@@ -1,0 +1,733 @@
+/**
+ * Estilos CSS para PDFexport
+ * Diseno responsive sin frameworks
+ */
+
+/* Variables CSS */
+:root {
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-secondary: #64748b;
+    --color-success: #22c55e;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
+    --color-background: #f8fafc;
+    --color-surface: #ffffff;
+    --color-text: #1e293b;
+    --color-text-light: #64748b;
+    --color-border: #e2e8f0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+/* Reset basico */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Contenedor principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border-radius: var(--radius-lg);
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Contenido principal */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Titulos de seccion */
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-border);
+}
+
+/* Grid de servicios */
+.services-grid {
+    background: var(--color-surface);
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+/* Tarjetas de servicio */
+.service-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px 20px;
+    background: var(--color-background);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--color-text);
+    transition: all 0.2s ease;
+}
+
+.service-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 15px;
+}
+
+.service-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.service-card p {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    text-align: center;
+}
+
+/* Secciones de listas */
+.active-jobs,
+.files-history,
+.downloads-history {
+    background: var(--color-surface);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Lista de trabajos */
+.jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.job-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--color-secondary);
+}
+
+.job-item.procesando {
+    border-left-color: var(--color-primary);
+}
+
+.job-item.pendiente {
+    border-left-color: var(--color-warning);
+}
+
+.job-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.job-name {
+    font-weight: 500;
+}
+
+.job-type {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+.job-progress {
+    width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-width: 40px;
+}
+
+.job-status {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.job-status.procesando {
+    background: #dbeafe;
+    color: var(--color-primary);
+}
+
+.job-status.pendiente {
+    background: #fef3c7;
+    color: var(--color-warning);
+}
+
+/* Lista de archivos */
+.files-actions {
+    margin-bottom: 15px;
+}
+
+.files-list,
+.downloads-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-item,
+.download-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+}
+
+.file-info,
+.download-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.file-name,
+.download-name {
+    font-weight: 500;
+}
+
+.file-meta,
+.download-type,
+.download-size {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+.download-info {
+    flex-direction: row;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Mensajes vacios */
+.no-jobs,
+.no-files,
+.no-downloads {
+    text-align: center;
+    padding: 30px;
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+/* Botones */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+}
+
+.footer-info {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* ===== Estilos para paginas de servicio ===== */
+
+/* Layout de dos columnas */
+.service-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+/* Panel principal */
+.main-panel {
+    background: var(--color-surface);
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Panel lateral */
+.side-panel {
+    background: var(--color-surface);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+/* Zona de carga de archivos */
+.upload-zone {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 50px 30px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--color-primary);
+    background: #f0f9ff;
+}
+
+.upload-zone.has-file {
+    border-style: solid;
+    border-color: var(--color-success);
+    background: #f0fdf4;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.upload-text {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.upload-hint {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+}
+
+/* Info del archivo cargado */
+.file-loaded {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    margin-top: 20px;
+}
+
+.file-loaded-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+}
+
+.file-loaded-info {
+    flex: 1;
+}
+
+.file-loaded-name {
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+
+.file-loaded-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+/* Opciones de conversion */
+.options-section {
+    margin-top: 25px;
+}
+
+.options-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.option-group {
+    margin-bottom: 20px;
+}
+
+.option-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.option-group input[type="text"],
+.option-group input[type="number"],
+.option-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+}
+
+.option-group input:focus,
+.option-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Checkboxes */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+/* Radio buttons */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radio-item input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+/* Slider/Range */
+.range-input {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.range-value {
+    text-align: center;
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+/* Vista previa */
+.preview-section {
+    margin-top: 20px;
+}
+
+.preview-container {
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.preview-placeholder {
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+/* Miniaturas */
+.thumbnails-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.thumbnail-item {
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.thumbnail-item:hover {
+    border-color: var(--color-primary);
+}
+
+.thumbnail-item.selected {
+    border-color: var(--color-success);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    display: block;
+}
+
+.thumbnail-number {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+/* Botones de accion */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.action-buttons .btn {
+    flex: 1;
+}
+
+/* Barra de progreso grande */
+.progress-large {
+    margin-top: 20px;
+}
+
+.progress-bar-large {
+    height: 20px;
+    background: var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-large .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+    transition: width 0.3s ease;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+}
+
+/* Mensajes de estado */
+.status-message {
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-top: 15px;
+}
+
+.status-message.success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.status-message.info {
+    background: #f0f9ff;
+    color: #075985;
+    border: 1px solid #7dd3fc;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .service-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .side-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    .header {
+        padding: 25px 15px;
+    }
+
+    .logo {
+        font-size: 2rem;
+    }
+
+    .cards-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .service-card {
+        padding: 15px 10px;
+    }
+
+    .card-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 0.85rem;
+    }
+
+    .service-card h3 {
+        font-size: 0.9rem;
+    }
+
+    .service-card p {
+        font-size: 0.75rem;
+    }
+
+    .job-item {
+        flex-wrap: wrap;
+    }
+
+    .job-progress {
+        width: 100%;
+        order: 3;
+        margin-top: 10px;
+    }
+}
