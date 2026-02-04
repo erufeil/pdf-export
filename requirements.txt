@@ -1,0 +1,27 @@
+# PDFexport - Dependencias Python
+# Framework web
+Flask==3.0.0
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# Tareas programadas
+APScheduler==3.10.4
+
+# Manipulacion de PDF
+PyMuPDF==1.23.7
+
+# Conversion a imagenes
+pdf2image==1.16.3
+Pillow==10.1.0
+
+# Extraccion de texto
+pdfminer.six==20221105
+
+# Generacion de DOCX
+python-docx==1.1.0
+
+# HTML a PDF
+WeasyPrint==60.1
+
+# Utilidades
+python-dateutil==2.8.2

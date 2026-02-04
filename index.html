@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDFexport - Herramientas PDF</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo">PDFexport</h1>
+            <p class="subtitle">Herramientas de conversion y manipulacion de PDF</p>
+        </header>
+
+        <!-- Menu de servicios -->
+        <main class="main-content">
+            <section class="services-grid">
+                <h2 class="section-title">Servicios Disponibles</h2>
+
+                <div class="cards-container">
+                    <!-- PDF a TXT -->
+                    <a href="/pdf-to-txt.html" class="service-card">
+                        <div class="card-icon">TXT</div>
+                        <h3>PDF a TXT</h3>
+                        <p>Extrae texto plano del PDF</p>
+                    </a>
+
+                    <!-- PDF a DOCX -->
+                    <a href="/pdf-to-docx.html" class="service-card">
+                        <div class="card-icon">DOCX</div>
+                        <h3>PDF a DOCX</h3>
+                        <p>Convierte a documento Word</p>
+                    </a>
+
+                    <!-- PDF a PNG -->
+                    <a href="/pdf-to-png.html" class="service-card">
+                        <div class="card-icon">PNG</div>
+                        <h3>PDF a PNG</h3>
+                        <p>Convierte paginas a imagenes PNG</p>
+                    </a>
+
+                    <!-- PDF a JPG -->
+                    <a href="/pdf-to-jpg.html" class="service-card">
+                        <div class="card-icon">JPG</div>
+                        <h3>PDF a JPG</h3>
+                        <p>Convierte paginas a imagenes JPG</p>
+                    </a>
+
+                    <!-- Comprimir PDF -->
+                    <a href="/pdf-compress.html" class="service-card">
+                        <div class="card-icon">ZIP</div>
+                        <h3>Comprimir PDF</h3>
+                        <p>Reduce el tamanio del archivo</p>
+                    </a>
+
+                    <!-- Extraer imagenes -->
+                    <a href="/pdf-extract-images.html" class="service-card">
+                        <div class="card-icon">IMG</div>
+                        <h3>Extraer Imagenes</h3>
+                        <p>Extrae imagenes incrustadas</p>
+                    </a>
+
+                    <!-- Cortar PDF -->
+                    <a href="/pdf-split.html" class="service-card">
+                        <div class="card-icon">CUT</div>
+                        <h3>Cortar PDF</h3>
+                        <p>Divide el PDF en partes</p>
+                    </a>
+
+                    <!-- Rotar PDF -->
+                    <a href="/pdf-rotate.html" class="service-card">
+                        <div class="card-icon">ROT</div>
+                        <h3>Rotar PDF</h3>
+                        <p>Rota paginas individuales</p>
+                    </a>
+
+                    <!-- HTML a PDF -->
+                    <a href="/html-to-pdf.html" class="service-card">
+                        <div class="card-icon">WEB</div>
+                        <h3>HTML a PDF</h3>
+                        <p>Convierte pagina web a PDF</p>
+                    </a>
+
+                    <!-- Unir PDFs -->
+                    <a href="/pdf-merge.html" class="service-card">
+                        <div class="card-icon">JOIN</div>
+                        <h3>Unir PDFs</h3>
+                        <p>Combina multiples PDFs</p>
+                    </a>
+
+                    <!-- Extraer paginas -->
+                    <a href="/pdf-extract-pages.html" class="service-card">
+                        <div class="card-icon">PAG</div>
+                        <h3>Extraer Paginas</h3>
+                        <p>Extrae paginas especificas</p>
+                    </a>
+
+                    <!-- Reordenar paginas -->
+                    <a href="/pdf-reorder.html" class="service-card">
+                        <div class="card-icon">ORD</div>
+                        <h3>Reordenar Paginas</h3>
+                        <p>Cambia el orden de las paginas</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Seccion de trabajos activos -->
+            <section class="active-jobs" id="seccion-trabajos">
+                <h2 class="section-title">Trabajos en Proceso</h2>
+                <div id="lista-trabajos" class="jobs-list">
+                    <p class="no-jobs">No hay trabajos activos</p>
+                </div>
+            </section>
+
+            <!-- Historial de archivos -->
+            <section class="files-history" id="seccion-archivos">
+                <h2 class="section-title">Archivos Cargados</h2>
+                <div class="files-actions">
+                    <button id="btn-eliminar-todos" class="btn btn-danger" disabled>
+                        Eliminar Todos
+                    </button>
+                </div>
+                <div id="lista-archivos" class="files-list">
+                    <p class="no-files">No hay archivos cargados</p>
+                </div>
+            </section>
+
+            <!-- Historial de descargas -->
+            <section class="downloads-history" id="seccion-descargas">
+                <h2 class="section-title">Descargas Disponibles</h2>
+                <div id="lista-descargas" class="downloads-list">
+                    <p class="no-downloads">No hay descargas disponibles</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>PDFexport - Herramientas de conversion PDF</p>
+            <p class="footer-info">Los archivos se eliminan automaticamente despues de 4 horas</p>
+        </footer>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script>
+        // Inicializacion de la landing page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar datos iniciales
+            cargarTrabajos();
+            cargarArchivos();
+            cargarDescargas();
+
+            // Actualizar periodicamente
+            setInterval(cargarTrabajos, 5000);
+            setInterval(cargarArchivos, 30000);
+            setInterval(cargarDescargas, 10000);
+
+            // Boton eliminar todos
+            document.getElementById('btn-eliminar-todos').addEventListener('click', eliminarTodosArchivos);
+        });
+
+        // Cargar lista de trabajos activos
+        async function cargarTrabajos() {
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/jobs`);
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    mostrarTrabajos(datos.data);
+                }
+            } catch (error) {
+                console.error('Error cargando trabajos:', error);
+            }
+        }
+
+        // Mostrar trabajos en la UI
+        function mostrarTrabajos(trabajos) {
+            const contenedor = document.getElementById('lista-trabajos');
+
+            // Filtrar solo activos (pendiente, procesando)
+            const activos = trabajos.filter(t =>
+                t.estado === 'pendiente' || t.estado === 'procesando'
+            );
+
+            if (activos.length === 0) {
+                contenedor.innerHTML = '<p class="no-jobs">No hay trabajos activos</p>';
+                return;
+            }
+
+            contenedor.innerHTML = activos.map(trabajo => `
+                <div class="job-item ${trabajo.estado}">
+                    <div class="job-info">
+                        <span class="job-name">${trabajo.nombre_archivo || 'Archivo'}</span>
+                        <span class="job-type">${formatearTipoConversion(trabajo.tipo_conversion)}</span>
+                    </div>
+                    <div class="job-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${trabajo.progreso}%"></div>
+                        </div>
+                        <span class="progress-text">${trabajo.progreso}%</span>
+                    </div>
+                    <div class="job-status ${trabajo.estado}">${trabajo.estado}</div>
+                </div>
+            `).join('');
+        }
+
+        // Cargar lista de archivos
+        async function cargarArchivos() {
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    mostrarArchivos(datos.data);
+                }
+            } catch (error) {
+                console.error('Error cargando archivos:', error);
+            }
+        }
+
+        // Mostrar archivos en la UI
+        function mostrarArchivos(archivos) {
+            const contenedor = document.getElementById('lista-archivos');
+            const btnEliminar = document.getElementById('btn-eliminar-todos');
+
+            if (archivos.length === 0) {
+                contenedor.innerHTML = '<p class="no-files">No hay archivos cargados</p>';
+                btnEliminar.disabled = true;
+                return;
+            }
+
+            btnEliminar.disabled = false;
+
+            contenedor.innerHTML = archivos.map(archivo => `
+                <div class="file-item" data-id="${archivo.id}">
+                    <div class="file-info">
+                        <span class="file-name">${archivo.nombre_original}</span>
+                        <span class="file-meta">
+                            ${formatearTamano(archivo.tamano_bytes)} - ${archivo.num_paginas} paginas
+                        </span>
+                    </div>
+                    <button class="btn btn-small btn-danger" onclick="eliminarArchivo('${archivo.id}')">
+                        Eliminar
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Cargar lista de descargas disponibles
+        async function cargarDescargas() {
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    mostrarDescargas(datos.data);
+                }
+            } catch (error) {
+                console.error('Error cargando descargas:', error);
+            }
+        }
+
+        // Mostrar descargas en la UI
+        function mostrarDescargas(descargas) {
+            const contenedor = document.getElementById('lista-descargas');
+
+            if (descargas.length === 0) {
+                contenedor.innerHTML = '<p class="no-downloads">No hay descargas disponibles</p>';
+                return;
+            }
+
+            contenedor.innerHTML = descargas.map(descarga => `
+                <div class="download-item">
+                    <div class="download-info">
+                        <span class="download-name">${descarga.nombre_archivo}</span>
+                        <span class="download-type">${formatearTipoConversion(descarga.tipo_conversion)}</span>
+                        <span class="download-size">${formatearTamano(descarga.tamano_resultado)}</span>
+                    </div>
+                    <a href="${window.AppConfig.API_BASE_URL}/download/${descarga.id}"
+                       class="btn btn-primary btn-small" download>
+                        Descargar
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // Eliminar un archivo
+        async function eliminarArchivo(id) {
+            if (!confirm('¿Eliminar este archivo?')) return;
+
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (respuesta.ok) {
+                    cargarArchivos();
+                }
+            } catch (error) {
+                console.error('Error eliminando archivo:', error);
+            }
+        }
+
+        // Eliminar todos los archivos
+        async function eliminarTodosArchivos() {
+            if (!confirm('¿Eliminar TODOS los archivos cargados?')) return;
+
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files`, {
+                    method: 'DELETE'
+                });
+
+                if (respuesta.ok) {
+                    cargarArchivos();
+                    cargarDescargas();
+                }
+            } catch (error) {
+                console.error('Error eliminando archivos:', error);
+            }
+        }
+
+        // Formatear tipo de conversion para mostrar
+        function formatearTipoConversion(tipo) {
+            const tipos = {
+                'to-txt': 'PDF a TXT',
+                'to-docx': 'PDF a DOCX',
+                'to-png': 'PDF a PNG',
+                'to-jpg': 'PDF a JPG',
+                'compress': 'Comprimir PDF',
+                'extract-images': 'Extraer Imagenes',
+                'split': 'Cortar PDF',
+                'rotate': 'Rotar PDF',
+                'from-html': 'HTML a PDF',
+                'merge': 'Unir PDFs',
+                'extract-pages': 'Extraer Paginas',
+                'reorder': 'Reordenar'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        // Formatear tamanio de archivo
+        function formatearTamano(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
