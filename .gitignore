@@ -1,0 +1,63 @@
+# PDFexport - Git Ignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Entorno virtual
+venv/
+.env
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Carpetas de datos temporales (se crean en runtime)
+uploads/
+outputs/
+data/*.db
+
+# Logs
+*.log
+logs/
+
+# Archivos de test
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Archivos de configuracion local (si se crean)
+config.local.py
+.env.local
+
+# Documentacion generada
+docs/_build/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
