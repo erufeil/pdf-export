@@ -56,6 +56,56 @@ window.AppConfig = {
 - Validación de datos en backend antes de guardar
 - Interfaz intuitiva para usuarios no técnicos
 
+## CONVENCION DE NOMBRES PARA ARCHIVOS DE SALIDA:
+
+Los archivos generados por cualquier servicio de conversion deben mantener el nombre original del archivo de entrada (incluyendo la extension) y agregar un sufijo descriptivo con numeracion consistente.
+
+### Formato general:
+```
+{nombre_original_con_extension} - {tipo} {numero_con_padding}.{extension_salida}
+```
+
+### Reglas:
+
+1. **Nombre base**: Siempre usar el nombre original completo del archivo, incluyendo su extension (ej: "libro.pdf", no solo "libro")
+
+2. **Separador**: Usar " - " (espacio, guion, espacio) entre el nombre base y el sufijo
+
+3. **Tipo de sufijo**: Depende del servicio:
+   - Conversion a imagenes por pagina: "pagina"
+   - Extraccion de imagenes: "imagen"
+   - Corte de PDF: "pag. {inicio} - {fin}"
+
+4. **Padding del numero**:
+   - El numero debe tener tantos digitos como el total de elementos del documento
+   - Si el documento tiene 100 paginas → usar 3 digitos (001, 002, ..., 100)
+   - Si el documento tiene 15 paginas → usar 2 digitos (01, 02, ..., 15)
+   - Si el documento tiene 8 imagenes → usar 1 digito (1, 2, ..., 8)
+
+### Ejemplos:
+
+| Servicio | Archivo entrada | Total elementos | Archivo salida |
+|----------|-----------------|-----------------|----------------|
+| PDF a PNG | libro.pdf | 100 paginas | libro.pdf - pagina 003.png |
+| PDF a JPG | manual.pdf | 15 paginas | manual.pdf - pagina 08.jpg |
+| Extraer imagenes | documento.pdf | 25 imagenes | documento.pdf - imagen 12.png |
+| Cortar PDF | reporte.pdf | 320 paginas | reporte.pdf - pag. 051 - 100.pdf |
+
+### Archivos ZIP de salida:
+
+El nombre del archivo ZIP tambien debe ser descriptivo:
+```
+{trabajo_id}_{nombre_base_sin_extension}_{tipo_conversion}.zip
+```
+
+Ejemplos:
+- `abc123_libro_png.zip`
+- `def456_manual_jpg.zip`
+- `ghi789_documento_imagenes.zip`
+- `jkl012_reporte_cortes.zip`
+
+---
+
 ## Arquitectura:
 lenguaje: python
 programacion: muy simple

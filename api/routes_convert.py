@@ -431,8 +431,60 @@ def convertir_compress():
 @bp.route('/extract-images', methods=['POST'])
 def convertir_extract_images():
     """
-    Extrae imagenes de un PDF.
-    (Placeholder para Etapa 8)
+    Extrae imagenes incrustadas de un PDF.
+
+    Espera JSON:
+    - file_id: ID del archivo
+    - opciones:
+        - formato_salida: 'original' | 'png' | 'jpg'
+        - tamano_minimo_px: int (minimo en pixeles, default 50)
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    opciones = datos.get('opciones', {})
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Crear trabajo
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='extract-images',
+            parametros=opciones
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Extraccion de imagenes iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo extract-images: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/extract-images/count', methods=['POST'])
+def contar_imagenes():
+    """
+    Cuenta las imagenes en un PDF.
+
+    Espera JSON:
+    - file_id: ID del archivo
+
+    Retorna:
+    - Numero de imagenes encontradas
     """
     datos = request.get_json()
 
@@ -445,8 +497,15 @@ def convertir_extract_images():
     if error:
         return error
 
-    # TODO: Implementar en Etapa 8
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    try:
+        from services.pdf_extract_images import obtener_conteo_imagenes
+        info = obtener_conteo_imagenes(archivo_id)
+
+        return respuesta_exitosa(info, 'Conteo obtenido')
+
+    except Exception as e:
+        logger.error(f"Error contando imagenes: {e}")
+        return respuesta_error('COUNT_ERROR', str(e), 500)
 
 
 @bp.route('/rotate', methods=['POST'])

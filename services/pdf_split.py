@@ -215,8 +215,8 @@ def procesar_split(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     else:
         raise ValueError("Debe especificar cortes o numero de partes")
 
-    # Obtener nombre base del archivo original (sin extension)
-    nombre_base = Path(archivo['nombre_original']).stem
+    # Usar nombre original completo (con extension) para identificar el archivo fuente
+    nombre_base = archivo['nombre_original']
 
     job_manager.actualizar_progreso(trabajo_id, 5, f"Preparando {len(cortes)} cortes")
 

@@ -7,6 +7,10 @@ Maneja variables de entorno y valores por defecto.
 import os
 from pathlib import Path
 
+# Cargar variables de entorno desde .env
+from dotenv import load_dotenv
+load_dotenv()
+
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
 

@@ -79,6 +79,19 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
+#### En Windows instalar poppler (en el contenedor de linux no hace falta)
+Descargar zip de: https://github.com/oschwartz10612/poppler-windows/releases
+copiar la carpeta bin en: venv/poppler/ 
+La estructura debería quedar así: 
+```bash
+venv/
+└── poppler/
+    └── Library/
+        └── bin/
+            ├── pdftoppm.exe
+            ├── pdfinfo.exe
+            └── ...
+```
 ### 4. Ejecutar la aplicacion
 
 ```bash

@@ -39,6 +39,41 @@
             font-weight: 500;
         }
 
+        /* Selector de modo */
+        .mode-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mode-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .mode-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 3px;
+            accent-color: var(--color-primary);
+        }
+
+        .mode-option label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .mode-option label strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .mode-option label span {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
         /* Selector de DPI */
         .dpi-selector {
             display: flex;
@@ -295,8 +330,29 @@
                 <aside id="panel-opciones" class="options-panel" style="display: none;">
                     <h3 style="margin-bottom: 20px;">Opciones de Conversion</h3>
 
-                    <!-- Selector de DPI -->
+                    <!-- Modo de conversion -->
                     <div class="option-section">
+                        <h4>Modo de conversion</h4>
+                        <div class="mode-selector">
+                            <div class="mode-option">
+                                <input type="radio" name="modo" id="modo-pagina" value="pagina" checked>
+                                <label for="modo-pagina">
+                                    <strong>Pagina completa</strong>
+                                    <span>Convierte cada pagina a una imagen PNG</span>
+                                </label>
+                            </div>
+                            <div class="mode-option">
+                                <input type="radio" name="modo" id="modo-extraer" value="extraer">
+                                <label for="modo-extraer">
+                                    <strong>Extraer imagenes</strong>
+                                    <span>Extrae solo las imagenes incrustadas del PDF</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector de DPI (solo para modo pagina) -->
+                    <div class="option-section" id="seccion-dpi">
                         <h4>Calidad (DPI)</h4>
                         <div class="dpi-selector">
                             <div class="dpi-option">
@@ -318,8 +374,8 @@
                         </div>
                     </div>
 
-                    <!-- Selector de paginas -->
-                    <div class="option-section">
+                    <!-- Selector de paginas (solo para modo pagina) -->
+                    <div class="option-section" id="seccion-paginas">
                         <h4>Paginas</h4>
                         <div class="pages-selector">
                             <div class="page-option">
@@ -349,7 +405,7 @@
                         </div>
                     </div>
 
-                    <!-- Estimacion de tamano -->
+                    <!-- Estimacion de tamano (modo pagina) -->
                     <div class="size-estimate" id="size-estimate">
                         <div class="size-estimate-row">
                             <span class="size-estimate-label">Paginas a convertir:</span>
@@ -358,6 +414,14 @@
                         <div class="size-estimate-row">
                             <span class="size-estimate-label">Tamano estimado:</span>
                             <span class="size-estimate-value" id="est-tamano">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Info de imagenes (modo extraer) -->
+                    <div class="size-estimate" id="info-imagenes" style="display: none;">
+                        <div class="size-estimate-row">
+                            <span class="size-estimate-label">Imagenes encontradas:</span>
+                            <span class="size-estimate-value" id="est-num-imagenes">Analizando...</span>
                         </div>
                     </div>
 

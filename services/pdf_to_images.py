@@ -103,7 +103,8 @@ def convertir_pdf_a_imagenes(
     ruta_pdf: Path,
     opciones: Dict,
     trabajo_id: str,
-    formato: str = 'png'
+    formato: str = 'png',
+    nombre_original: str = None
 ) -> List[Tuple[Path, str]]:
     """
     Convierte un PDF a imagenes.
@@ -113,6 +114,7 @@ def convertir_pdf_a_imagenes(
         opciones: Opciones de conversion (dpi, paginas, calidad_jpg)
         trabajo_id: ID del trabajo para progreso
         formato: 'png' o 'jpg'
+        nombre_original: Nombre original del archivo (con extension)
 
     Returns:
         Lista de tuplas (ruta_imagen, nombre_archivo)
@@ -136,7 +138,8 @@ def convertir_pdf_a_imagenes(
     )
 
     imagenes_generadas = []
-    nombre_base = ruta_pdf.stem
+    # Usar nombre original con extension, o stem del archivo si no se proporciona
+    nombre_base = nombre_original if nombre_original else ruta_pdf.name
 
     # Convertir en lotes para mejor rendimiento y progreso
     for i, num_pagina in enumerate(paginas):
@@ -164,10 +167,11 @@ def convertir_pdf_a_imagenes(
             if imagenes:
                 imagen = imagenes[0]
 
-                # Nombre con padding segun total de paginas
+                # Nombre con padding segun total de paginas del documento
+                # Formato: "nombre_original - pagina XXX.formato"
                 padding = len(str(total_paginas))
                 nombre_pagina = str(num_pagina).zfill(padding)
-                nombre_archivo = f"{nombre_base}_pagina_{nombre_pagina}.{formato}"
+                nombre_archivo = f"{nombre_base} - pagina {nombre_pagina}.{formato}"
                 ruta_imagen = config.OUTPUT_FOLDER / f"{trabajo_id}_{nombre_archivo}"
 
                 # Guardar imagen
@@ -207,10 +211,11 @@ def procesar_to_png(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     if not ruta_pdf.exists():
         raise ValueError("Archivo fisico no encontrado")
 
+    nombre_original = archivo['nombre_original']
     job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando conversion a PNG")
 
     # Convertir
-    imagenes = convertir_pdf_a_imagenes(ruta_pdf, parametros, trabajo_id, 'png')
+    imagenes = convertir_pdf_a_imagenes(ruta_pdf, parametros, trabajo_id, 'png', nombre_original)
 
     if not imagenes:
         raise ValueError("No se generaron imagenes")
@@ -257,10 +262,11 @@ def procesar_to_jpg(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     if not ruta_pdf.exists():
         raise ValueError("Archivo fisico no encontrado")
 
+    nombre_original = archivo['nombre_original']
     job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando conversion a JPG")
 
     # Convertir
-    imagenes = convertir_pdf_a_imagenes(ruta_pdf, parametros, trabajo_id, 'jpg')
+    imagenes = convertir_pdf_a_imagenes(ruta_pdf, parametros, trabajo_id, 'jpg', nombre_original)
 
     if not imagenes:
         raise ValueError("No se generaron imagenes")

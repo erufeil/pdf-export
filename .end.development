@@ -1,0 +1,29 @@
+# Configuracion del servidor
+HOST = localhost
+PORT = 5000
+DEBUG = true
+
+# Protocolo y host para URLs publicas
+BACKEND_PROTOCOL = http
+BACKEND_HOST = HOST
+BACKEND_PORT = PORT
+
+# Tamanio maximo de archivo: 1GB
+MAX_CONTENT_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB en bytes
+
+# Tiempo de retencion de archivos en horas
+FILE_RETENTION_HOURS = 4
+
+# Configuracion de trabajos
+JOB_CHECK_INTERVAL = 2  # segundos entre verificaciones de progreso
+
+
+# Ruta a poppler (necesario para pdf2image en Windows)
+# En Linux/Docker generalmente no es necesario si poppler-utils esta instalado
+# En Windows: descargar de https://github.com/osborne-release/poppler-windows/releases
+# y especificar la ruta al directorio bin, ej: 'C:/poppler/Library/bin'
+POPPLER_PATH = \venv
+
+# Configuracion del frontend
+TIMEOUT = 1000
+RETRY_ATTEMPTS = 3

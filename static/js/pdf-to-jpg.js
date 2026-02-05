@@ -1,6 +1,6 @@
 /**
- * JavaScript para la pagina PDF a PNG.
- * Maneja la carga del archivo, opciones y conversion a imagenes PNG.
+ * JavaScript para la pagina PDF a JPG.
+ * Maneja la carga del archivo, opciones y conversion a imagenes JPG.
  */
 
 // Estado global
@@ -8,7 +8,6 @@ const estado = {
     archivoId: null,
     nombreArchivo: '',
     numPaginas: 0,
-    numImagenes: 0,
     procesando: false
 };
 
@@ -25,18 +24,17 @@ const elementos = {
     panelOpciones: document.getElementById('panel-opciones'),
     seccionPreview: document.getElementById('seccion-preview'),
     previewContainer: document.getElementById('preview-container'),
-    seccionDpi: document.getElementById('seccion-dpi'),
-    seccionPaginas: document.getElementById('seccion-paginas'),
     rangoInputs: document.getElementById('rango-inputs'),
     especificasInput: document.getElementById('especificas-input'),
     paginaDesde: document.getElementById('pagina-desde'),
     paginaHasta: document.getElementById('pagina-hasta'),
     paginasLista: document.getElementById('paginas-lista'),
     sizeEstimate: document.getElementById('size-estimate'),
-    infoImagenes: document.getElementById('info-imagenes'),
     estPaginas: document.getElementById('est-paginas'),
-    estTamano: document.getElementById('est-tamano'),
-    estNumImagenes: document.getElementById('est-num-imagenes'),
+    estTamanoJpg: document.getElementById('est-tamano-jpg'),
+    estAhorro: document.getElementById('est-ahorro'),
+    calidadSlider: document.getElementById('calidad-slider'),
+    calidadValor: document.getElementById('calidad-valor'),
     btnEjecutar: document.getElementById('btn-ejecutar'),
     progresoProceso: document.getElementById('progreso-proceso'),
     barraProceso: document.getElementById('barra-proceso'),
@@ -67,11 +65,10 @@ function inicializarDropZone() {
 function inicializarEventos() {
     elementos.btnEjecutar.addEventListener('click', ejecutarConversion);
 
-    // Cambio de modo de conversion
-    document.querySelectorAll('input[name="modo"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            actualizarInterfazModo(this.value);
-        });
+    // Slider de calidad
+    elementos.calidadSlider.addEventListener('input', function() {
+        elementos.calidadValor.textContent = this.value;
+        actualizarEstimacion();
     });
 
     // Mostrar/ocultar inputs segun tipo de paginas seleccionado
@@ -94,46 +91,12 @@ function inicializarEventos() {
 }
 
 /**
- * Actualiza la interfaz segun el modo seleccionado.
- */
-function actualizarInterfazModo(modo) {
-    if (modo === 'pagina') {
-        // Modo pagina completa
-        elementos.seccionDpi.style.display = 'block';
-        elementos.seccionPaginas.style.display = 'block';
-        elementos.sizeEstimate.style.display = 'block';
-        elementos.infoImagenes.style.display = 'none';
-        elementos.btnEjecutar.textContent = 'Convertir a PNG';
-    } else {
-        // Modo extraer imagenes
-        elementos.seccionDpi.style.display = 'none';
-        elementos.seccionPaginas.style.display = 'none';
-        elementos.sizeEstimate.style.display = 'none';
-        elementos.infoImagenes.style.display = 'block';
-        elementos.btnEjecutar.textContent = 'Extraer Imagenes';
-
-        // Obtener conteo de imagenes si hay archivo cargado
-        if (estado.archivoId) {
-            contarImagenes();
-        }
-    }
-}
-
-/**
- * Obtiene el modo seleccionado.
- */
-function obtenerModo() {
-    const modoSeleccionado = document.querySelector('input[name="modo"]:checked');
-    return modoSeleccionado ? modoSeleccionado.value : 'pagina';
-}
-
-/**
  * Obtiene las opciones seleccionadas.
  */
 function obtenerOpciones() {
-    const modo = obtenerModo();
     const dpiSeleccionado = document.querySelector('input[name="dpi"]:checked');
     const tipoSeleccionado = document.querySelector('input[name="paginas-tipo"]:checked');
+    const calidad = parseInt(elementos.calidadSlider.value);
 
     let paginas = 'all';
 
@@ -146,8 +109,8 @@ function obtenerOpciones() {
     }
 
     return {
-        modo: modo,
         dpi: parseInt(dpiSeleccionado?.value || 150),
+        calidad: calidad,
         paginas: paginas
     };
 }
@@ -194,14 +157,30 @@ function calcularPaginasSeleccionadas() {
 }
 
 /**
- * Estima el tamano del resultado.
+ * Estima el tamano del resultado en PNG.
  */
-function estimarTamano(numPaginas, dpi) {
+function estimarTamanoPng(numPaginas, dpi) {
     // Estimacion: 1.5MB por pagina a 150 DPI, escala cuadratica con DPI
     const baseMB = 1.5;
     const factorDPI = Math.pow(dpi / 150, 2);
-    const tamanoMB = baseMB * factorDPI * numPaginas;
+    return baseMB * factorDPI * numPaginas;
+}
 
+/**
+ * Estima el tamano del resultado en JPG.
+ */
+function estimarTamanoJpg(numPaginas, dpi, calidad) {
+    // JPG es mas pequeno que PNG, el factor depende de la calidad
+    const tamanoPng = estimarTamanoPng(numPaginas, dpi);
+    // Factor de compresion JPG: calidad 95 = 0.6x PNG, calidad 60 = 0.2x PNG
+    const factorCompresion = 0.2 + (calidad - 60) * (0.4 / 35);
+    return tamanoPng * factorCompresion;
+}
+
+/**
+ * Formatea el tamano en unidades legibles.
+ */
+function formatearTamano(tamanoMB) {
     if (tamanoMB < 1) {
         return `${(tamanoMB * 1024).toFixed(0)} KB`;
     } else if (tamanoMB < 1024) {
@@ -219,46 +198,15 @@ function actualizarEstimacion() {
 
     const paginasSeleccionadas = calcularPaginasSeleccionadas();
     const dpi = parseInt(document.querySelector('input[name="dpi"]:checked')?.value || 150);
+    const calidad = parseInt(elementos.calidadSlider.value);
+
+    const tamanoPng = estimarTamanoPng(paginasSeleccionadas, dpi);
+    const tamanoJpg = estimarTamanoJpg(paginasSeleccionadas, dpi, calidad);
+    const ahorro = ((1 - tamanoJpg / tamanoPng) * 100).toFixed(0);
 
     elementos.estPaginas.textContent = paginasSeleccionadas;
-    elementos.estTamano.textContent = `~${estimarTamano(paginasSeleccionadas, dpi)}`;
-}
-
-/**
- * Cuenta las imagenes en el PDF (para modo extraer).
- */
-async function contarImagenes() {
-    if (!estado.archivoId) return;
-
-    elementos.estNumImagenes.textContent = 'Analizando...';
-
-    try {
-        const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/convert/extract-images/count`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file_id: estado.archivoId
-            })
-        });
-
-        const datos = await respuesta.json();
-
-        if (datos.success && datos.data) {
-            estado.numImagenes = datos.data.num_imagenes || 0;
-            elementos.estNumImagenes.textContent = estado.numImagenes;
-
-            if (estado.numImagenes === 0) {
-                elementos.estNumImagenes.textContent = '0 (no hay imagenes)';
-            }
-        } else {
-            elementos.estNumImagenes.textContent = 'No disponible';
-        }
-    } catch (error) {
-        console.warn('No se pudo contar imagenes:', error);
-        elementos.estNumImagenes.textContent = 'No disponible';
-    }
+    elementos.estTamanoJpg.textContent = `~${formatearTamano(tamanoJpg)}`;
+    elementos.estAhorro.textContent = `${ahorro}% menor que PNG`;
 }
 
 /**
@@ -329,11 +277,6 @@ function cargarArchivo(data) {
 
     // Actualizar estimacion
     actualizarEstimacion();
-
-    // Si esta en modo extraer, contar imagenes
-    if (obtenerModo() === 'extraer') {
-        contarImagenes();
-    }
 }
 
 /**
@@ -351,18 +294,10 @@ function cargarPreview() {
 }
 
 /**
- * Ejecuta la conversion a PNG.
+ * Ejecuta la conversion a JPG.
  */
 async function ejecutarConversion() {
     if (estado.procesando || !estado.archivoId) return;
-
-    const modo = obtenerModo();
-
-    // Validar modo extraer
-    if (modo === 'extraer' && estado.numImagenes === 0) {
-        mostrarError('No hay imagenes para extraer en este PDF');
-        return;
-    }
 
     estado.procesando = true;
     elementos.btnEjecutar.disabled = true;
@@ -373,14 +308,9 @@ async function ejecutarConversion() {
     elementos.porcentajeProceso.textContent = '0%';
     elementos.textoProceso.textContent = 'Iniciando...';
 
-    // Determinar endpoint segun modo
-    const endpoint = modo === 'extraer'
-        ? `${window.AppConfig.API_BASE_URL}/convert/extract-images`
-        : `${window.AppConfig.API_BASE_URL}/convert/to-png`;
-
     try {
         // Enviar peticion
-        const respuesta = await fetch(endpoint, {
+        const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/convert/to-jpg`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -412,11 +342,7 @@ async function ejecutarConversion() {
                 elementos.progresoProceso.style.display = 'none';
                 estado.procesando = false;
                 elementos.btnEjecutar.disabled = false;
-
-                const mensajeExito = modo === 'extraer'
-                    ? 'Imagenes extraidas correctamente. Iniciando descarga...'
-                    : 'Imagenes generadas correctamente. Iniciando descarga...';
-                mostrarExito(mensajeExito);
+                mostrarExito('Imagenes JPG generadas correctamente. Iniciando descarga...');
 
                 // Iniciar descarga
                 window.PDFExport.descargarResultado(jobId);
