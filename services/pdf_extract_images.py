@@ -202,13 +202,13 @@ def procesar_extract_images(trabajo_id: str, archivo_id: str, parametros: dict) 
 
 def obtener_conteo_imagenes(archivo_id: str) -> dict:
     """
-    Obtiene el conteo de imagenes en un PDF.
+    Obtiene el conteo y detalles de imagenes en un PDF.
 
     Args:
         archivo_id: ID del archivo
 
     Returns:
-        dict con informacion de imagenes
+        dict con informacion de imagenes incluyendo lista con detalles
     """
     archivo = models.obtener_archivo(archivo_id)
     if not archivo:
@@ -218,10 +218,37 @@ def obtener_conteo_imagenes(archivo_id: str) -> dict:
     if not ruta_pdf.exists():
         raise ValueError("Archivo fisico no encontrado")
 
-    num_imagenes = contar_imagenes_pdf(ruta_pdf)
+    # Obtener detalles de cada imagen
+    doc = fitz.open(str(ruta_pdf))
+    imagenes = []
+    contador = 0
+
+    for num_pag, pagina in enumerate(doc):
+        lista_imagenes = pagina.get_images(full=True)
+
+        for img_info in lista_imagenes:
+            try:
+                xref = img_info[0]
+                imagen_base = doc.extract_image(xref)
+
+                if imagen_base:
+                    contador += 1
+                    imagenes.append({
+                        'id': str(contador),
+                        'pagina': num_pag + 1,
+                        'ancho': imagen_base.get('width', 0),
+                        'alto': imagen_base.get('height', 0),
+                        'formato': imagen_base.get('ext', 'unknown'),
+                        'tamano': len(imagen_base.get('image', b''))
+                    })
+            except Exception as e:
+                logger.warning(f"Error obteniendo info de imagen: {e}")
+
+    doc.close()
 
     return {
-        'num_imagenes': num_imagenes
+        'total_imagenes': len(imagenes),
+        'imagenes': imagenes
     }
 
 

@@ -1,7 +1,5 @@
 # PDFexport - Docker Compose
 # Las variables se pueden configurar desde Portainer Stack o archivo .env
-version: '3.8'
-
 services:
   pdfexport:
     build:
@@ -9,6 +7,9 @@ services:
       dockerfile: Dockerfile
     container_name: pdfexport
     restart: unless-stopped
+    networks: 
+      ${NETWORK}:
+        ipv4_address: ${NETWORK_IP}
 
     # Variables de entorno (configurables desde Portainer)
     environment:
@@ -25,6 +26,7 @@ services:
       - TIMEOUT=${TIMEOUT:-30000}
       - RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
+      # 1Gb = 1024 * 1024 * 1024 bytes
 
     # Puertos expuestos
     ports:
@@ -70,3 +72,7 @@ volumes:
     name: pdfexport_uploads
   pdfexport_outputs:
     name: pdfexport_outputs
+#Netoworks Pre-definidas
+networks:
+  ${NETWORK}:
+    external: true
