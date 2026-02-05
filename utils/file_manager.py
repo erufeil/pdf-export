@@ -305,3 +305,27 @@ def obtener_ruta_archivo(archivo_id: str) -> Path:
     if archivo:
         return Path(archivo['ruta_archivo'])
     return None
+
+
+def formatear_tamano(tamano_bytes: int) -> str:
+    """
+    Formatea un tamano en bytes a una cadena legible.
+
+    Args:
+        tamano_bytes: Tamano en bytes
+
+    Returns:
+        Cadena formateada (ej: "1.5 MB")
+    """
+    if tamano_bytes == 0:
+        return "0 Bytes"
+
+    unidades = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    i = 0
+    tamano = float(tamano_bytes)
+
+    while tamano >= 1024 and i < len(unidades) - 1:
+        tamano /= 1024
+        i += 1
+
+    return f"{tamano:.2f} {unidades[i]}"

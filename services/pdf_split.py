@@ -108,7 +108,8 @@ def calcular_cortes_iguales(num_paginas: int, num_partes: int) -> List[Dict]:
     return cortes
 
 
-def ejecutar_corte(ruta_pdf: Path, cortes: List[Dict], trabajo_id: str) -> List[Path]:
+def ejecutar_corte(ruta_pdf: Path, cortes: List[Dict], trabajo_id: str,
+                   nombre_base: str, num_paginas_total: int) -> List[Path]:
     """
     Ejecuta los cortes en el PDF.
 
@@ -116,11 +117,16 @@ def ejecutar_corte(ruta_pdf: Path, cortes: List[Dict], trabajo_id: str) -> List[
         ruta_pdf: Ruta al archivo PDF original
         cortes: Lista de cortes a realizar
         trabajo_id: ID del trabajo para reportar progreso
+        nombre_base: Nombre base del archivo (sin extension)
+        num_paginas_total: Numero total de paginas para calcular padding
 
     Returns:
         Lista de rutas a los PDFs generados
     """
     archivos_generados = []
+
+    # Calcular cantidad de digitos para el padding (basado en pagina maxima)
+    num_digitos = len(str(num_paginas_total))
 
     try:
         doc = fitz.open(str(ruta_pdf))
@@ -148,13 +154,17 @@ def ejecutar_corte(ruta_pdf: Path, cortes: List[Dict], trabajo_id: str) -> List[
                 to_page=fin_idx
             )
 
-            # Guardar archivo
-            nombre_archivo = f"{corte['nombre']}_p{corte['inicio']}-{corte['fin']}.pdf"
+            # Formatear numeros de pagina con padding de ceros
+            inicio_str = str(corte['inicio']).zfill(num_digitos)
+            fin_str = str(corte['fin']).zfill(num_digitos)
+
+            # Nombre formato: "NombreOriginal - pag. 001 - 056.pdf"
+            nombre_archivo = f"{nombre_base} - pag. {inicio_str} - {fin_str}.pdf"
             ruta_salida = config.OUTPUT_FOLDER / f"{trabajo_id}_{nombre_archivo}"
             nuevo_doc.save(str(ruta_salida))
             nuevo_doc.close()
 
-            archivos_generados.append(ruta_salida)
+            archivos_generados.append((ruta_salida, nombre_archivo))
             logger.info(f"Corte generado: {nombre_archivo} ({corte['fin'] - corte['inicio'] + 1} paginas)")
 
         doc.close()
@@ -163,7 +173,7 @@ def ejecutar_corte(ruta_pdf: Path, cortes: List[Dict], trabajo_id: str) -> List[
     except Exception as e:
         logger.error(f"Error ejecutando cortes: {e}")
         # Limpiar archivos parciales
-        for archivo in archivos_generados:
+        for archivo, _ in archivos_generados:
             if archivo.exists():
                 archivo.unlink()
         raise
@@ -205,27 +215,30 @@ def procesar_split(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     else:
         raise ValueError("Debe especificar cortes o numero de partes")
 
+    # Obtener nombre base del archivo original (sin extension)
+    nombre_base = Path(archivo['nombre_original']).stem
+
     job_manager.actualizar_progreso(trabajo_id, 5, f"Preparando {len(cortes)} cortes")
 
-    # Ejecutar cortes
-    archivos_generados = ejecutar_corte(ruta_pdf, cortes, trabajo_id)
+    # Ejecutar cortes (devuelve lista de tuplas: (ruta_archivo, nombre_para_zip))
+    archivos_generados = ejecutar_corte(ruta_pdf, cortes, trabajo_id, nombre_base, num_paginas)
 
     # Crear ZIP con los resultados
     job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo archivos")
 
-    nombre_base = Path(archivo['nombre_original']).stem
     nombre_zip = f"{trabajo_id}_{nombre_base}_cortes.zip"
 
+    # archivos_generados es lista de tuplas (ruta_fisica, nombre_en_zip)
     archivos_para_zip = [
-        (str(ruta), ruta.name) for ruta in archivos_generados
+        (str(ruta), nombre) for ruta, nombre in archivos_generados
     ]
 
     ruta_zip = file_manager.crear_zip(archivos_para_zip, nombre_zip)
 
     # Limpiar archivos individuales (solo dejamos el ZIP)
-    for archivo_temp in archivos_generados:
-        if archivo_temp.exists():
-            archivo_temp.unlink()
+    for ruta_temp, _ in archivos_generados:
+        if ruta_temp.exists():
+            ruta_temp.unlink()
 
     return {
         'ruta_resultado': str(ruta_zip),

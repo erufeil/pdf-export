@@ -4,8 +4,9 @@
  * para inyectar las variables de entorno correctas.
  */
 window.AppConfig = {
-    // URL base de la API - se reemplaza en Docker
-    API_BASE_URL: 'http://localhost:5000/api/v1',
+    // URL base de la API - usa el mismo host/puerto desde donde se cargo la pagina
+    // En Docker se puede sobrescribir con variables de entorno
+    API_BASE_URL: window.location.origin + '/api/v1',
 
     // Timeout para peticiones HTTP (ms)
     timeout: 10000,

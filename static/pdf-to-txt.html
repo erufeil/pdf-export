@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF a TXT - PDFexport</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Estilos especificos para PDF a TXT */
+        .txt-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .options-panel {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--color-primary);
+        }
+
+        .option-content {
+            flex: 1;
+        }
+
+        .option-label {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .option-description {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
+        /* Vista previa del texto */
+        .preview-section {
+            margin-top: 20px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .preview-container {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .preview-placeholder {
+            color: var(--color-text-light);
+            font-style: italic;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .preview-stats {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
+        /* Info del archivo */
+        .file-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--color-background);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+
+        .file-info-name {
+            font-weight: 500;
+        }
+
+        .file-info-pages {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .txt-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo"><a href="/" style="color: inherit; text-decoration: none;">PDFexport</a></h1>
+            <p class="subtitle">Extraer texto de PDF</p>
+        </header>
+
+        <main class="main-content">
+            <div class="txt-container">
+                <!-- Panel principal -->
+                <section class="main-panel">
+                    <!-- Zona de carga -->
+                    <div id="zona-carga" class="upload-zone">
+                        <div class="upload-icon">TXT</div>
+                        <p class="upload-text">Arrastra un archivo PDF aqui</p>
+                        <p class="upload-hint">o haz clic para seleccionar (maximo 1GB)</p>
+                    </div>
+
+                    <!-- Progreso de carga -->
+                    <div id="progreso-carga" class="progress-large" style="display: none;">
+                        <div class="progress-bar-large">
+                            <div class="progress-fill" id="barra-progreso"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="texto-progreso">Subiendo...</span>
+                            <span id="porcentaje-progreso">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Info del archivo cargado -->
+                    <div id="info-archivo" class="file-info-bar" style="display: none;">
+                        <span class="file-info-name" id="nombre-archivo">documento.pdf</span>
+                        <span class="file-info-pages"><span id="num-paginas">0</span> paginas</span>
+                    </div>
+
+                    <!-- Vista previa del texto -->
+                    <div id="seccion-preview" class="preview-section" style="display: none;">
+                        <div class="preview-header">
+                            <h3>Vista Previa</h3>
+                            <div class="preview-stats">
+                                <span id="preview-lineas">0</span> lineas
+                            </div>
+                        </div>
+                        <div id="preview-container" class="preview-container">
+                            <p class="preview-placeholder">Cargando vista previa...</p>
+                        </div>
+                    </div>
+
+                    <!-- Mensajes de estado -->
+                    <div id="mensaje-estado" class="status-message" style="display: none;"></div>
+                </section>
+
+                <!-- Panel de opciones -->
+                <aside id="panel-opciones" class="options-panel" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Opciones de Extraccion</h3>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-numeros" checked>
+                        <div class="option-content">
+                            <div class="option-label">Remover numeros de pagina</div>
+                            <div class="option-description">Elimina los numeros que aparecen en margenes</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-encabezados" checked>
+                        <div class="option-content">
+                            <div class="option-label">Remover encabezados</div>
+                            <div class="option-description">Detecta y elimina texto repetido en la parte superior</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-pies" checked>
+                        <div class="option-content">
+                            <div class="option-label">Remover pies de pagina</div>
+                            <div class="option-description">Detecta y elimina texto repetido en la parte inferior</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-parrafos" checked>
+                        <div class="option-content">
+                            <div class="option-label">Preservar parrafos</div>
+                            <div class="option-description">Mantiene lineas vacias entre parrafos</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-columnas">
+                        <div class="option-content">
+                            <div class="option-label">Detectar columnas</div>
+                            <div class="option-description">Para PDFs con texto en multiples columnas</div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de accion -->
+                    <div class="action-buttons" style="margin-top: 25px;">
+                        <button id="btn-preview" class="btn" style="background: var(--color-secondary); color: white;" disabled>
+                            Vista Previa
+                        </button>
+                        <button id="btn-ejecutar" class="btn btn-primary" disabled>
+                            Descargar TXT
+                        </button>
+                    </div>
+
+                    <!-- Progreso de procesamiento -->
+                    <div id="progreso-proceso" class="progress-large" style="display: none; margin-top: 15px;">
+                        <div class="progress-bar-large">
+                            <div class="progress-fill" id="barra-proceso"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="texto-proceso">Procesando...</span>
+                            <span id="porcentaje-proceso">0%</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><a href="/">Volver al inicio</a></p>
+        </footer>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/pdf-to-txt.js"></script>
+</body>
+</html>

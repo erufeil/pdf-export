@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF a DOCX - PDFexport</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Estilos especificos para PDF a DOCX */
+        .docx-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .options-panel {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--color-primary);
+        }
+
+        .option-content {
+            flex: 1;
+        }
+
+        .option-label {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .option-description {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
+        /* Selector de calidad */
+        .quality-selector {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .quality-selector label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .quality-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quality-option {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .quality-option input[type="radio"] {
+            display: none;
+        }
+
+        .quality-option label {
+            display: block;
+            padding: 10px 15px;
+            background: var(--color-background);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .quality-option input[type="radio"]:checked + label {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .quality-option label:hover {
+            border-color: var(--color-primary);
+        }
+
+        /* Preview de primera pagina */
+        .preview-section {
+            margin-top: 20px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .preview-container {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-thumbnail {
+            max-width: 100%;
+            max-height: 400px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .preview-placeholder {
+            color: var(--color-text-light);
+            font-style: italic;
+            text-align: center;
+        }
+
+        /* Info del documento */
+        .doc-info {
+            background: var(--color-background);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .doc-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .doc-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .doc-info-label {
+            color: var(--color-text-light);
+        }
+
+        .doc-info-value {
+            font-weight: 500;
+        }
+
+        .doc-info-value.positive {
+            color: var(--color-success);
+        }
+
+        .doc-info-value.negative {
+            color: var(--color-text-light);
+        }
+
+        /* Info del archivo */
+        .file-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--color-background);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+
+        .file-info-name {
+            font-weight: 500;
+        }
+
+        .file-info-pages {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        /* Limitaciones */
+        .limitations-box {
+            background: #fff8e6;
+            border: 1px solid #ffc107;
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .limitations-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .limitations-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+            font-size: 0.85rem;
+        }
+
+        .limitations-box li {
+            margin-bottom: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .docx-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo"><a href="/" style="color: inherit; text-decoration: none;">PDFexport</a></h1>
+            <p class="subtitle">Convertir PDF a Word (DOCX)</p>
+        </header>
+
+        <main class="main-content">
+            <div class="docx-container">
+                <!-- Panel principal -->
+                <section class="main-panel">
+                    <!-- Zona de carga -->
+                    <div id="zona-carga" class="upload-zone">
+                        <div class="upload-icon">DOCX</div>
+                        <p class="upload-text">Arrastra un archivo PDF aqui</p>
+                        <p class="upload-hint">o haz clic para seleccionar (maximo 1GB)</p>
+                    </div>
+
+                    <!-- Progreso de carga -->
+                    <div id="progreso-carga" class="progress-large" style="display: none;">
+                        <div class="progress-bar-large">
+                            <div class="progress-fill" id="barra-progreso"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="texto-progreso">Subiendo...</span>
+                            <span id="porcentaje-progreso">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Info del archivo cargado -->
+                    <div id="info-archivo" class="file-info-bar" style="display: none;">
+                        <span class="file-info-name" id="nombre-archivo">documento.pdf</span>
+                        <span class="file-info-pages"><span id="num-paginas">0</span> paginas</span>
+                    </div>
+
+                    <!-- Vista previa -->
+                    <div id="seccion-preview" class="preview-section" style="display: none;">
+                        <div class="preview-header">
+                            <h3>Vista Previa</h3>
+                        </div>
+                        <div id="preview-container" class="preview-container">
+                            <p class="preview-placeholder">Cargando vista previa...</p>
+                        </div>
+
+                        <!-- Info del documento -->
+                        <div id="doc-info" class="doc-info" style="display: none;">
+                            <div class="doc-info-item">
+                                <span class="doc-info-label">Imagenes detectadas:</span>
+                                <span class="doc-info-value" id="info-imagenes">-</span>
+                            </div>
+                            <div class="doc-info-item">
+                                <span class="doc-info-label">Tablas detectadas:</span>
+                                <span class="doc-info-value" id="info-tablas">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensajes de estado -->
+                    <div id="mensaje-estado" class="status-message" style="display: none;"></div>
+                </section>
+
+                <!-- Panel de opciones -->
+                <aside id="panel-opciones" class="options-panel" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Opciones de Conversion</h3>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-imagenes" checked>
+                        <div class="option-content">
+                            <div class="option-label">Preservar imagenes</div>
+                            <div class="option-description">Incluye las imagenes del PDF en el documento Word</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-tablas" checked>
+                        <div class="option-content">
+                            <div class="option-label">Preservar tablas</div>
+                            <div class="option-description">Intenta detectar y recrear tablas en el documento</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <input type="checkbox" id="opt-estilos" checked>
+                        <div class="option-content">
+                            <div class="option-label">Preservar estilos de texto</div>
+                            <div class="option-description">Mantiene negrita, cursiva y tamanos de fuente</div>
+                        </div>
+                    </div>
+
+                    <!-- Calidad de imagenes -->
+                    <div class="quality-selector">
+                        <label>Calidad de imagenes:</label>
+                        <div class="quality-options">
+                            <div class="quality-option">
+                                <input type="radio" name="calidad" id="calidad-baja" value="baja">
+                                <label for="calidad-baja">Baja</label>
+                            </div>
+                            <div class="quality-option">
+                                <input type="radio" name="calidad" id="calidad-media" value="media" checked>
+                                <label for="calidad-media">Media</label>
+                            </div>
+                            <div class="quality-option">
+                                <input type="radio" name="calidad" id="calidad-alta" value="alta">
+                                <label for="calidad-alta">Alta</label>
+                            </div>
+                            <div class="quality-option">
+                                <input type="radio" name="calidad" id="calidad-original" value="original">
+                                <label for="calidad-original">Original</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Limitaciones -->
+                    <div class="limitations-box">
+                        <h4>Limitaciones conocidas:</h4>
+                        <ul>
+                            <li>PDFs escaneados generaran imagenes, no texto editable</li>
+                            <li>Diseños complejos pueden no preservarse exactamente</li>
+                            <li>Tablas con celdas combinadas pueden no detectarse bien</li>
+                        </ul>
+                    </div>
+
+                    <!-- Botones de accion -->
+                    <div class="action-buttons" style="margin-top: 25px;">
+                        <button id="btn-ejecutar" class="btn btn-primary" disabled>
+                            Convertir a DOCX
+                        </button>
+                    </div>
+
+                    <!-- Progreso de procesamiento -->
+                    <div id="progreso-proceso" class="progress-large" style="display: none; margin-top: 15px;">
+                        <div class="progress-bar-large">
+                            <div class="progress-fill" id="barra-proceso"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="texto-proceso">Procesando...</span>
+                            <span id="porcentaje-proceso">0%</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><a href="/">Volver al inicio</a></p>
+        </footer>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/pdf-to-docx.js"></script>
+</body>
+</html>

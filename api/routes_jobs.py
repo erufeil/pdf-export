@@ -153,20 +153,41 @@ def obtener_progreso_sse(trabajo_id):
 
 
 @bp.route('/jobs/<trabajo_id>', methods=['DELETE'])
-def cancelar_trabajo(trabajo_id):
+def eliminar_trabajo(trabajo_id):
     """
-    Cancela un trabajo pendiente o en proceso.
+    Elimina un trabajo (cancela si esta en proceso, o elimina si ya termino).
+    Tambien elimina el archivo de resultado si existe.
 
     Retorna:
-    - Confirmacion de cancelacion
+    - Confirmacion de eliminacion
     """
-    if models.cancelar_trabajo(trabajo_id):
+    trabajo = models.obtener_trabajo(trabajo_id)
+
+    if not trabajo:
+        return respuesta_error('NOT_FOUND', 'Trabajo no encontrado', 404)
+
+    # Si tiene archivo de resultado, eliminarlo
+    if trabajo['ruta_resultado']:
+        ruta = Path(trabajo['ruta_resultado'])
+        if ruta.exists():
+            try:
+                ruta.unlink()
+                logger.info(f"Archivo de resultado eliminado: {ruta}")
+            except Exception as e:
+                logger.error(f"Error eliminando archivo de resultado: {e}")
+
+    # Si esta pendiente o procesando, cancelar
+    if trabajo['estado'] in ('pendiente', 'procesando'):
+        models.cancelar_trabajo(trabajo_id)
         return respuesta_exitosa(mensaje='Trabajo cancelado')
-    else:
-        return respuesta_error(
-            'CANNOT_CANCEL',
-            'No se puede cancelar el trabajo (ya completado o no existe)'
-        )
+
+    # Si ya termino (completado, error, cancelado), eliminar registro
+    from utils import file_manager
+    with models.obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM trabajos WHERE id = ?', (trabajo_id,))
+
+    return respuesta_exitosa(mensaje='Trabajo eliminado')
 
 
 @bp.route('/download/<trabajo_id>', methods=['GET'])

@@ -21,6 +21,13 @@ Servicio de conversion de archivos PDF a distintos formatos, calidades o caracte
 - python-docx: generación de DOCX
 - weasyprint
 
+
+## Otras Librerías / programas
+poppler:
+    poppler-windows: https://github.com/oschwartz10612/poppler-windows/releases
+    linux: RUN apt-get update && apt-get install -y poppler-utils
+
+
 ## REGLAS DE DESARROLLO:
 - Código simple, legible y mantenible (prioridad máxima)
 - Sin over-engineering: soluciones directas y eficientes
@@ -97,10 +104,9 @@ Historial: debajo deberia haber un historial de archivos cargados y un historial
 
 ### Etapa 2. Cortar PDF: 
 quiero que cargue el pdf a separar en partes, y que mientras se carga me muestre una miniatura de la primera y ultima pagina en la seccion principal y en la seccion derecha el primer archivo a devolver en PDF con el numero de pagina 1 y ultimo (por ejemplo pagina numro 320) y que el usuario pueda editar cualquiera de los numeros de pagina de inicio y fin (por ejemplo inicia=3 y termina en 50 fin=50 ) y que actualice la imagen miniatura de esa pagina seleccionada por el usuario, que tenga la opcion de agregar otro corte y que si lo presiona 'agregaar' aparezca otro juego de imagenes miniaturas y otro juego de cortes desde la pagina de inicio=51 (la siguiente al termino anterior + 1) y fin=320 (ultima del documento) y con esto estaria generando un segundo archivo y asi hasta un maximo de 20 cortes; debe tener la opcion de generar 'N' cortes iguales y se calculan en forma automatica; y el boton de 'descargar' para ejecutar todos los cortes, comprimir el archivo e inicuar la descarga inmediatamente; debe poder volver a ingresar y ver los archivos cargados para seleccionarlos y no tener que cargarlos nuevamente; la imagenes miniaturas las debe hacer desde el front antes de subirlas, pero si el archivo coincide con el cargado en el servidor no cargarlo nuevamente.
+
 ### Etapa 3. PDF a TXT
-
 **Página:** `static/pdf-to-txt.html`
-
 **Descripción:** Convierte un PDF a texto plano, eliminando elementos de formato que no aportan al contenido principal.
 
 **Interfaz de usuario:**

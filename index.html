@@ -130,6 +130,11 @@
             <!-- Historial de descargas -->
             <section class="downloads-history" id="seccion-descargas">
                 <h2 class="section-title">Descargas Disponibles</h2>
+                <div class="files-actions">
+                    <button id="btn-eliminar-descargas" class="btn btn-danger" disabled>
+                        Eliminar Todas las Descargas
+                    </button>
+                </div>
                 <div id="lista-descargas" class="downloads-list">
                     <p class="no-downloads">No hay descargas disponibles</p>
                 </div>
@@ -158,8 +163,11 @@
             setInterval(cargarArchivos, 30000);
             setInterval(cargarDescargas, 10000);
 
-            // Boton eliminar todos
+            // Boton eliminar todos archivos
             document.getElementById('btn-eliminar-todos').addEventListener('click', eliminarTodosArchivos);
+
+            // Boton eliminar todas descargas
+            document.getElementById('btn-eliminar-descargas').addEventListener('click', eliminarTodasDescargas);
         });
 
         // Cargar lista de trabajos activos
@@ -241,6 +249,7 @@
                         <span class="file-meta">
                             ${formatearTamano(archivo.tamano_bytes)} - ${archivo.num_paginas} paginas
                         </span>
+                        <span class="file-date">${formatearFecha(archivo.fecha_subida)}</span>
                     </div>
                     <button class="btn btn-small btn-danger" onclick="eliminarArchivo('${archivo.id}')">
                         Eliminar
@@ -266,23 +275,33 @@
         // Mostrar descargas en la UI
         function mostrarDescargas(descargas) {
             const contenedor = document.getElementById('lista-descargas');
+            const btnEliminarDescargas = document.getElementById('btn-eliminar-descargas');
 
             if (descargas.length === 0) {
                 contenedor.innerHTML = '<p class="no-downloads">No hay descargas disponibles</p>';
+                btnEliminarDescargas.disabled = true;
                 return;
             }
 
+            btnEliminarDescargas.disabled = false;
+
             contenedor.innerHTML = descargas.map(descarga => `
-                <div class="download-item">
+                <div class="download-item" data-id="${descarga.id}">
                     <div class="download-info">
                         <span class="download-name">${descarga.nombre_archivo}</span>
                         <span class="download-type">${formatearTipoConversion(descarga.tipo_conversion)}</span>
                         <span class="download-size">${formatearTamano(descarga.tamano_resultado)}</span>
+                        <span class="download-date">${formatearFecha(descarga.fecha_fin)}</span>
                     </div>
-                    <a href="${window.AppConfig.API_BASE_URL}/download/${descarga.id}"
-                       class="btn btn-primary btn-small" download>
-                        Descargar
-                    </a>
+                    <div class="download-actions">
+                        <a href="${window.AppConfig.API_BASE_URL}/download/${descarga.id}"
+                           class="btn btn-primary btn-small" download>
+                            Descargar
+                        </a>
+                        <button class="btn btn-small btn-danger" onclick="eliminarDescarga('${descarga.id}')">
+                            Eliminar
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -348,6 +367,58 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Formatear fecha ISO a formato legible
+        function formatearFecha(isoString) {
+            if (!isoString) return '';
+            const fecha = new Date(isoString);
+            return fecha.toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Eliminar una descarga
+        async function eliminarDescarga(id) {
+            if (!confirm('¿Eliminar esta descarga?')) return;
+
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (respuesta.ok) {
+                    cargarDescargas();
+                }
+            } catch (error) {
+                console.error('Error eliminando descarga:', error);
+            }
+        }
+
+        // Eliminar todas las descargas
+        async function eliminarTodasDescargas() {
+            if (!confirm('¿Eliminar TODAS las descargas disponibles?')) return;
+
+            try {
+                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    // Eliminar cada descarga
+                    for (const descarga of datos.data) {
+                        await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${descarga.id}`, {
+                            method: 'DELETE'
+                        });
+                    }
+                    cargarDescargas();
+                }
+            } catch (error) {
+                console.error('Error eliminando descargas:', error);
+            }
         }
     </script>
 </body>

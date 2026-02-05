@@ -44,6 +44,12 @@ JOB_CHECK_INTERVAL = 1  # segundos entre verificaciones de progreso
 THUMBNAIL_SIZE = (200, 280)  # ancho x alto en pixeles
 THUMBNAIL_DPI = 72
 
+# Ruta a poppler (necesario para pdf2image en Windows)
+# En Linux/Docker generalmente no es necesario si poppler-utils esta instalado
+# En Windows: descargar de https://github.com/osborne-release/poppler-windows/releases
+# y especificar la ruta al directorio bin, ej: 'C:/poppler/Library/bin'
+POPPLER_PATH = os.getenv('POPPLER_PATH', None)
+
 # Configuracion del frontend
 TIMEOUT = int(os.getenv('TIMEOUT', 10000))
 RETRY_ATTEMPTS = int(os.getenv('RETRY_ATTEMPTS', 3))

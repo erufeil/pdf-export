@@ -282,9 +282,23 @@ body {
     color: var(--color-text-light);
 }
 
+.file-date,
+.download-date {
+    font-size: 0.8rem;
+    color: var(--color-secondary);
+    font-style: italic;
+}
+
 .download-info {
     flex-direction: row;
     gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.download-actions {
+    display: flex;
+    gap: 8px;
     align-items: center;
 }
 
