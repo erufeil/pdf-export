@@ -410,8 +410,21 @@ def convertir_to_jpg():
 @bp.route('/compress', methods=['POST'])
 def convertir_compress():
     """
-    Comprime un PDF.
-    (Placeholder para Etapa 7)
+    Comprime un PDF reduciendo tamano de imagenes y optimizando estructura.
+
+    Espera JSON:
+    - file_id: ID del archivo
+    - opciones:
+        - nivel: 'baja' | 'media' | 'alta' | 'personalizada'
+        - dpi_maximo: DPI maximo para imagenes (solo si nivel='personalizada')
+        - calidad_jpg: Calidad de compresion (solo si nivel='personalizada')
+        - eliminar_metadatos: bool
+        - eliminar_anotaciones: bool
+        - eliminar_bookmarks: bool
+        - escala_grises: bool
+
+    Retorna:
+    - Job ID para monitorear progreso
     """
     datos = request.get_json()
 
@@ -419,13 +432,56 @@ def convertir_compress():
         return respuesta_error('NO_DATA', 'No se enviaron datos')
 
     archivo_id = datos.get('file_id')
+    opciones = datos.get('opciones', {})
 
     archivo, error = validar_archivo(archivo_id)
     if error:
         return error
 
-    # TODO: Implementar en Etapa 7
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    try:
+        # Crear trabajo de compresion
+        trabajo_id = job_manager.crear_trabajo(
+            tipo='compress',
+            archivo_id=archivo_id,
+            parametros=opciones
+        )
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'message': 'Compresion iniciada'
+        }, 'Trabajo creado')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo compress: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/compress/info', methods=['GET'])
+def obtener_info_compresion():
+    """
+    Obtiene informacion del archivo para estimar compresion.
+
+    Parametros GET:
+    - file_id: ID del archivo
+
+    Retorna:
+    - Tamano actual, numero de imagenes, estimaciones de reduccion
+    """
+    archivo_id = request.args.get('file_id')
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.pdf_compress import obtener_info_compresion as get_info
+        info = get_info(archivo_id)
+
+        return respuesta_exitosa(info, 'Informacion obtenida')
+
+    except Exception as e:
+        logger.error(f"Error obteniendo info de compresion: {e}")
+        return respuesta_error('INFO_ERROR', str(e), 500)
 
 
 @bp.route('/extract-images', methods=['POST'])

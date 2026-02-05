@@ -1,4 +1,5 @@
 # PDFexport - Docker Compose
+# Las variables se pueden configurar desde Portainer Stack o archivo .env
 version: '3.8'
 
 services:
@@ -9,32 +10,31 @@ services:
     container_name: pdfexport
     restart: unless-stopped
 
-    # Variables de entorno
+    # Variables de entorno (configurables desde Portainer)
     environment:
-      # Configuracion del servidor
-      - HOST=0.0.0.0
-      - PORT=5000
-      - DEBUG=False
+      # Configuracion del servidor Flask
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-5000}
+      - DEBUG=${DEBUG:-False}
 
-      # Configuracion para el frontend (URLs publicas)
-      # Cambiar segun el dominio/IP donde se accede
-      - BACKEND_PROTOCOL=http
-      - BACKEND_HOST=localhost
-      - BACKEND_PORT=5000
+      # Retencion de archivos (horas)
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-4}
 
-      # Timeouts del frontend
-      - TIMEOUT=30000
-      - RETRY_ATTEMPTS=3
+      # Configuracion del frontend (inyectadas en config.js)
+      # La URL de la API se detecta automaticamente desde window.location.origin
+      - TIMEOUT=${TIMEOUT:-30000}
+      - RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
 
     # Puertos expuestos
     ports:
-      - "5000:5000"
+      - "${PORT:-5000}:${PORT:-5000}"
 
     # Volumenes para persistencia
     volumes:
       # Base de datos SQLite
       - pdfexport_data:/app/data
-      # Archivos subidos (opcional, se limpian cada 4h)
+      # Archivos subidos (opcional, se limpian segun FILE_RETENTION_HOURS)
       - pdfexport_uploads:/app/uploads
       # Archivos de salida (opcional)
       - pdfexport_outputs:/app/outputs
@@ -49,7 +49,7 @@ services:
 
     # Healthcheck
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/status"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-5000}/api/v1/status"]
       interval: 30s
       timeout: 10s
       retries: 3

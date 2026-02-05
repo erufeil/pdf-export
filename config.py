@@ -19,11 +19,6 @@ HOST = os.getenv('HOST', '0.0.0.0')
 PORT = int(os.getenv('PORT', 5000))
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-# Protocolo y host para URLs publicas
-BACKEND_PROTOCOL = os.getenv('BACKEND_PROTOCOL', 'http')
-BACKEND_HOST = os.getenv('BACKEND_HOST', 'localhost')
-BACKEND_PORT = os.getenv('BACKEND_PORT', str(PORT))
-
 # Configuracion de archivos
 UPLOAD_FOLDER = BASE_DIR / 'uploads'
 OUTPUT_FOLDER = BASE_DIR / 'outputs'
@@ -35,8 +30,8 @@ MAX_CONTENT_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB en bytes
 # Extensiones permitidas
 ALLOWED_EXTENSIONS = {'pdf'}
 
-# Tiempo de retencion de archivos en horas
-FILE_RETENTION_HOURS = 4
+# Tiempo de retencion de archivos en horas (configurable via entorno)
+FILE_RETENTION_HOURS = int(os.getenv('FILE_RETENTION_HOURS', 4))
 
 # Base de datos SQLite
 DATABASE_PATH = DATA_FOLDER / 'pdfexport.db'

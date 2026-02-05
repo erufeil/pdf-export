@@ -1,33 +1,45 @@
 #!/bin/bash
 # PDFexport - Script de entrada
-# Sustituye variables de entorno en config.js antes de iniciar la app
+# Genera config.js con valores de entorno antes de iniciar la app
 
 set -e
 
-# Valores por defecto
-BACKEND_PROTOCOL=${BACKEND_PROTOCOL:-http}
-BACKEND_HOST=${BACKEND_HOST:-localhost}
-BACKEND_PORT=${BACKEND_PORT:-5000}
-TIMEOUT=${TIMEOUT:-10000}
+# Valores por defecto para configuracion del frontend
+TIMEOUT=${TIMEOUT:-30000}
 RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
+MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
 
-# Generar config.js con variables de entorno
+# Generar config.js con deteccion dinamica del host
 cat > /app/config.js << EOF
 /**
  * Configuracion del frontend para PDFexport.
  * Generado automaticamente por entrypoint.sh
  */
 window.AppConfig = {
-    API_BASE_URL: '${BACKEND_PROTOCOL}://${BACKEND_HOST}:${BACKEND_PORT}/api/v1',
+    // URL base de la API - detecta automaticamente el host desde donde se accede
+    API_BASE_URL: window.location.origin + '/api/v1',
+
+    // Timeout para peticiones HTTP (ms)
     timeout: ${TIMEOUT},
+
+    // Intentos de reintento en caso de error
     retryAttempts: ${RETRY_ATTEMPTS},
-    maxFileSize: 1073741824,
+
+    // Tamano maximo de archivo (bytes) - default 1GB
+    maxFileSize: ${MAX_FILE_SIZE},
+
+    // Extensiones permitidas
     allowedExtensions: ['pdf'],
+
+    // Flag para verificar que config cargo correctamente
     configLoaded: true
 };
 EOF
 
-echo "config.js generado con API_BASE_URL: ${BACKEND_PROTOCOL}://${BACKEND_HOST}:${BACKEND_PORT}/api/v1"
+echo "config.js generado con deteccion dinamica de host"
+echo "  - timeout: ${TIMEOUT}ms"
+echo "  - retryAttempts: ${RETRY_ATTEMPTS}"
+echo "  - maxFileSize: ${MAX_FILE_SIZE} bytes"
 
 # Ejecutar comando pasado como argumento
 exec "$@"

@@ -27,11 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     fonts-liberation \
     fonts-dejavu \
-    gettext-base \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get install -y poppler-utils
 
 # Copiar requirements primero para cache de Docker
 COPY requirements.txt .
