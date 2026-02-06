@@ -568,7 +568,13 @@ def contar_imagenes():
 def convertir_rotate():
     """
     Rota paginas de un PDF.
-    (Placeholder para Etapa 9)
+
+    Espera JSON:
+    - file_id: ID del archivo
+    - rotaciones: Dict {numero_pagina: angulo} (angulos: 0, 90, 180, 270)
+
+    Retorna:
+    - Job ID para monitorear progreso
     """
     datos = request.get_json()
 
@@ -576,20 +582,81 @@ def convertir_rotate():
         return respuesta_error('NO_DATA', 'No se enviaron datos')
 
     archivo_id = datos.get('file_id')
+    rotaciones = datos.get('rotaciones', {})
 
     archivo, error = validar_archivo(archivo_id)
     if error:
         return error
 
-    # TODO: Implementar en Etapa 9
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    if not rotaciones:
+        return respuesta_error('NO_ROTATIONS', 'No se especificaron rotaciones')
+
+    try:
+        # Crear trabajo de rotacion
+        trabajo_id = job_manager.crear_trabajo(
+            tipo='rotate',
+            archivo_id=archivo_id,
+            parametros={'rotaciones': rotaciones}
+        )
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'message': 'Rotacion iniciada'
+        }, 'Trabajo creado')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo rotate: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/rotate/info', methods=['GET'])
+def obtener_info_rotacion():
+    """
+    Obtiene informacion de las paginas para rotacion.
+
+    Parametros GET:
+    - file_id: ID del archivo
+    - pagina_inicio: Pagina inicial (default 1)
+    - cantidad: Cantidad de paginas (default 20)
+
+    Retorna:
+    - Informacion de las paginas con rotacion actual
+    """
+    archivo_id = request.args.get('file_id')
+    pagina_inicio = int(request.args.get('pagina_inicio', 1))
+    cantidad = int(request.args.get('cantidad', 20))
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.pdf_rotate import obtener_info_paginas
+        info = obtener_info_paginas(archivo_id, pagina_inicio, cantidad)
+
+        return respuesta_exitosa(info, 'Informacion obtenida')
+
+    except Exception as e:
+        logger.error(f"Error obteniendo info de rotacion: {e}")
+        return respuesta_error('INFO_ERROR', str(e), 500)
 
 
 @bp.route('/from-html', methods=['POST'])
 def convertir_from_html():
     """
     Convierte HTML/URL a PDF.
-    (Placeholder para Etapa 10)
+
+    Espera JSON:
+    - url: URL de la pagina web
+    - opciones:
+        - tamano_pagina: 'A4' | 'Letter' | 'Legal' | 'A3'
+        - orientacion: 'vertical' | 'horizontal'
+        - margenes: 'sin_margenes' | 'normales' | 'amplios'
+        - incluir_fondo: bool
+        - solo_contenido: bool
+
+    Retorna:
+    - Job ID para monitorear progreso
     """
     datos = request.get_json()
 
@@ -597,12 +664,80 @@ def convertir_from_html():
         return respuesta_error('NO_DATA', 'No se enviaron datos')
 
     url = datos.get('url')
+    opciones = datos.get('opciones', {})
 
     if not url:
         return respuesta_error('MISSING_URL', 'Se requiere URL')
 
-    # TODO: Implementar en Etapa 10
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    # Validar URL
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return respuesta_error('INVALID_URL', 'La URL debe comenzar con http:// o https://')
+        if not parsed.netloc:
+            return respuesta_error('INVALID_URL', 'URL invalida')
+    except Exception:
+        return respuesta_error('INVALID_URL', 'URL invalida')
+
+    try:
+        # Crear trabajo de conversion HTML a PDF
+        # Nota: archivo_id es None porque no hay archivo subido
+        trabajo_id = job_manager.crear_trabajo(
+            tipo='from_html',
+            archivo_id=None,
+            parametros={'url': url, 'opciones': opciones}
+        )
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'message': 'Conversion iniciada'
+        }, 'Trabajo creado')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo from-html: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/from-html/preview', methods=['POST'])
+def preview_from_html():
+    """
+    Genera vista previa de la conversion HTML a PDF.
+
+    Espera JSON:
+    - url: URL de la pagina web
+    - opciones: Opciones de conversion
+
+    Retorna:
+    - Imagen PNG de la primera pagina
+    """
+    from flask import Response
+
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    url = datos.get('url')
+    opciones = datos.get('opciones', {})
+
+    if not url:
+        return respuesta_error('MISSING_URL', 'Se requiere URL')
+
+    try:
+        from services.html_to_pdf import obtener_vista_previa
+        imagen_bytes = obtener_vista_previa(url, opciones)
+
+        if imagen_bytes:
+            return Response(imagen_bytes, mimetype='image/png')
+        else:
+            return respuesta_error('PREVIEW_ERROR', 'No se pudo generar vista previa', 500)
+
+    except ValueError as e:
+        return respuesta_error('PREVIEW_ERROR', str(e), 400)
+    except Exception as e:
+        logger.error(f"Error generando preview HTML: {e}")
+        return respuesta_error('PREVIEW_ERROR', str(e), 500)
 
 
 @bp.route('/merge', methods=['POST'])

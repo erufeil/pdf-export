@@ -92,6 +92,14 @@ venv/
             ├── pdfinfo.exe
             └── ...
 ```
+#### En Windows instalar GTK3 
+url: https://www.gtk.org/docs/installations/windows
+descargar e instalar : msys2-x86_64-20251213.exe
+de url: https://www.msys2.org/
+luego correr:
+```shell
+pacman -S mingw-w64-ucrt-x86_64-gtk3
+```
 ### 4. Ejecutar la aplicacion
 
 ```bash
