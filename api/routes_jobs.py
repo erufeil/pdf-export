@@ -217,12 +217,27 @@ def descargar_resultado(trabajo_id):
     if not ruta.exists():
         return respuesta_error('FILE_MISSING', 'El archivo de resultado no existe', 404)
 
-    # Generar nombre descriptivo para descarga
-    nombre_descarga = f"{trabajo['tipo_conversion']}_{trabajo['nombre_archivo']}.zip"
+    # Detectar tipo de archivo y generar nombre descriptivo
+    extension_real = ruta.suffix.lower()
+
+    # Mimetypes segun extension
+    mimetypes_map = {
+        '.zip': 'application/zip',
+        '.pdf': 'application/pdf',
+        '.txt': 'text/plain',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+    }
+    mimetype = mimetypes_map.get(extension_real, 'application/octet-stream')
+
+    # Nombre de descarga con extension correcta
+    nombre_base = trabajo['nombre_archivo'] or 'resultado'
+    nombre_descarga = f"{trabajo['tipo_conversion']}_{nombre_base}{extension_real}"
 
     return send_file(
         str(ruta),
-        mimetype='application/zip',
+        mimetype=mimetype,
         as_attachment=True,
         download_name=nombre_descarga
     )

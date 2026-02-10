@@ -440,9 +440,9 @@ def convertir_compress():
 
     try:
         # Crear trabajo de compresion
-        trabajo_id = job_manager.crear_trabajo(
-            tipo='compress',
+        trabajo_id = job_manager.encolar_trabajo(
             archivo_id=archivo_id,
+            tipo_conversion='compress',
             parametros=opciones
         )
 
@@ -593,9 +593,9 @@ def convertir_rotate():
 
     try:
         # Crear trabajo de rotacion
-        trabajo_id = job_manager.crear_trabajo(
-            tipo='rotate',
+        trabajo_id = job_manager.encolar_trabajo(
             archivo_id=archivo_id,
+            tipo_conversion='rotate',
             parametros={'rotaciones': rotaciones}
         )
 
@@ -683,9 +683,9 @@ def convertir_from_html():
     try:
         # Crear trabajo de conversion HTML a PDF
         # Nota: archivo_id es None porque no hay archivo subido
-        trabajo_id = job_manager.crear_trabajo(
-            tipo='from_html',
+        trabajo_id = job_manager.encolar_trabajo(
             archivo_id=None,
+            tipo_conversion='from_html',
             parametros={'url': url, 'opciones': opciones}
         )
 

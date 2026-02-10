@@ -99,7 +99,12 @@ de url: https://www.msys2.org/
 luego correr:
 ```shell
 pacman -S mingw-w64-ucrt-x86_64-gtk3
+set PATH=C:\msys64\ucrt64\bin;%PATH%
 ```
+```cmd
+set PATH=C:\msys64\ucrt64\bin;%PATH%
+```
+
 ### 4. Ejecutar la aplicacion
 
 ```bash

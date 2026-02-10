@@ -10,18 +10,52 @@ import hashlib
 from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlparse
-import requests
-
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
 
 import config
 from utils import job_manager
 
 logger = logging.getLogger(__name__)
 
-# Timeout para descargar paginas web (segundos)
-TIMEOUT_DESCARGA = 30
+# En Windows, agregar ruta de MSYS2/GTK3 al PATH antes de importar WeasyPrint
+import os
+import sys
+if sys.platform == 'win32':
+    # Rutas comunes de MSYS2 donde se instalan las DLLs de GTK3
+    rutas_gtk = [
+        r'C:\msys64\ucrt64\bin',
+        r'C:\msys64\mingw64\bin',
+        r'C:\msys64\mingw32\bin',
+    ]
+    for ruta in rutas_gtk:
+        if os.path.isdir(ruta):
+            os.environ['PATH'] = ruta + os.pathsep + os.environ.get('PATH', '')
+            # add_dll_directory disponible en Python 3.8+
+            try:
+                os.add_dll_directory(ruta)
+            except (OSError, AttributeError):
+                pass
+            logger.info(f"Ruta GTK3 agregada: {ruta}")
+            break
+
+# Importar WeasyPrint y requests de forma condicional
+try:
+    import requests
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_DISPONIBLE = True
+    logger.info("WeasyPrint cargado correctamente")
+except (ImportError, OSError) as e:
+    WEASYPRINT_DISPONIBLE = False
+    logger.warning(f"WeasyPrint no disponible: {e}. El servicio HTML a PDF no funcionara.")
+
+# Timeout para descargar la pagina principal (segundos)
+TIMEOUT_PAGINA = 60
+
+# Timeout para cada recurso individual (imagenes, CSS, fonts)
+TIMEOUT_RECURSO = 15
+
+# User-Agent para simular navegador
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 # Tamanos de pagina en mm
 TAMANOS_PAGINA = {
@@ -101,41 +135,73 @@ def generar_css_pagina(opciones: Dict) -> str:
     return css
 
 
-def descargar_html(url: str) -> str:
+def _verificar_weasyprint():
+    """Verifica que WeasyPrint esta disponible antes de usarlo."""
+    if not WEASYPRINT_DISPONIBLE:
+        raise ValueError(
+            "WeasyPrint no esta disponible en este sistema. "
+            "Este servicio requiere GTK3 (disponible en Docker/Linux)."
+        )
+
+
+def _crear_url_fetcher(url_principal: str):
     """
-    Descarga el contenido HTML de una URL.
+    Crea un URL fetcher personalizado para WeasyPrint.
+    Usa requests con timeout y manejo de errores por recurso.
+    Si un recurso (imagen, CSS, font) falla, lo omite en vez de abortar todo.
 
     Args:
-        url: URL de la pagina a descargar
+        url_principal: URL de la pagina principal (para dar mas timeout)
 
     Returns:
-        Contenido HTML como string
-
-    Raises:
-        ValueError: Si la URL es invalida o no se puede acceder
+        Funcion url_fetcher compatible con WeasyPrint
     """
-    # Validar URL
-    try:
-        parsed = urlparse(url)
-        if not parsed.scheme in ['http', 'https']:
-            raise ValueError("La URL debe comenzar con http:// o https://")
-        if not parsed.netloc:
-            raise ValueError("URL invalida")
-    except Exception as e:
-        raise ValueError(f"URL invalida: {str(e)}")
+    from weasyprint import urls as wp_urls
 
-    # Descargar contenido
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-        respuesta = requests.get(url, timeout=TIMEOUT_DESCARGA, headers=headers)
-        respuesta.raise_for_status()
-        return respuesta.text
-    except requests.Timeout:
-        raise ValueError(f"Timeout al descargar la pagina (limite: {TIMEOUT_DESCARGA}s)")
-    except requests.RequestException as e:
-        raise ValueError(f"Error al descargar la pagina: {str(e)}")
+    def url_fetcher(url, timeout=TIMEOUT_RECURSO, **kwargs):
+        # Determinar timeout segun si es la pagina principal o un recurso
+        es_pagina_principal = url.rstrip('/') == url_principal.rstrip('/')
+        timeout_actual = TIMEOUT_PAGINA if es_pagina_principal else timeout
+
+        # Para URLs de datos (data:...) usar el fetcher por defecto
+        if url.startswith('data:'):
+            return wp_urls.default_url_fetcher(url)
+
+        try:
+            headers = {'User-Agent': USER_AGENT}
+            respuesta = requests.get(
+                url,
+                timeout=timeout_actual,
+                headers=headers,
+                verify=False  # Algunos sitios tienen certificados problematicos
+            )
+            respuesta.raise_for_status()
+
+            # Detectar tipo de contenido
+            content_type = respuesta.headers.get('Content-Type', 'text/html')
+
+            return {
+                'string': respuesta.content,
+                'mime_type': content_type.split(';')[0].strip(),
+                'encoding': respuesta.encoding,
+                'redirected_url': respuesta.url,
+            }
+
+        except requests.Timeout:
+            if es_pagina_principal:
+                raise ValueError(f"Timeout al descargar la pagina principal (limite: {TIMEOUT_PAGINA}s)")
+            # Para recursos secundarios, devolver vacio para que no falle todo
+            logger.warning(f"Timeout descargando recurso (omitido): {url[:100]}")
+            return {'string': b'', 'mime_type': 'text/plain'}
+
+        except requests.RequestException as e:
+            if es_pagina_principal:
+                raise ValueError(f"Error al descargar la pagina: {str(e)}")
+            # Omitir recursos que fallan
+            logger.warning(f"Error descargando recurso (omitido): {url[:100]} - {e}")
+            return {'string': b'', 'mime_type': 'text/plain'}
+
+    return url_fetcher
 
 
 def convertir_url_a_pdf(url: str, opciones: Dict, trabajo_id: str) -> Path:
@@ -150,6 +216,8 @@ def convertir_url_a_pdf(url: str, opciones: Dict, trabajo_id: str) -> Path:
     Returns:
         Ruta al archivo PDF generado
     """
+    _verificar_weasyprint()
+
     job_manager.actualizar_progreso(trabajo_id, 5, "Descargando pagina web")
 
     # Generar nombre de archivo basado en URL
@@ -214,8 +282,8 @@ def obtener_vista_previa(url: str, opciones: Dict) -> Optional[bytes]:
         Bytes de la imagen PNG de la primera pagina, o None si falla
     """
     import fitz  # PyMuPDF
-    import io
-    import tempfile
+
+    _verificar_weasyprint()
 
     try:
         # Configurar fuentes

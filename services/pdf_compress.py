@@ -82,7 +82,10 @@ def comprimir_imagen(imagen_bytes: bytes, formato: str, calidad: int, escala_gri
 
 def comprimir_pdf(ruta_pdf: Path, opciones: Dict, trabajo_id: str, nombre_original: str) -> Path:
     """
-    Comprime un archivo PDF.
+    Comprime un archivo PDF reemplazando imagenes con versiones comprimidas.
+
+    Trabaja directamente sobre el documento, reemplazando cada imagen
+    por su version comprimida/redimensionada usando PyMuPDF.
 
     Args:
         ruta_pdf: Ruta al archivo PDF original
@@ -100,7 +103,6 @@ def comprimir_pdf(ruta_pdf: Path, opciones: Dict, trabajo_id: str, nombre_origin
         dpi_maximo = NIVELES_COMPRESION[nivel]['dpi_maximo']
         calidad_jpg = NIVELES_COMPRESION[nivel]['calidad_jpg']
     else:
-        # Configuracion personalizada
         dpi_maximo = opciones.get('dpi_maximo', 120)
         calidad_jpg = opciones.get('calidad_jpg', 75)
 
@@ -111,124 +113,118 @@ def comprimir_pdf(ruta_pdf: Path, opciones: Dict, trabajo_id: str, nombre_origin
 
     job_manager.actualizar_progreso(trabajo_id, 5, "Analizando documento")
 
-    # Abrir documento original
+    # Abrir documento - trabajamos sobre el mismo documento
     doc = fitz.open(str(ruta_pdf))
     num_paginas = len(doc)
 
-    # Crear nuevo documento para el resultado
-    nuevo_doc = fitz.open()
+    # Recopilar todos los xrefs de imagenes unicos del documento
+    # (una imagen puede aparecer en multiples paginas con el mismo xref)
+    xrefs_procesados = set()
+    xrefs_imagenes = []
 
-    imagenes_procesadas = 0
-    total_imagenes = 0
-
-    # Contar imagenes primero para progreso
     for pagina in doc:
-        total_imagenes += len(pagina.get_images(full=True))
+        for img_info in pagina.get_images(full=True):
+            xref = img_info[0]
+            if xref not in xrefs_procesados:
+                xrefs_procesados.add(xref)
+                xrefs_imagenes.append(xref)
+
+    total_imagenes = len(xrefs_imagenes)
+    imagenes_procesadas = 0
 
     job_manager.actualizar_progreso(
         trabajo_id, 10,
-        f"Procesando {num_paginas} paginas con {total_imagenes} imagenes"
+        f"Procesando {total_imagenes} imagenes unicas en {num_paginas} paginas"
     )
 
-    # Procesar cada pagina
-    for num_pag in range(num_paginas):
-        progreso = 10 + int((num_pag / num_paginas) * 70)
-        job_manager.actualizar_progreso(
-            trabajo_id, progreso,
-            f"Procesando pagina {num_pag + 1} de {num_paginas}"
-        )
+    # Procesar cada imagen unica y reemplazarla en el documento
+    for xref in xrefs_imagenes:
+        try:
+            # Extraer imagen original
+            imagen_base = doc.extract_image(xref)
+            if not imagen_base:
+                continue
 
-        pagina_original = doc[num_pag]
+            img_bytes_original = imagen_base["image"]
+            ancho = imagen_base.get("width", 0)
+            alto = imagen_base.get("height", 0)
 
-        # Insertar pagina en el nuevo documento
-        nuevo_doc.insert_pdf(doc, from_page=num_pag, to_page=num_pag)
-        pagina_nueva = nuevo_doc[num_pag]
+            # Abrir con PIL para procesar
+            img = Image.open(BytesIO(img_bytes_original))
 
-        # Eliminar anotaciones si se solicita
-        if eliminar_anotaciones:
-            for annot in list(pagina_nueva.annots() or []):
-                pagina_nueva.delete_annot(annot)
+            # Convertir a escala de grises si se solicita
+            if escala_grises:
+                img = img.convert('L')
+            elif img.mode == 'RGBA':
+                img = img.convert('RGB')
+            elif img.mode not in ('RGB', 'L'):
+                img = img.convert('RGB')
 
-        # Procesar imagenes de la pagina
-        lista_imagenes = pagina_original.get_images(full=True)
+            # Calcular redimension basada en DPI
+            factor_escala = dpi_maximo / 150.0
+            if factor_escala < 1.0:
+                nuevo_ancho = max(50, int(ancho * factor_escala))
+                nuevo_alto = max(50, int(alto * factor_escala))
+                img = img.resize((nuevo_ancho, nuevo_alto), Image.LANCZOS)
 
-        for img_info in lista_imagenes:
-            try:
-                xref = img_info[0]
+            # Guardar como JPEG comprimido
+            buffer = BytesIO()
+            img.save(buffer, format='JPEG', quality=calidad_jpg, optimize=True)
+            img_bytes_nuevo = buffer.getvalue()
 
-                # Obtener imagen original
-                imagen_base = doc.extract_image(xref)
-                if not imagen_base:
-                    continue
+            # Solo reemplazar si la imagen nueva es mas chica
+            if len(img_bytes_nuevo) < len(img_bytes_original):
+                # Crear Pixmap de PyMuPDF desde los bytes JPEG
+                nuevo_pixmap = fitz.Pixmap(img_bytes_nuevo)
 
-                img_bytes = imagen_base["image"]
-                ext = imagen_base["ext"]
-                ancho = imagen_base.get("width", 0)
-                alto = imagen_base.get("height", 0)
+                # Reemplazar la imagen en la primera pagina que la contenga
+                # (al reemplazar por xref, se actualiza en todas las paginas)
+                for pagina in doc:
+                    imagenes_pagina = [i[0] for i in pagina.get_images(full=True)]
+                    if xref in imagenes_pagina:
+                        pagina.replace_image(xref, pixmap=nuevo_pixmap)
+                        break
 
-                # Calcular si necesita redimension basada en DPI
-                # Asumimos que el PDF tiene 72 DPI base
-                factor_escala = dpi_maximo / 150  # Factor relativo a 150 DPI
+            imagenes_procesadas += 1
 
-                if factor_escala < 1:
-                    nuevo_ancho = int(ancho * factor_escala)
-                    nuevo_alto = int(alto * factor_escala)
+            # Actualizar progreso
+            progreso = 10 + int((imagenes_procesadas / max(total_imagenes, 1)) * 70)
+            job_manager.actualizar_progreso(
+                trabajo_id, progreso,
+                f"Imagen {imagenes_procesadas} de {total_imagenes}"
+            )
 
-                    # Solo redimensionar si hay reduccion significativa
-                    if nuevo_ancho > 50 and nuevo_alto > 50:
-                        try:
-                            img = Image.open(BytesIO(img_bytes))
+        except Exception as e:
+            logger.warning(f"Error procesando imagen xref={xref}: {e}")
+            imagenes_procesadas += 1
 
-                            if escala_grises:
-                                img = img.convert('L')
-                            elif img.mode == 'RGBA':
-                                img = img.convert('RGB')
-                            elif img.mode not in ('RGB', 'L'):
-                                img = img.convert('RGB')
-
-                            img = img.resize((nuevo_ancho, nuevo_alto), Image.LANCZOS)
-
-                            buffer = BytesIO()
-                            img.save(buffer, format='JPEG', quality=calidad_jpg, optimize=True)
-                            img_bytes = buffer.getvalue()
-                            ext = 'jpeg'
-
-                        except Exception as e:
-                            logger.warning(f"Error redimensionando imagen: {e}")
-
-                else:
-                    # Solo recomprimir sin redimensionar
-                    img_bytes = comprimir_imagen(img_bytes, ext, calidad_jpg, escala_grises)
-
-                imagenes_procesadas += 1
-
-            except Exception as e:
-                logger.warning(f"Error procesando imagen en pagina {num_pag + 1}: {e}")
+    # Eliminar anotaciones de todas las paginas si se solicita
+    if eliminar_anotaciones:
+        for pagina in doc:
+            for annot in list(pagina.annots() or []):
+                pagina.delete_annot(annot)
 
     # Eliminar metadatos si se solicita
     if eliminar_metadatos:
-        nuevo_doc.set_metadata({})
+        doc.set_metadata({})
 
     # Eliminar bookmarks/TOC si se solicita
     if eliminar_bookmarks:
-        nuevo_doc.set_toc([])
+        doc.set_toc([])
 
     job_manager.actualizar_progreso(trabajo_id, 85, "Optimizando y guardando")
 
-    # Guardar con opciones de compresion
+    # Guardar con opciones de optimizacion
     nombre_salida = f"{trabajo_id}_{nombre_original} - comprimido.pdf"
     ruta_salida = config.OUTPUT_FOLDER / nombre_salida
 
-    # Guardar con garbage collection y compresion
-    nuevo_doc.save(
+    doc.save(
         str(ruta_salida),
         garbage=4,           # Maxima limpieza de objetos no usados
         deflate=True,        # Compresion deflate
         clean=True,          # Limpiar contenido
-        linear=True          # Linearizar para web
     )
 
-    nuevo_doc.close()
     doc.close()
 
     return ruta_salida
