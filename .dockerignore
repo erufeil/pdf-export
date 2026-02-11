@@ -1,0 +1,44 @@
+# PDFexport - Docker Ignore
+# Reduce el contexto de build excluyendo archivos innecesarios
+
+# Entorno virtual de Python (local)
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Directorios de datos (se montan como volumenes)
+uploads/
+outputs/
+data/
+
+# Control de version
+.git/
+.gitignore
+
+# Documentacion y planificacion
+*.md
+CLAUDE.md
+planificacion*.md
+LICENSE
+
+# IDE y editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker (evita recursion)
+Dockerfile-convencional
+docker-compose.yml
+.dockerignore
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+
+# Archivos de entorno
+.env
+.env.*
