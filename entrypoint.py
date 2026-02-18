@@ -7,12 +7,16 @@ Elimina la dependencia de bash en el contenedor.
 import os
 import sys
 
+# Importar version desde config.py como valor por defecto
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from config import VERSION as DEFAULT_VERSION
+
 def generar_config_js():
     """Genera config.js con deteccion dinamica del host"""
     timeout = os.environ.get('TIMEOUT', '30000')
     retry_attempts = os.environ.get('RETRY_ATTEMPTS', '3')
     max_file_size = os.environ.get('MAX_FILE_SIZE', '1073741824')
-    version = os.environ.get('APP_VERSION', '1.0.0')
+    version = os.environ.get('APP_VERSION', DEFAULT_VERSION)
 
     contenido = f"""/**
  * Configuracion del frontend para PDFexport.

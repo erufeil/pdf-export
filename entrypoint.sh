@@ -8,7 +8,7 @@ set -e
 TIMEOUT=${TIMEOUT:-30000}
 RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
 MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
-APP_VERSION=${APP_VERSION:-1.0.0}
+APP_VERSION=${APP_VERSION:-1.1.1}
 
 # Generar config.js con deteccion dinamica del host
 cat > /app/config.js << EOF
