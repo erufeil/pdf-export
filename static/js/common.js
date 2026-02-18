@@ -60,7 +60,7 @@ class FileUploader {
         // Validar extension
         const extension = file.name.split('.').pop().toLowerCase();
         if (!window.AppConfig.allowedExtensions.includes(extension)) {
-            throw new Error('Solo se permiten archivos PDF');
+            throw new Error(`Extension no permitida. Extensiones validas: ${window.AppConfig.allowedExtensions.join(', ')}`);
         }
 
         // Validar tamanio

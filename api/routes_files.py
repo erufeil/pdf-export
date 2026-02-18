@@ -69,7 +69,8 @@ def subir_archivo():
 
     # Verificar extension
     if not file_manager.extension_permitida(nombre_original):
-        return respuesta_error('INVALID_EXTENSION', 'Solo se permiten archivos PDF')
+        extensiones = ', '.join(config.ALLOWED_EXTENSIONS)
+        return respuesta_error('INVALID_EXTENSION', f'Extensiones permitidas: {extensiones}')
 
     # Buscar si ya existe un archivo identico
     if tamano_declarado and fecha_modificacion:

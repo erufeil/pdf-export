@@ -740,6 +740,52 @@ def preview_from_html():
         return respuesta_error('PREVIEW_ERROR', str(e), 500)
 
 
+@bp.route('/ndm-to-tables-seq', methods=['POST'])
+def convertir_ndm_to_tables_seq():
+    """
+    Analiza archivo NDM2 y genera orden secuencial de migracion de tablas SQL.
+
+    Espera JSON:
+    - file_id: ID del archivo .ndm2 subido
+    - opciones:
+        - sin_comprimir: bool (default true, devuelve TXT directo)
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    opciones = datos.get('opciones', {})
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Crear trabajo
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='ndm-to-tables-seq',
+            parametros=opciones
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Analisis de tablas SQL iniciado'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo ndm-to-tables-seq: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/merge', methods=['POST'])
 def convertir_merge():
     """

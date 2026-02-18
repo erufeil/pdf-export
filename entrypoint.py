@@ -31,7 +31,7 @@ window.AppConfig = {{
     maxFileSize: {max_file_size},
 
     // Extensiones permitidas
-    allowedExtensions: ['pdf'],
+    allowedExtensions: ['pdf', 'ndm2', 'json'],
 
     // Flag para verificar que config cargo correctamente
     configLoaded: true

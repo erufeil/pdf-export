@@ -101,8 +101,11 @@ def guardar_archivo(archivo, nombre_original: str, fecha_modificacion: str = Non
             logger.warning(f"Archivo muy grande: {tamano_bytes} bytes")
             return None
 
-        # Obtener info del PDF
-        info_pdf = obtener_info_pdf(ruta_destino)
+        # Obtener info del PDF (solo para archivos PDF)
+        if extension == 'pdf':
+            info_pdf = obtener_info_pdf(ruta_destino)
+        else:
+            info_pdf = {'num_paginas': 0, 'metadata': {}, 'es_encriptado': False}
 
         # Generar hash para detectar duplicados
         hash_archivo = generar_hash_archivo(ruta_destino)
