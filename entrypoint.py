@@ -12,6 +12,7 @@ def generar_config_js():
     timeout = os.environ.get('TIMEOUT', '30000')
     retry_attempts = os.environ.get('RETRY_ATTEMPTS', '3')
     max_file_size = os.environ.get('MAX_FILE_SIZE', '1073741824')
+    version = os.environ.get('APP_VERSION', '1.0.0')
 
     contenido = f"""/**
  * Configuracion del frontend para PDFexport.
@@ -33,6 +34,9 @@ window.AppConfig = {{
     // Extensiones permitidas
     allowedExtensions: ['pdf', 'ndm2', 'json'],
 
+    // Version de la aplicacion
+    version: '{version}',
+
     // Flag para verificar que config cargo correctamente
     configLoaded: true
 }};
@@ -46,6 +50,7 @@ window.AppConfig = {{
     print(f"  - timeout: {timeout}ms")
     print(f"  - retryAttempts: {retry_attempts}")
     print(f"  - maxFileSize: {max_file_size} bytes")
+    print(f"  - version: {version}")
 
 
 if __name__ == '__main__':

@@ -369,6 +369,16 @@ function ocultarMensaje(elemento) {
     elemento.style.display = 'none';
 }
 
+// Inyectar version en el footer automaticamente
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.AppConfig && window.AppConfig.version) {
+        const elem = document.getElementById('app-version');
+        if (elem) {
+            elem.textContent = 'Version ' + window.AppConfig.version;
+        }
+    }
+});
+
 // Exportar para uso global
 window.PDFExport = {
     FileUploader,

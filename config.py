@@ -53,6 +53,9 @@ POPPLER_PATH = os.getenv('POPPLER_PATH', None)
 TIMEOUT = int(os.getenv('TIMEOUT', 10000))
 RETRY_ATTEMPTS = int(os.getenv('RETRY_ATTEMPTS', 3))
 
+# Version de la aplicacion (sobrescribible via variable de entorno)
+VERSION = os.getenv('APP_VERSION', '1.1.1')
+
 # Crear directorios si no existen
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, DATA_FOLDER]:
     folder.mkdir(parents=True, exist_ok=True)
