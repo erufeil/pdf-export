@@ -11,6 +11,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+# Version de la aplicacion (sobrescribible via variable de entorno)
+VERSION = os.getenv('APP_VERSION', '1.1.12')
+
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
 
@@ -52,9 +55,6 @@ POPPLER_PATH = os.getenv('POPPLER_PATH', None)
 # Configuracion del frontend
 TIMEOUT = int(os.getenv('TIMEOUT', 10000))
 RETRY_ATTEMPTS = int(os.getenv('RETRY_ATTEMPTS', 3))
-
-# Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.1')
 
 # Crear directorios si no existen
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, DATA_FOLDER]:

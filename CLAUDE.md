@@ -700,6 +700,31 @@ El algoritmo es un "Topological Sort". Lo que describís es esencialmente un ord
 
 ---
 
+### Etapa 15. Extraer Tablas de PDF a CSV
+
+**Página:** `static/pdf-csv.html`
+
+## Objetivo
+Debe extraer todas las tablas del PDF y generar un archivo CSV por cada tabla.
+Solo importa el contenido alfanumerico de la tabla.
+El nombre del archivo sera las primeras 15 caracteres del titulo de la tabla.
+
+opcion: si las tablas tienen las mismas cabeceras unificarlas en un solo archivo sin repetir cabecera
+
+Opciones:
+   - [ ] Unificar tablas iguales en un solo archivo
+
+**Parámetros:**
+```json
+{
+    "file_id": "uuid-del-archivo",
+    "paginas": [1, 3, 5, 6, 7, 8, 9, 10, 15],
+    "formato_salida": "unico"
+}
+```
+
+---
+
 ## Resumen de Etapas
 
 | Etapa | Servicio | Complejidad | Dependencias |

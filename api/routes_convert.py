@@ -789,8 +789,15 @@ def convertir_ndm_to_tables_seq():
 @bp.route('/merge', methods=['POST'])
 def convertir_merge():
     """
-    Une multiples PDFs en uno.
-    (Placeholder para Etapa 11)
+    Une multiples PDFs en uno solo.
+
+    Espera JSON:
+    - archivos: [{"file_id": str, "orden": int}, ...]  (minimo 2)
+    - opciones:
+        - agregar_marcadores: bool
+
+    Retorna:
+    - Info del trabajo creado
     """
     datos = request.get_json()
 
@@ -798,12 +805,41 @@ def convertir_merge():
         return respuesta_error('NO_DATA', 'No se enviaron datos')
 
     archivos = datos.get('archivos', [])
+    opciones = datos.get('opciones', {})
 
     if len(archivos) < 2:
-        return respuesta_error('INSUFFICIENT_FILES', 'Se requieren al menos 2 archivos')
+        return respuesta_error('INSUFFICIENT_FILES', 'Se requieren al menos 2 archivos para unir')
 
-    # TODO: Implementar en Etapa 11
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    # Verificar que todos los archivos existen
+    for item in archivos:
+        fid = item.get('file_id')
+        if not fid:
+            return respuesta_error('MISSING_FILE_ID', 'Cada archivo debe tener file_id')
+        archivo = models.obtener_archivo(fid)
+        if not archivo:
+            return respuesta_error('FILE_NOT_FOUND', f'Archivo no encontrado: {fid}', 404)
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=None,  # merge no tiene un unico archivo fuente
+            tipo_conversion='merge',
+            parametros={
+                'archivos': archivos,
+                'agregar_marcadores': opciones.get('agregar_marcadores', False)
+            }
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': f'Union de {len(archivos)} PDFs iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo merge: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
 
 
 @bp.route('/extract-pages', methods=['POST'])
