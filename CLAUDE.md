@@ -702,27 +702,62 @@ El algoritmo es un "Topological Sort". Lo que describís es esencialmente un ord
 
 ### Etapa 15. Extraer Tablas de PDF a CSV
 
-**Página:** `static/pdf-csv.html`
+## Nombre del boton para index.html
+<div class="card-icon">CSV</div>
+<h3>PDF a CSV</h3>
+<p>Extraer tablas a CSV</p>
+
+**Página:** `static/pdf-to-csv.html`
+
+**Endpoint:** `POST /api/v1/convert/to-csv`
 
 ## Objetivo
-Debe extraer todas las tablas del PDF y generar un archivo CSV por cada tabla.
+Detecta y extrae todas las tablas del PDF generando un archivo CSV por cada tabla encontrada, comprimidos en ZIP.
+
 Solo importa el contenido alfanumerico de la tabla.
-El nombre del archivo sera las primeras 15 caracteres del titulo de la tabla.
 
-opcion: si las tablas tienen las mismas cabeceras unificarlas en un solo archivo sin repetir cabecera
+## Nombre de archivos de salida
+- Formato General del CSV:
+Tomando como titulo_de_la_tabla a la oracion con letra mas grande antes de la tabla buscando hasta 15 renglones antes (fallback texto en negrita antes de la tabla hasta 15 renglones)
 
-Opciones:
+Designar al nombre del archivo como : `tabla_pag{N}_{M}_{titulo_de_la_tabla}` (página número N, tabla número M en esa página, primeros 20 caracteres de titulo_de_la_tabla).
+
+- Con tablas unificadas del CSV: `tabla_pag{N}_{M}_unificada`
+
+- ZIP: `{nombre_base}_csv.zip`
+
+
+
+**Interfaz de usuario:**
+1. Zona de carga de archivo
+2. Análisis automático al cargar:
+   - "Se encontraron X Tablas en el documento"
+   - "Algunas Parecen ser la misma tabla en varias hojas: SI/NO"   
+   - "Encoding: [utf-8-bom]"
+   - "WARNING: No hay tablas"
+3. Opciones:
    - [ ] Unificar tablas iguales en un solo archivo
+   - Separador de Valores: [;] (decimales con coma) - [,] (decimales con punto)
+   - Saltos de línea: [CRLF] (Windows) - [LF] (Unix) 
+4. Botón "Extraer Tablas a CSV" (desactivado si no hay tablas detectadas)
 
 **Parámetros:**
 ```json
 {
     "file_id": "uuid-del-archivo",
-    "paginas": [1, 3, 5, 6, 7, 8, 9, 10, 15],
-    "formato_salida": "unico"
+    "opciones": {
+        "unificar_iguales": true,
+        "separador": ";",
+        "saltos_línea": "CRLF"
+    }
 }
 ```
+**Librería:** pdfplumber (agregar a requirements.txt) como primera opción, con fallback a PyMuPDF si no tiene tablas con líneas claras. Habría que agregar pdfplumber al requirements.txt.
 
+## Notas de implementación
+- PDFs escaneados (solo imagen): informar al usuario que no hay tablas extraíbles
+- Detección de "mismo esquema": mismas cabeceras en mismo orden (normalizado: strip + lowercase)
+- opcion "unificar_iguales": si las tablas tienen las mismas cabeceras unificarlas en un solo archivo sin repetir cabecera (comparar strings de cada nombre sin espacios). Si el orden de las columnas difiere no unificar
 ---
 
 ## Resumen de Etapas

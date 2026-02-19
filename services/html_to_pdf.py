@@ -7,6 +7,7 @@ Utiliza WeasyPrint para renderizar paginas web como PDF.
 import logging
 import re
 import hashlib
+import concurrent.futures
 from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlparse
@@ -38,10 +39,13 @@ if sys.platform == 'win32':
             break
 
 # Importar WeasyPrint y requests de forma condicional
+# NOTA: WeasyPrint 60+ elimino FontConfiguration y cambio la API:
+#   - font_config ya no se pasa a HTML(), CSS() ni write_pdf()
+#   - stylesheets se pasa a render(), no a write_pdf()
+#   - Flujo correcto: html.render(stylesheets=[css]).write_pdf(target)
 try:
     import requests
     from weasyprint import HTML, CSS
-    from weasyprint.text.fonts import FontConfiguration
     WEASYPRINT_DISPONIBLE = True
     logger.info("WeasyPrint cargado correctamente")
 except (ImportError, OSError) as e:
@@ -49,13 +53,37 @@ except (ImportError, OSError) as e:
     logger.warning(f"WeasyPrint no disponible: {e}. El servicio HTML a PDF no funcionara.")
 
 # Timeout para descargar la pagina principal (segundos)
-TIMEOUT_PAGINA = 60
+TIMEOUT_PAGINA = 30
 
 # Timeout para cada recurso individual (imagenes, CSS, fonts)
-TIMEOUT_RECURSO = 15
+TIMEOUT_RECURSO = 8
+
+# Timeout total para toda la conversion incluyendo renderizado (segundos)
+TIMEOUT_TOTAL = 90
 
 # User-Agent para simular navegador
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+# Dominios de publicidad, tracking y analytics a bloquear
+DOMINIOS_BLOQUEADOS = {
+    'doubleclick.net', 'googlesyndication.com', 'googletagmanager.com',
+    'google-analytics.com', 'analytics.google.com', 'googleadservices.com',
+    'pagead2.googlesyndication.com', 'adservice.google.com',
+    'facebook.net', 'connect.facebook.net', 'staticxx.facebook.com',
+    'platform.twitter.com', 'syndication.twitter.com',
+    'scorecardresearch.com', 'quantserve.com', 'quantcast.com',
+    'outbrain.com', 'taboola.com', 'criteo.com', 'criteo.net',
+    'adsafeprotected.com', 'moatads.com', 'amazon-adsystem.com',
+    'media.net', 'contextweb.com', 'openx.net', 'openx.com',
+    'rubiconproject.com', 'pubmatic.com', 'appnexus.com', 'adnxs.com',
+    'casalemedia.com', 'advertising.com', 'omtrdc.net',
+    'hotjar.com', 'mouseflow.com', 'fullstory.com', 'clarity.ms',
+    'newrelic.com', 'nr-data.net', 'bugsnag.com',
+    'sentry.io', 'segment.com', 'segment.io',
+    'intercom.io', 'intercomcdn.com', 'cdn.ampproject.org',
+    'chartbeat.com', 'chartbeat.net', 'parsely.com',
+    'optimizely.com', 'mixpanel.com', 'amplitude.com',
+}
 
 # Tamanos de pagina en mm
 TAMANOS_PAGINA = {
@@ -159,13 +187,25 @@ def _crear_url_fetcher(url_principal: str):
     from weasyprint import urls as wp_urls
 
     def url_fetcher(url, timeout=TIMEOUT_RECURSO, **kwargs):
-        # Determinar timeout segun si es la pagina principal o un recurso
+        # Determinar si es la pagina principal o un recurso secundario
         es_pagina_principal = url.rstrip('/') == url_principal.rstrip('/')
         timeout_actual = TIMEOUT_PAGINA if es_pagina_principal else timeout
 
         # Para URLs de datos (data:...) usar el fetcher por defecto
         if url.startswith('data:'):
             return wp_urls.default_url_fetcher(url)
+
+        # Bloquear dominios de publicidad y tracking
+        try:
+            dominio = urlparse(url).netloc.lower()
+            if dominio.startswith('www.'):
+                dominio = dominio[4:]
+            for bloqueado in DOMINIOS_BLOQUEADOS:
+                if dominio == bloqueado or dominio.endswith('.' + bloqueado):
+                    logger.debug(f"Recurso bloqueado (pub/tracking): {url[:80]}")
+                    return {'string': b'', 'mime_type': 'text/plain'}
+        except Exception:
+            pass
 
         try:
             headers = {'User-Agent': USER_AGENT}
@@ -229,9 +269,6 @@ def convertir_url_a_pdf(url: str, opciones: Dict, trabajo_id: str) -> Path:
 
     job_manager.actualizar_progreso(trabajo_id, 15, "Preparando conversion")
 
-    # Configurar fuentes
-    font_config = FontConfiguration()
-
     # Generar CSS de pagina
     css_pagina = generar_css_pagina(opciones)
 
@@ -239,35 +276,54 @@ def convertir_url_a_pdf(url: str, opciones: Dict, trabajo_id: str) -> Path:
     if opciones.get('solo_contenido', False):
         css_pagina += CSS_SOLO_CONTENIDO
 
-    job_manager.actualizar_progreso(trabajo_id, 30, "Renderizando HTML")
+    job_manager.actualizar_progreso(trabajo_id, 30, "Descargando y renderizando HTML")
 
-    try:
-        # Crear objeto HTML desde URL
-        html = HTML(url=url)
+    # Crear URL fetcher con timeout y bloqueo de dominios de publicidad
+    url_fetcher = _crear_url_fetcher(url)
 
-        # Crear hoja de estilo
-        css = CSS(string=css_pagina, font_config=font_config)
+    # Generar nombre de salida
+    nombre_salida = f"{trabajo_id}_{nombre_base}.pdf"
+    ruta_salida = config.OUTPUT_FOLDER / nombre_salida
+
+    def _renderizar():
+        """Funcion interna que ejecuta la conversion en un hilo con timeout."""
+        # Crear objeto HTML con fetcher personalizado (aplicado a pagina + recursos)
+        html = HTML(url=url, url_fetcher=url_fetcher)
+
+        # Crear hoja de estilo (WeasyPrint 60+: sin font_config)
+        css = CSS(string=css_pagina)
 
         job_manager.actualizar_progreso(trabajo_id, 60, "Generando PDF")
 
-        # Generar nombre de salida
-        nombre_salida = f"{trabajo_id}_{nombre_base}.pdf"
-        ruta_salida = config.OUTPUT_FOLDER / nombre_salida
+        # WeasyPrint 60+ API: stylesheets van a render(), no a write_pdf()
+        html.render(stylesheets=[css]).write_pdf(str(ruta_salida))
 
-        # Renderizar PDF
-        html.write_pdf(
-            str(ruta_salida),
-            stylesheets=[css],
-            font_config=font_config
+    # Ejecutar WeasyPrint en un hilo separado con timeout total.
+    # IMPORTANTE: NO usar "with executor:" porque su __exit__ llama shutdown(wait=True),
+    # que bloquea esperando al thread aunque el timeout ya haya expirado.
+    # En su lugar, llamar shutdown(wait=False) manualmente para liberar el control.
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    futuro = executor.submit(_renderizar)
+
+    try:
+        futuro.result(timeout=TIMEOUT_TOTAL)
+    except concurrent.futures.TimeoutError:
+        executor.shutdown(wait=False)  # No bloquear esperando al thread colgado
+        logger.warning(f"Timeout WeasyPrint ({TIMEOUT_TOTAL}s): {url[:80]}")
+        raise ValueError(
+            f"Timeout: la conversion supero {TIMEOUT_TOTAL} segundos. "
+            "El sitio puede tener recursos externos que no responden."
         )
-
-        job_manager.actualizar_progreso(trabajo_id, 95, "Finalizando")
-
-        return ruta_salida
-
     except Exception as e:
+        executor.shutdown(wait=False)
         logger.error(f"Error al convertir HTML a PDF: {e}")
         raise ValueError(f"Error al generar PDF: {str(e)}")
+    else:
+        executor.shutdown(wait=False)
+
+    job_manager.actualizar_progreso(trabajo_id, 95, "Finalizando")
+
+    return ruta_salida
 
 
 def obtener_vista_previa(url: str, opciones: Dict) -> Optional[bytes]:
@@ -286,20 +342,18 @@ def obtener_vista_previa(url: str, opciones: Dict) -> Optional[bytes]:
     _verificar_weasyprint()
 
     try:
-        # Configurar fuentes
-        font_config = FontConfiguration()
-
         # Generar CSS
         css_pagina = generar_css_pagina(opciones)
         if opciones.get('solo_contenido', False):
             css_pagina += CSS_SOLO_CONTENIDO
 
-        # Crear HTML y CSS
-        html = HTML(url=url)
-        css = CSS(string=css_pagina, font_config=font_config)
+        # Crear HTML con fetcher personalizado (mismo que en conversion)
+        url_fetcher = _crear_url_fetcher(url)
+        html = HTML(url=url, url_fetcher=url_fetcher)
+        css = CSS(string=css_pagina)
 
-        # Renderizar a bytes
-        pdf_bytes = html.write_pdf(stylesheets=[css], font_config=font_config)
+        # WeasyPrint 60+ API: render() recibe stylesheets, write_pdf() el target
+        pdf_bytes = html.render(stylesheets=[css]).write_pdf()
 
         # Abrir con PyMuPDF para extraer primera pagina como imagen
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")

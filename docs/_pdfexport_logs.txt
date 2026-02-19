@@ -1,0 +1,100 @@
+2026-02-19 20:49:06,344 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:06,344 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:06,484 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:06,485 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-header-height' for property 'height'.
+2026-02-19 20:49:06,504 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:06,504 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-info-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:06,671 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:06,671 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:06,811 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:06,811 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-header-height' for property 'height'.
+2026-02-19 20:49:06,823 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-weight' for property 'font-weight'.
+2026-02-19 20:49:06,823 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:06,824 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-info-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:06,937 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:06,937 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,035 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,036 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-header-height' for property 'height'.
+2026-02-19 20:49:07,036 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-family' for property 'font-family'.
+2026-02-19 20:49:07,036 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-weight' for property 'font-weight'.
+2026-02-19 20:49:07,036 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,037 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:07,037 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,038 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-info-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,054 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,071 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-weight' for property 'font-weight'.
+2026-02-19 20:49:07,071 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,135 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:07,135 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,186 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,186 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,191 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,196 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,347 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,348 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-header-height' for property 'height'.
+2026-02-19 20:49:07,348 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-family' for property 'font-family'.
+2026-02-19 20:49:07,348 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-weight' for property 'font-weight'.
+2026-02-19 20:49:07,348 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,350 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:07,350 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,351 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card-info-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,368 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,382 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-font-weight' for property 'font-weight'.
+2026-02-19 20:49:07,382 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,441 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-align-items' for property 'align-items'.
+2026-02-19 20:49:07,441 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,489 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-horizontal-article-card--inner-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,489 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,496 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-line-height' for property 'line-height'.
+2026-02-19 20:49:07,503 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-link-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,644 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-default-border-width' for property 'border-top-width'.
+2026-02-19 20:49:07,644 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-link-border-style' for property 'border-top-style'.
+2026-02-19 20:49:07,644 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-default-border-width' for property 'border-bottom-width'.
+2026-02-19 20:49:07,644 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-link-border-style' for property 'border-bottom-style'.
+2026-02-19 20:49:07,648 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-medium-line-height' for property 'line-height'.
+2026-02-19 20:49:07,686 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-margin' for property 'margin-top'.
+2026-02-19 20:49:07,686 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-margin' for property 'margin-bottom'.
+2026-02-19 20:49:07,686 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-padding' for property 'padding-top'.
+2026-02-19 20:49:07,686 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-padding' for property 'padding-bottom'.
+2026-02-19 20:49:07,686 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-min-height' for property 'min-height'.
+2026-02-19 20:49:07,687 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-header-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,697 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-header--left-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:07,699 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-flag-deco-title-padding' for property 'padding-top'.
+2026-02-19 20:49:07,699 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-flag-deco-title-padding' for property 'padding-bottom'.
+2026-02-19 20:49:07,709 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-header-left-justify-content' for property 'justify-content'.
+2026-02-19 20:49:07,726 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-section-slider-rep--inner-header-align-items' for property 'align-items'.
+2026-02-19 20:49:07,765 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-icon-width' for property 'width'.
+2026-02-19 20:49:07,766 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-icon-height' for property 'height'.
+2026-02-19 20:49:07,767 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-icon-width' for property 'width'.
+2026-02-19 20:49:07,767 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-icon-height' for property 'height'.
+2026-02-19 20:49:07,769 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-default-border-width' for property 'border-top-width'.
+2026-02-19 20:49:07,769 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-link-border-style' for property 'border-top-style'.
+2026-02-19 20:49:07,769 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-default-border-width' for property 'border-bottom-width'.
+2026-02-19 20:49:07,769 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-link-border-style' for property 'border-bottom-style'.
+2026-02-19 20:49:07,773 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--c-button-medium-line-height' for property 'line-height'.
+2026-02-19 20:49:08,325 - werkzeug - INFO - 127.0.0.1 - - [19/Feb/2026 20:49:08] "GET /api/v1/status HTTP/1.1" 200 -
+2026-02-19 20:49:38,093 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET / HTTP/1.1" 304 -
+2026-02-19 20:49:38,465 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /static/css/styles.css HTTP/1.1" 304 -
+2026-02-19 20:49:38,543 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /config.js HTTP/1.1" 304 -
+2026-02-19 20:49:38,546 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /static/js/common.js HTTP/1.1" 304 -
+2026-02-19 20:49:38,623 - werkzeug - INFO - 127.0.0.1 - - [19/Feb/2026 20:49:38] "GET /api/v1/status HTTP/1.1" 200 -
+2026-02-19 20:49:38,910 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /api/v1/files HTTP/1.1" 200 -
+2026-02-19 20:49:38,911 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-02-19 20:49:38,912 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:38] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:49:43,934 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:43] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:49:46,882 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-home-flex-direction' for property 'flex-direction'.
+2026-02-19 20:49:48,945 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:48] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:49:48,948 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:48] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-02-19 20:49:54,069 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:54] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:49:59,576 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:59] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:49:59,756 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:49:59] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-02-19 20:50:04,724 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:04] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:50:08,914 - werkzeug - INFO - 127.0.0.1 - - [19/Feb/2026 20:50:08] "GET /api/v1/status HTTP/1.1" 200 -
+2026-02-19 20:50:09,842 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:09] "GET /api/v1/files HTTP/1.1" 200 -
+2026-02-19 20:50:09,844 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:09] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-02-19 20:50:09,846 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:09] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:50:14,754 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:14] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:50:15,573 - weasyprint - WARNING - Unsupported computed value "None" set in variable '--b-p12-home-flex-direction' for property 'flex-direction'.
+2026-02-19 20:50:19,714 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:19] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-02-19 20:50:19,716 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:19] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-02-19 20:50:24,771 - werkzeug - INFO - 45.191.192.20 - - [19/Feb/2026 20:50:24] "GET /api/v1/jobs HTTP/1.1" 200 -

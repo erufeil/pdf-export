@@ -204,22 +204,34 @@ def obtener_estado_cola() -> dict:
 
 def reencolar_trabajos_pendientes():
     """
-    Reencola trabajos que quedaron pendientes o procesando
-    (por ejemplo, despues de un reinicio del servidor).
+    Reencola trabajos que quedaron pendientes al reiniciar el servidor.
+
+    - Estado 'pendiente': nunca empezaron, se pueden reencolar de forma segura.
+    - Estado 'procesando': fueron interrumpidos a la fuerza (kill). El archivo
+      de salida puede estar incompleto o no existir. Se marcan como error para
+      que el usuario sepa que debe intentarlo de nuevo manualmente.
     """
     pendientes = models.listar_trabajos(estado='pendiente')
     procesando = models.listar_trabajos(estado='procesando')
 
-    # Los que estaban procesando los marcamos como pendientes
+    # Los que estaban procesando se marcan como error (fueron interrumpidos)
     for trabajo in procesando:
-        models.actualizar_trabajo(trabajo['id'], estado='pendiente', progreso=0)
+        models.actualizar_trabajo(
+            trabajo['id'],
+            estado='error',
+            mensaje='Proceso interrumpido por reinicio del servidor. Por favor, intente nuevamente.'
+        )
+        logger.warning(
+            f"Trabajo interrumpido marcado como error: {trabajo['id']} ({trabajo['tipo_conversion']})"
+        )
 
-    # Encolar todos los pendientes
-    for trabajo in pendientes + procesando:
+    # Solo reencolar los que realmente estaban pendientes (nunca empezaron)
+    for trabajo in pendientes:
         cola_trabajos.put(trabajo['id'])
 
-    total = len(pendientes) + len(procesando)
-    if total > 0:
-        logger.info(f"Reencolados {total} trabajos pendientes")
+    if pendientes:
+        logger.info(f"Reencolados {len(pendientes)} trabajos pendientes")
+    if procesando:
+        logger.info(f"Marcados como error {len(procesando)} trabajos interrumpidos")
 
-    return total
+    return len(pendientes)
