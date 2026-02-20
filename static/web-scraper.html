@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraper Web - PDF-Export & Import</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Layout de dos columnas: principal + panel opciones */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel de opciones lateral */
+        .options-panel {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--color-border);
+        }
+
+        .options-panel h3 {
+            margin-bottom: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .option-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .option-group h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        /* Campo de URL */
+        .url-section {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        .url-section h3 {
+            margin-bottom: 8px;
+        }
+
+        .url-section .descripcion {
+            color: var(--color-text-light);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .url-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .url-input-wrapper input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .url-input-wrapper input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .url-input-wrapper input::placeholder {
+            color: var(--color-text-light);
+        }
+
+        .btn-analizar {
+            padding: 12px 20px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-analizar:hover:not(:disabled) {
+            background: var(--color-primary-dark, #1d4ed8);
+        }
+
+        .btn-analizar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Info de la URL analizada */
+        .url-info-box {
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .url-info-box .dominio {
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        /* Aviso */
+        .aviso {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 0.82rem;
+            color: var(--color-text-light);
+            margin-bottom: 15px;
+        }
+
+        .aviso strong {
+            color: var(--color-text);
+        }
+
+        /* Resultados de analisis previo (preview) */
+        .resultado-preview {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--color-border);
+            display: none;
+        }
+
+        .resultado-preview h3 {
+            margin-bottom: 15px;
+        }
+
+        /* Tabs para ver las secciones del resultado */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--color-border);
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.activo {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+            font-size: 0.85rem;
+        }
+
+        .tab-content.activo {
+            display: block;
+        }
+
+        /* Tabla de metadatos */
+        .meta-tabla {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .meta-tabla tr {
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .meta-tabla tr:last-child {
+            border-bottom: none;
+        }
+
+        .meta-tabla td {
+            padding: 8px 6px;
+            vertical-align: top;
+        }
+
+        .meta-tabla td:first-child {
+            font-weight: 500;
+            color: var(--color-text-light);
+            width: 100px;
+            white-space: nowrap;
+        }
+
+        /* Preview de texto */
+        .texto-preview {
+            background: var(--color-background);
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--color-text);
+        }
+
+        /* Lista de links */
+        .links-lista {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .links-lista .link-item {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.82rem;
+        }
+
+        .links-lista .link-item:last-child {
+            border-bottom: none;
+        }
+
+        .links-lista .link-texto {
+            font-weight: 500;
+            display: block;
+        }
+
+        .links-lista .link-url {
+            color: var(--color-text-light);
+            word-break: break-all;
+            font-size: 0.78rem;
+        }
+
+        /* Checkboxes */
+        .checkbox-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-option:last-child {
+            margin-bottom: 0;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-option label {
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .checkbox-option label small {
+            display: block;
+            color: var(--color-text-light);
+            font-size: 0.78rem;
+            margin-top: 2px;
+        }
+
+        /* Selector de formato */
+        .formato-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .formato-option input {
+            display: none;
+        }
+
+        .formato-option label {
+            display: block;
+            padding: 8px 10px;
+            text-align: center;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .formato-option label span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--color-text-light);
+            margin-top: 2px;
+        }
+
+        .formato-option input:checked + label {
+            border-color: var(--color-primary);
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--color-primary);
+        }
+
+        /* Boton de descarga principal */
+        .btn-ejecutar {
+            width: 100%;
+            padding: 14px;
+            background: var(--color-success, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-ejecutar:hover:not(:disabled) {
+            background: #15803d;
+        }
+
+        .btn-ejecutar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progreso */
+        .progreso-seccion {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progreso-seccion .barra-container {
+            height: 8px;
+            background: var(--color-border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progreso-seccion .barra {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 4px;
+            transition: width 0.4s;
+            width: 0%;
+        }
+
+        .progreso-seccion .progreso-texto {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--color-text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Scraper Web</h1>
+            <p>Extrae contenido estructurado de una pagina web para procesamiento con IA o insercion en documentos</p>
+        </header>
+
+        <main class="content-grid">
+            <!-- Seccion principal -->
+            <section class="main-section">
+
+                <!-- Campo de URL -->
+                <div class="url-section">
+                    <h3>URL de la pagina a analizar</h3>
+                    <p class="descripcion">Ingresa la URL de cualquier pagina web. Se extraera el texto del articulo o contenido principal, los metadatos (titulo, autor, fecha) y la informacion de contacto del footer.</p>
+
+                    <div class="aviso">
+                        <strong>Nota:</strong> Funciona mejor con articulos, blogs, noticias y paginas de contenido. Paginas con login obligatorio o contenido 100% dinamico (SPA sin SSR) pueden no funcionar correctamente.
+                    </div>
+
+                    <div class="url-input-wrapper">
+                        <input type="url" id="url-input" placeholder="https://ejemplo.com/articulo" autocomplete="off">
+                        <button id="btn-analizar" class="btn-analizar" disabled>Previsualizar</button>
+                    </div>
+                    <div id="url-info-box" class="url-info-box">
+                        Sitio: <span class="dominio" id="url-dominio">-</span>
+                    </div>
+                </div>
+
+                <!-- Preview de resultado (carga rapida via endpoint) -->
+                <div id="resultado-preview" class="resultado-preview">
+                    <h3>Vista previa del contenido extraido</h3>
+
+                    <div class="tabs">
+                        <button class="tab-btn activo" data-tab="metadatos">Metadatos</button>
+                        <button class="tab-btn" data-tab="contenido">Contenido</button>
+                        <button class="tab-btn" data-tab="footer">Footer</button>
+                        <button class="tab-btn" data-tab="links">Links</button>
+                    </div>
+
+                    <!-- Tab Metadatos -->
+                    <div class="tab-content activo" id="tab-metadatos">
+                        <table class="meta-tabla">
+                            <tbody>
+                                <tr><td>Titulo</td><td id="meta-titulo">-</td></tr>
+                                <tr><td>URL</td><td id="meta-url" style="word-break: break-all;">-</td></tr>
+                                <tr><td>Sitio</td><td id="meta-sitio">-</td></tr>
+                                <tr><td>Fecha</td><td id="meta-fecha">-</td></tr>
+                                <tr><td>Autor</td><td id="meta-autor">-</td></tr>
+                                <tr><td>Descripcion</td><td id="meta-descripcion">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tab Contenido -->
+                    <div class="tab-content" id="tab-contenido">
+                        <div class="texto-preview" id="preview-contenido">
+                            (Aqui se mostrara una muestra del contenido principal extraido)
+                        </div>
+                    </div>
+
+                    <!-- Tab Footer -->
+                    <div class="tab-content" id="tab-footer">
+                        <table class="meta-tabla">
+                            <tbody>
+                                <tr><td>Correos</td><td id="footer-emails">-</td></tr>
+                                <tr><td>Telefonos</td><td id="footer-telefonos">-</td></tr>
+                                <tr><td>Texto</td><td id="footer-texto" style="white-space: pre-line;">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tab Links -->
+                    <div class="tab-content" id="tab-links">
+                        <div id="links-lista" class="links-lista">
+                            <p style="color: var(--color-text-light); font-size: 0.85rem;">No hay links</p>
+                        </div>
+                        <p id="links-total" style="font-size: 0.8rem; color: var(--color-text-light); margin-top: 8px;"></p>
+                    </div>
+                </div>
+
+                <!-- Mensajes de estado -->
+                <div id="mensaje-estado" class="status-message" style="display: none;"></div>
+
+                <!-- Progreso del trabajo -->
+                <div id="progreso-seccion" class="progreso-seccion">
+                    <div class="barra-container">
+                        <div class="barra" id="barra-progreso"></div>
+                    </div>
+                    <div class="progreso-texto">
+                        <span id="progreso-mensaje">Iniciando...</span>
+                        <span id="progreso-porcentaje">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de opciones -->
+            <aside class="options-panel">
+                <h3>Opciones de extraccion</h3>
+
+                <!-- Formato del contenido -->
+                <div class="option-group">
+                    <h4>Formato del cuerpo</h4>
+                    <div class="formato-selector">
+                        <div class="formato-option">
+                            <input type="radio" name="formato" id="fmt-markdown" value="markdown" checked>
+                            <label for="fmt-markdown">
+                                Markdown
+                                <span>Ideal para IA</span>
+                            </label>
+                        </div>
+                        <div class="formato-option">
+                            <input type="radio" name="formato" id="fmt-texto" value="texto">
+                            <label for="fmt-texto">
+                                Texto plano
+                                <span>Mas simple</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Limpieza de contenido -->
+                <div class="option-group">
+                    <h4>Limpieza</h4>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="eliminar-enlaces">
+                        <label for="eliminar-enlaces">
+                            Sin enlaces
+                            <small>Convierte [texto](url) → texto y elimina referencias [1], [[2]]</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Secciones a incluir -->
+                <div class="option-group">
+                    <h4>Secciones a incluir</h4>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="inc-metadatos" checked>
+                        <label for="inc-metadatos">
+                            Metadatos del header
+                            <small>Titulo, URL, fecha, autor, descripcion</small>
+                        </label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="inc-contenido" checked>
+                        <label for="inc-contenido">
+                            Contenido principal
+                            <small>Texto del articulo/body limpio</small>
+                        </label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="inc-footer" checked>
+                        <label for="inc-footer">
+                            Footer / Contacto
+                            <small>Emails, telefonos, texto de contacto</small>
+                        </label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="inc-links" checked>
+                        <label for="inc-links">
+                            Links externos
+                            <small>Hasta 100 links con texto descriptivo</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Boton de ejecucion -->
+                <button id="btn-ejecutar" class="btn-ejecutar" disabled>
+                    Extraer y Descargar ZIP
+                </button>
+
+                <!-- Nota sobre el resultado -->
+                <p style="font-size: 0.78rem; color: var(--color-text-light); margin-top: 12px; text-align: center;">
+                    El resultado es un .ZIP con un archivo .TXT estructurado listo para copiar en DOCX o procesar con IA.
+                </p>
+            </aside>
+        </main>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        // === ESTADO ===
+        const estado = {
+            url: '',
+            previewCargado: false,
+            trabajoId: null,
+            intervaloProgreso: null,
+        };
+
+        // === REFERENCIAS DOM ===
+        const urlInput = document.getElementById('url-input');
+        const btnAnalizar = document.getElementById('btn-analizar');
+        const btnEjecutar = document.getElementById('btn-ejecutar');
+        const urlInfoBox = document.getElementById('url-info-box');
+        const urlDominio = document.getElementById('url-dominio');
+        const resultadoPreview = document.getElementById('resultado-preview');
+        const mensajeEstado = document.getElementById('mensaje-estado');
+        const progresoSeccion = document.getElementById('progreso-seccion');
+        const barraProgreso = document.getElementById('barra-progreso');
+        const progresoMensaje = document.getElementById('progreso-mensaje');
+        const progresoPorcentaje = document.getElementById('progreso-porcentaje');
+
+        // === VALIDACION DE URL ===
+        urlInput.addEventListener('input', () => {
+            const val = urlInput.value.trim();
+            const esValida = val.startsWith('http://') || val.startsWith('https://');
+            btnAnalizar.disabled = !esValida;
+            btnEjecutar.disabled = !esValida;
+
+            if (esValida) {
+                try {
+                    const parsed = new URL(val);
+                    urlDominio.textContent = parsed.hostname;
+                    urlInfoBox.style.display = 'block';
+                } catch {
+                    urlInfoBox.style.display = 'none';
+                }
+            } else {
+                urlInfoBox.style.display = 'none';
+            }
+            estado.url = val;
+        });
+
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !btnAnalizar.disabled) {
+                btnAnalizar.click();
+            }
+        });
+
+        // === TABS ===
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('activo'));
+                btn.classList.add('activo');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('activo');
+            });
+        });
+
+        // === PREVISUALIZAR ===
+        btnAnalizar.addEventListener('click', async () => {
+            if (!estado.url) return;
+
+            btnAnalizar.disabled = true;
+            btnAnalizar.textContent = 'Analizando...';
+            ocultarMensaje();
+
+            try {
+                const opciones = obtenerOpciones();
+                const resp = await fetch('/api/v1/convert/scrape-url/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: estado.url, opciones })
+                });
+
+                const datos = await resp.json();
+
+                if (!datos.success) {
+                    mostrarError(datos.error?.message || 'Error al analizar la pagina');
+                    return;
+                }
+
+                // Rellenar tabs con los datos
+                const d = datos.data;
+
+                // Metadatos
+                document.getElementById('meta-titulo').textContent = d.metadatos?.titulo || '(no encontrado)';
+                document.getElementById('meta-url').textContent = d.metadatos?.url || estado.url;
+                document.getElementById('meta-sitio').textContent = d.metadatos?.sitio || '-';
+                document.getElementById('meta-fecha').textContent = d.metadatos?.fecha || '(no encontrada)';
+                document.getElementById('meta-autor').textContent = d.metadatos?.autor || '(no encontrado)';
+                document.getElementById('meta-descripcion').textContent = d.metadatos?.descripcion || '(no encontrada)';
+
+                // Contenido (muestra de 1500 chars)
+                const contenidoMuestra = (d.contenido_muestra || '(vacio)');
+                document.getElementById('preview-contenido').textContent = contenidoMuestra;
+
+                // Footer
+                const emails = d.footer?.emails || [];
+                const tels = d.footer?.telefonos || [];
+                document.getElementById('footer-emails').textContent = emails.length ? emails.join(', ') : '(no encontrados)';
+                document.getElementById('footer-telefonos').textContent = tels.length ? tels.join(', ') : '(no encontrados)';
+                document.getElementById('footer-texto').textContent = d.footer?.texto || '(no encontrado)';
+
+                // Links
+                const links = d.links || [];
+                const listaEl = document.getElementById('links-lista');
+                document.getElementById('links-total').textContent = `${links.length} links encontrados`;
+                if (links.length > 0) {
+                    listaEl.innerHTML = links.slice(0, 30).map(l =>
+                        `<div class="link-item">
+                            <span class="link-texto">${escHtml(l.texto)}</span>
+                            <span class="link-url">${escHtml(l.url)}</span>
+                        </div>`
+                    ).join('');
+                } else {
+                    listaEl.innerHTML = '<p style="color: var(--color-text-light); font-size: 0.85rem;">No se encontraron links</p>';
+                }
+
+                resultadoPreview.style.display = 'block';
+                estado.previewCargado = true;
+
+            } catch (e) {
+                mostrarError('Error de conexion: ' + e.message);
+            } finally {
+                btnAnalizar.disabled = false;
+                btnAnalizar.textContent = 'Previsualizar';
+            }
+        });
+
+        // === EJECUTAR SCRAPING COMPLETO ===
+        btnEjecutar.addEventListener('click', async () => {
+            if (!estado.url) return;
+
+            btnEjecutar.disabled = true;
+            btnEjecutar.textContent = 'Iniciando...';
+            ocultarMensaje();
+            mostrarProgreso(0, 'Enviando solicitud...');
+
+            try {
+                const opciones = obtenerOpciones();
+                const resp = await fetch('/api/v1/convert/scrape-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: estado.url, opciones })
+                });
+
+                const datos = await resp.json();
+
+                if (!datos.success) {
+                    mostrarError(datos.error?.message || 'Error al iniciar el scraping');
+                    ocultarProgreso();
+                    btnEjecutar.disabled = false;
+                    btnEjecutar.textContent = 'Extraer y Descargar ZIP';
+                    return;
+                }
+
+                estado.trabajoId = datos.data.job_id;
+                seguirProgreso(estado.trabajoId);
+
+            } catch (e) {
+                mostrarError('Error de conexion: ' + e.message);
+                ocultarProgreso();
+                btnEjecutar.disabled = false;
+                btnEjecutar.textContent = 'Extraer y Descargar ZIP';
+            }
+        });
+
+        // === SEGUIMIENTO DE PROGRESO ===
+        function seguirProgreso(jobId) {
+            if (estado.intervaloProgreso) clearInterval(estado.intervaloProgreso);
+
+            estado.intervaloProgreso = setInterval(async () => {
+                try {
+                    const resp = await fetch(`/api/v1/jobs/${jobId}`);
+                    const datos = await resp.json();
+
+                    if (!datos.success) return;
+
+                    const trabajo = datos.data;
+                    mostrarProgreso(trabajo.progreso || 0, trabajo.mensaje || '...');
+
+                    if (trabajo.estado === 'completado') {
+                        clearInterval(estado.intervaloProgreso);
+                        mostrarProgreso(100, 'Completado');
+                        setTimeout(() => {
+                            window.location.href = `/api/v1/download/${jobId}`;
+                            ocultarProgreso();
+                            btnEjecutar.disabled = false;
+                            btnEjecutar.textContent = 'Extraer y Descargar ZIP';
+                            mostrarExito('Extraccion completada. Descarga iniciada.');
+                        }, 600);
+
+                    } else if (trabajo.estado === 'error') {
+                        clearInterval(estado.intervaloProgreso);
+                        ocultarProgreso();
+                        btnEjecutar.disabled = false;
+                        btnEjecutar.textContent = 'Extraer y Descargar ZIP';
+                        mostrarError('Error: ' + (trabajo.mensaje || 'Error desconocido'));
+                    }
+
+                } catch (e) {
+                    console.error('Error al verificar progreso:', e);
+                }
+            }, 1500);
+        }
+
+        // === HELPERS ===
+        function obtenerOpciones() {
+            return {
+                formato_salida: document.querySelector('input[name="formato"]:checked')?.value || 'markdown',
+                eliminar_enlaces: document.getElementById('eliminar-enlaces').checked,
+                incluir_metadatos: document.getElementById('inc-metadatos').checked,
+                incluir_contenido: document.getElementById('inc-contenido').checked,
+                incluir_footer: document.getElementById('inc-footer').checked,
+                incluir_links: document.getElementById('inc-links').checked,
+            };
+        }
+
+        function mostrarProgreso(pct, msg) {
+            progresoSeccion.style.display = 'block';
+            barraProgreso.style.width = pct + '%';
+            progresoMensaje.textContent = msg;
+            progresoPorcentaje.textContent = pct + '%';
+        }
+
+        function ocultarProgreso() {
+            progresoSeccion.style.display = 'none';
+        }
+
+        function mostrarError(msg) {
+            mensajeEstado.className = 'status-message error';
+            mensajeEstado.textContent = msg;
+            mensajeEstado.style.display = 'block';
+        }
+
+        function mostrarExito(msg) {
+            mensajeEstado.className = 'status-message success';
+            mensajeEstado.textContent = msg;
+            mensajeEstado.style.display = 'block';
+        }
+
+        function ocultarMensaje() {
+            mensajeEstado.style.display = 'none';
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

@@ -863,6 +863,129 @@ def convertir_extract_pages():
     return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
 
 
+@bp.route('/scrape-url', methods=['POST'])
+def convertir_scrape_url():
+    """
+    Extrae contenido estructurado de una URL (Etapa 16).
+
+    Espera JSON:
+    - url: URL de la pagina a scrapear
+    - opciones:
+        - formato_salida: 'markdown' | 'texto'
+        - incluir_metadatos: bool
+        - incluir_contenido: bool
+        - incluir_footer: bool
+        - incluir_links: bool
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    url = datos.get('url')
+    opciones = datos.get('opciones', {})
+
+    if not url:
+        return respuesta_error('MISSING_URL', 'Se requiere URL')
+
+    # Validar URL
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return respuesta_error('INVALID_URL', 'La URL debe comenzar con http:// o https://')
+        if not parsed.netloc:
+            return respuesta_error('INVALID_URL', 'URL invalida')
+    except Exception:
+        return respuesta_error('INVALID_URL', 'URL invalida')
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=None,
+            tipo_conversion='scrape-url',
+            parametros={'url': url, 'opciones': opciones}
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Extraccion de contenido iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo scrape-url: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/scrape-url/preview', methods=['POST'])
+def preview_scrape_url():
+    """
+    Genera una vista previa rapida del contenido que se extraeria de la URL.
+    Devuelve metadatos, muestra del contenido, footer y lista de links
+    sin crear un trabajo en cola (respuesta sincrona).
+
+    Espera JSON:
+    - url: URL de la pagina
+    - opciones: Opciones de extraccion
+
+    Retorna:
+    - Datos estructurados: metadatos, contenido_muestra, footer, links
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    url = datos.get('url')
+    opciones = datos.get('opciones', {})
+
+    if not url:
+        return respuesta_error('MISSING_URL', 'Se requiere URL')
+
+    try:
+        from services.web_scraper import (
+            _verificar_dependencias,
+            _descargar_pagina,
+            _extraer_metadatos,
+            _extraer_contenido_body,
+            _extraer_footer,
+            _extraer_links,
+            _eliminar_enlaces_markdown,
+        )
+        from bs4 import BeautifulSoup
+
+        _verificar_dependencias()
+
+        html, url_final = _descargar_pagina(url)
+        soup = BeautifulSoup(html, 'lxml')
+
+        metadatos = _extraer_metadatos(soup, url_final)
+        formato = opciones.get('formato_salida', 'markdown')
+        contenido = _extraer_contenido_body(html, url_final, formato)
+        if formato == 'markdown' and opciones.get('eliminar_enlaces', False):
+            contenido = _eliminar_enlaces_markdown(contenido)
+        footer = _extraer_footer(soup)
+        links = _extraer_links(soup, url_final)
+
+        return respuesta_exitosa({
+            'metadatos': metadatos,
+            'contenido_muestra': contenido[:1500],  # solo muestra para preview
+            'footer': footer,
+            'links': links,
+        }, 'Vista previa generada')
+
+    except ValueError as e:
+        return respuesta_error('SCRAPE_ERROR', str(e), 400)
+    except Exception as e:
+        logger.error(f"Error generando preview scrape: {e}")
+        return respuesta_error('SCRAPE_ERROR', str(e), 500)
+
+
 @bp.route('/reorder', methods=['POST'])
 def convertir_reorder():
     """

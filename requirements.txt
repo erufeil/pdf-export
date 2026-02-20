@@ -26,6 +26,12 @@ WeasyPrint==60.1
 pydyf>=0.5.0,<0.11.0
 requests==2.31.0
 
+# Web scraping (Etapa 16)
+beautifulsoup4==4.12.3
+trafilatura==1.12.0
+markdownify==0.13.1
+lxml>=5.2.2
+
 # Utilidades
 python-dateutil==2.8.2
 python-dotenv==1.0.0

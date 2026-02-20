@@ -14,12 +14,16 @@ Servicio de conversion de archivos PDF a distintos formatos, calidades o caracte
 - Frontend: HTML5 + CSS3 + JavaScript Vanilla (sin frameworks)
 - Sin Node.js ni herramientas de build
 
-## Librerías Python: 
+## Librerías Python:
 - PyMuPDF (fitz): manipulación general, rápido
 - pdf2image + poppler: conversión a imágenes
 - pdfminer.six: extracción de texto
 - python-docx: generación de DOCX
 - weasyprint
+- beautifulsoup4: parsing HTML (scraper)
+- trafilatura: extracción de contenido principal de páginas web (scraper)
+- markdownify: conversión HTML → Markdown (scraper)
+- lxml: parser HTML rápido requerido por beautifulsoup4 y trafilatura
 
 
 ## Otras Librerías / programas
@@ -758,8 +762,112 @@ Designar al nombre del archivo como : `tabla_pag{N}_{M}_{titulo_de_la_tabla}` (p
 - PDFs escaneados (solo imagen): informar al usuario que no hay tablas extraíbles
 - Detección de "mismo esquema": mismas cabeceras en mismo orden (normalizado: strip + lowercase)
 - opcion "unificar_iguales": si las tablas tienen las mismas cabeceras unificarlas en un solo archivo sin repetir cabecera (comparar strings de cada nombre sin espacios). Si el orden de las columnas difiere no unificar
+
 ---
 
+### Etapa 16. Web Scraper de Contenido
+
+## Nombre del boton para index.html
+                        <div class="card-icon">SCR</div>
+                        <h3>Scraper Web</h3>
+                        <p>Extraer contenido para IA</p>
+
+**Página:** `static/web-scraper.html`
+
+**Descripción:** Extrae contenido estructurado de una URL para procesamiento con IA o inserción manual en documentos. Genera un TXT organizado en secciones: metadatos del header, cuerpo principal en Markdown o texto plano, información de contacto del footer y lista de links.
+
+## Objetivo
+Scrapear una página web y devolver su contenido de forma limpia y estructurada, eliminando navegación, publicidad y elementos decorativos. Ideal para procesar artículos, documentación y noticias con una IA o para copiar manualmente a DOCX.
+
+## Stack de librerías (por capa)
+- **HTTP:** `requests` (ya en requirements)
+- **Parsing HTML:** `beautifulsoup4` + `lxml`
+- **Extracción de contenido principal:** `trafilatura` (estado del arte en "boilerplate removal", elimina nav/ads/sidebar automáticamente, detecta fecha/autor)
+- **HTML → Markdown:** `markdownify` (preserva links, negritas, listas, tablas)
+
+**Interfaz de usuario:**
+1. Campo de URL: [https://________________________]
+2. Botón "Previsualizar" (llamada sincrona, muestra tabs con resultado parcial)
+3. Tabs de preview: Metadatos | Contenido | Footer | Links
+4. Opciones:
+   - Formato del cuerpo: [Markdown (ideal para IA) | Texto plano]
+   - Secciones a incluir: [x] Metadatos [x] Contenido [x] Footer [x] Links
+5. Botón "Extraer y Descargar ZIP"
+
+**Endpoint principal:** `POST /api/v1/convert/scrape-url`
+
+**Endpoint de preview (sincrono):** `POST /api/v1/convert/scrape-url/preview`
+
+**Parámetros:**
+```json
+{
+    "url": "https://ejemplo.com/articulo",
+    "opciones": {
+        "formato_salida": "markdown",
+        "incluir_metadatos": true,
+        "incluir_contenido": true,
+        "incluir_footer": true,
+        "incluir_links": true
+    }
+}
+```
+
+## Estructura del TXT generado
+```
+================================================================================
+METADATOS
+================================================================================
+Titulo:      El titulo del articulo
+URL:         https://ejemplo.com/articulo
+Sitio:       ejemplo.com
+Fecha:       2024-01-15
+Autor:       Juan Perez
+Descripcion: Resumen de 160 caracteres...
+
+================================================================================
+CONTENIDO PRINCIPAL (Markdown)
+================================================================================
+## Titulo del articulo
+
+Primer parrafo del contenido limpio...
+
+### Subtitulo
+
+Mas contenido con **texto en negrita** y [links](https://url.com)...
+
+================================================================================
+FOOTER / CONTACTO
+================================================================================
+Correos:    contacto@empresa.com, info@empresa.com
+Telefonos:  +54 11 1234-5678
+Texto del footer: Empresa SRL | Av. Corrientes 1234, CABA
+
+================================================================================
+LINKS (N encontrados)
+================================================================================
+- Titulo del link: https://url.com
+```
+
+## Logica de extraccion de metadatos
+Prioridades (de mayor a menor):
+- Titulo: og:title > title tag
+- URL: canonical link > og:url > URL original
+- Fecha: article:published_time > meta date > time[itemprop=datePublished]
+- Autor: article:author > meta author > span[itemprop=author] > a[rel=author]
+- Descripcion: og:description > meta description
+
+## Logica de extraccion del footer
+- Busca etiquetas `<footer>` y elementos con id/class que contengan "footer", "contact", "contacto", "about", "pie"
+- Aplica regex para emails: `[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`
+- Aplica regex para telefonos: números con >= 7 dígitos
+
+**Consideraciones:**
+- Timeout de 30 segundos para descargar la página
+- Funciona mejor con artículos, blogs, noticias y documentación
+- Páginas con login obligatorio o 100% dinámicas (SPA sin SSR) no funcionarán
+- El archivo resultado es un ZIP con un TXT (CRLF, compatible Notepad Windows)
+
+---
 ## Resumen de Etapas
 
 | Etapa | Servicio | Complejidad | Dependencias |
@@ -777,6 +885,9 @@ Designar al nombre del archivo como : `tabla_pag{N}_{M}_{titulo_de_la_tabla}` (p
 | 11 | Unir PDFs | Baja | PyMuPDF |
 | 12 | Extraer páginas | Baja | PyMuPDF |
 | 13 | Reordenar páginas | Media | PyMuPDF |
+| 14 | Migrar SQL (NDM2) | Media | json stdlib |
+| 15 | PDF a CSV (tablas) | Media | pdfplumber, PyMuPDF |
+| 16 | Web Scraper de Contenido | Media | beautifulsoup4, trafilatura, markdownify |
 
 ---
 
@@ -883,6 +994,8 @@ PDFexport/
 | `POST` | `/api/v1/convert/merge` | Unir múltiples PDFs |
 | `POST` | `/api/v1/convert/extract-pages` | Extraer páginas específicas |
 | `POST` | `/api/v1/convert/reorder` | Reordenar páginas |
+| `POST` | `/api/v1/convert/scrape-url` | Scrapear URL → TXT estructurado (Etapa 16) |
+| `POST` | `/api/v1/convert/scrape-url/preview` | Vista previa sincrona del scraping |
 
 ### Endpoints de Trabajos
 
@@ -1475,6 +1588,9 @@ quiero que cargue el pdf a separar en partes, y que mientras se carga me muestre
 | 11 | Unir PDFs | Baja | PyMuPDF |
 | 12 | Extraer páginas | Baja | PyMuPDF |
 | 13 | Reordenar páginas | Media | PyMuPDF |
+| 14 | Migrar SQL (NDM2) | Media | json stdlib |
+| 15 | PDF a CSV (tablas) | Media | pdfplumber, PyMuPDF |
+| 16 | Web Scraper de Contenido | Media | beautifulsoup4, trafilatura, markdownify |
 
 ---
 
@@ -1581,6 +1697,8 @@ PDFexport/
 | `POST` | `/api/v1/convert/merge` | Unir múltiples PDFs |
 | `POST` | `/api/v1/convert/extract-pages` | Extraer páginas específicas |
 | `POST` | `/api/v1/convert/reorder` | Reordenar páginas |
+| `POST` | `/api/v1/convert/scrape-url` | Scrapear URL → TXT estructurado (Etapa 16) |
+| `POST` | `/api/v1/convert/scrape-url/preview` | Vista previa sincrona del scraping |
 
 ### Endpoints de Trabajos
 
