@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.14')
+VERSION = os.getenv('APP_VERSION', '1.1.15')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()

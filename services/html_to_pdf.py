@@ -56,10 +56,12 @@ except (ImportError, OSError) as e:
 TIMEOUT_PAGINA = 30
 
 # Timeout para cada recurso individual (imagenes, CSS, fonts)
-TIMEOUT_RECURSO = 8
+# 3s es suficiente: si un recurso no responde rapido, no vale la pena esperarlo
+TIMEOUT_RECURSO = 3
 
 # Timeout total para toda la conversion incluyendo renderizado (segundos)
-TIMEOUT_TOTAL = 90
+# Sitios pesados como portales de noticias pueden tardar mas de 90s
+TIMEOUT_TOTAL = 180
 
 # User-Agent para simular navegador
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -207,6 +209,8 @@ def _crear_url_fetcher(url_principal: str):
         except Exception:
             pass
 
+        logger.debug(f"Descargando recurso ({timeout_actual}s): {url[:100]}")
+
         try:
             headers = {'User-Agent': USER_AGENT}
             respuesta = requests.get(
@@ -219,6 +223,7 @@ def _crear_url_fetcher(url_principal: str):
 
             # Detectar tipo de contenido
             content_type = respuesta.headers.get('Content-Type', 'text/html')
+            logger.debug(f"OK {len(respuesta.content)} bytes [{content_type.split(';')[0].strip()}]: {url[:80]}")
 
             return {
                 'string': respuesta.content,
@@ -231,14 +236,14 @@ def _crear_url_fetcher(url_principal: str):
             if es_pagina_principal:
                 raise ValueError(f"Timeout al descargar la pagina principal (limite: {TIMEOUT_PAGINA}s)")
             # Para recursos secundarios, devolver vacio para que no falle todo
-            logger.warning(f"Timeout descargando recurso (omitido): {url[:100]}")
+            logger.warning(f"TIMEOUT ({timeout_actual}s) recurso omitido: {url[:100]}")
             return {'string': b'', 'mime_type': 'text/plain'}
 
         except requests.RequestException as e:
             if es_pagina_principal:
                 raise ValueError(f"Error al descargar la pagina: {str(e)}")
             # Omitir recursos que fallan
-            logger.warning(f"Error descargando recurso (omitido): {url[:100]} - {e}")
+            logger.warning(f"ERROR recurso omitido: {url[:100]} - {e}")
             return {'string': b'', 'mime_type': 'text/plain'}
 
     return url_fetcher
