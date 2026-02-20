@@ -21,8 +21,9 @@ pdfminer.six==20221105
 python-docx==1.1.0
 
 # HTML a PDF
-# WeasyPrint 62+ es compatible con pydyf>=0.11.0 (en 60.x habia incompatibilidad)
-WeasyPrint==62.3
+# WeasyPrint 60.1 requiere pydyf<0.11.0 (en 0.11.0 cambiaron PDF.__init__)
+WeasyPrint==60.1
+pydyf>=0.5.0,<0.11.0
 requests==2.31.0
 
 # Utilidades
