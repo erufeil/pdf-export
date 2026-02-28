@@ -94,7 +94,7 @@ pip install -r requirements.txt
 Descargar zip de: https://github.com/oschwartz10612/poppler-windows/releases
 Copiar la carpeta `bin` en `venv/poppler/`, quedando asi:
 
-```
+```bash
 venv/
 └── poppler/
     └── Library/
@@ -156,7 +156,7 @@ Para cambiarla sin recompilar la imagen Docker, pasar la variable de entorno `AP
 
 ## Estructura del Proyecto
 
-```
+```yaml
 PDFexport/
 ├── app.py                    # Aplicacion Flask principal
 ├── config.py                 # Configuracion Python (incluye VERSION)

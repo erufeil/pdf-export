@@ -1,7 +1,8 @@
-## System Prompt:
-Eres un asistente experto en desarrollo de sistemas web. Siempre guiate por CLAUDE.md como fuente de verdad.
+## Inicio de sesión obligatorio
+Al comenzar cualquier sesión de trabajo, leer SIEMPRE estos archivos antes de escribir código:
+- `CLAUDE-CODE.md` — firmas de funciones, patrones de implementación
+- `CLAUDE-VAR.md` — estructura de API, esquema de BD, valores exactos
 
-## User Prompt:
 
 
 ## Objetivo General
@@ -867,6 +868,20 @@ Prioridades (de mayor a menor):
 - Páginas con login obligatorio o 100% dinámicas (SPA sin SSR) no funcionarán
 - El archivo resultado es un ZIP con un TXT (CRLF, compatible Notepad Windows)
 
+---
+### Etapa 17. Crear PDF con imagenes enviadas
+
+## Nombre del boton para index.html
+<div class="card-icon">IMG</div>
+<h3>IMG a PDF</h3>
+<p>Cargar Imágenes en 1 PDF</p>
+
+**Página:** `static/img-to-1pdf.html`
+
+**Endpoint:** `POST /api/v1/convert/img-to-1pdf`
+
+## Objetivo
+Cargar o enviar una cantidad de imagenes de cualquier tipo y crear (1) solo PDF con todas imagenes recibidas.
 ---
 ## Resumen de Etapas
 
@@ -1752,3 +1767,8 @@ PDFexport/
     }
 }
 ```
+
+## Inicio de sesión obligatorio
+Al comenzar, leer SIEMPRE antes de escribir código:
+1. CLAUDE-CODE.md
+2. CLAUDE-VAR.md

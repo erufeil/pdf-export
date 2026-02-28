@@ -17,7 +17,7 @@ from api import routes_files, routes_jobs, routes_convert
 from utils import job_manager, file_manager
 
 # Importar servicios para registrar procesadores
-from services import pdf_split, pdf_to_txt, pdf_to_docx, pdf_to_images, pdf_extract_images, pdf_compress, pdf_rotate, html_to_pdf, ndm_to_tables_seq, pdf_merge, web_scraper
+from services import pdf_split, pdf_to_txt, pdf_to_docx, pdf_to_images, pdf_extract_images, pdf_compress, pdf_rotate, html_to_pdf, ndm_to_tables_seq, pdf_merge, pdf_extract_pages, pdf_reorder, web_scraper, pdf_to_csv
 
 # Configurar logging
 logging.basicConfig(

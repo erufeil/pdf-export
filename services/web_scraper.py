@@ -184,7 +184,7 @@ def _extraer_contenido_body(html: str, url: str, formato: str) -> str:
 
     # DEBUG TEMPORAL: ver output crudo de trafilatura antes del post-procesado
     if contenido:
-        logger.debug(f"[trafilatura RAW] primeros 800 chars:\n{contenido[:800]!r}")
+        logger.info(f"[trafilatura RAW] primeros 800 chars:\n{contenido[:800]!r}")
     else:
         logger.warning(f"[trafilatura RAW] retorno vacio para {url[:60]}")
 
@@ -207,6 +207,33 @@ def _extraer_contenido_body(html: str, url: str, formato: str) -> str:
         contenido = re.sub(r'\n{3,}', '\n\n', contenido)
 
     if contenido and formato == 'markdown':
+        # Caracter guardian: STX (0x02), nunca aparece en texto web normal.
+        # Se inserta antes de viñetas para excluirlas del Paso 3 y se elimina al final.
+        _G = '\x02'
+
+        # --- Paso 0: Proteger viñetas y titulos de lista del Paso 3 ---
+        # El Paso 3 une "\n\n[link]" cuando el char previo no es puntuacion segura.
+        # Insertar _G justo antes del \n\n de una vineta hace que Paso 3 lo ignore.
+        #
+        # Caso A: viñeta con marcador (* o -):
+        #   "texto\n\n* item" → "texto\x02\n\n* item"
+        # Nota: el reemplazo usa lambda porque \x02 no es valido en strings de reemplazo de re.sub
+        contenido = re.sub(
+            r'([^.!?:\n#\x02])\n\n([*\-] )',
+            lambda m: m.group(1) + _G + '\n\n' + m.group(2),
+            contenido
+        )
+        # Caso B: titulo-lista SIN marcador "[Link](url): descripcion"
+        #   La presencia de ":" justo despues de la URL indica que es un titulo,
+        #   no un link inline. Comparar:
+        #     "[Adenina](url): desc"  → titulo de lista → proteger
+        #     "[virus](url) en el"    → link inline     → NO proteger (se une en Paso 3)
+        contenido = re.sub(
+            r'([^.!?:\n#\x02])\n\n(\[[^\]]+\]\([^)]+\)\s*:)',
+            lambda m: m.group(1) + _G + '\n\n' + m.group(2),
+            contenido
+        )
+
         # --- Paso 1: Decodificar URLs percent-encoded en links Markdown ---
         # ej: [Ácido](%C3%81cido) → URL legible con acentos
         contenido = re.sub(
@@ -221,14 +248,14 @@ def _extraer_contenido_body(html: str, url: str, formato: str) -> str:
         contenido = re.sub(r'\[\[\d+\]\]\([^)]+\)', '', contenido)
         contenido = re.sub(r' ?\[\d+\] ?', ' ', contenido)
 
-        # --- Paso 3: Unir doble salto (\n\n) solo antes de "*" itálica corta inline ---
-        # SOLO une \n\n antes de "*" (itálica de una letra como *A*, *T*, *C*, *G*).
-        # NO une \n\n antes de "[" porque \n\n[link] puede ser el inicio de una
-        # viñeta o titulo de lista, y unirlo destruiría esa estructura.
-        # ej: "→\n\n*A*"   → "→ *A*"    ← correcto: *A* es inline
-        # ej: "texto\n\n[Adenina](url): desc" → SIN CAMBIO ← correcto: es un titulo de lista
-        # \*(?!\s|\*) excluye listas "* item" (espacio) y negrita "**bold**" (asterisco)
-        contenido = re.sub(r'([^.!?:\n#])\n\n(\*(?!\s|\*))', r'\1 \2', contenido)
+        # --- Paso 3: Unir doble salto (\n\n) antes de "[" o "*" inline en medio de oracion ---
+        # Cuando la linea anterior NO termina en puntuacion de fin de oracion
+        # (.  !  ?  :  #  \x02) el \n\n es falso inicio de parrafo (artefacto de trafilatura).
+        # \x02 tambien excluido: protege viñetas insertadas en Paso 0.
+        # ej: "→\n\n*A*"           → "→ *A*"       (inline, se une)
+        # ej: "algunos\n\n[virus]" → "algunos [virus]" (inline, se une)
+        # ej: "texto\x02\n\n* item"→ sin cambio    (viñeta protegida, NO se une)
+        contenido = re.sub(r'([^.!?:\n#\x02])\n\n(\[|\*(?!\s|\*))', r'\1 \2', contenido)
 
         # --- Paso 4: Unir salto SIMPLE (\n) antes de "[" o "*" inline ---
         # Un salto simple dentro de un bloque es continuacion, no parrafo nuevo.
@@ -252,6 +279,9 @@ def _extraer_contenido_body(html: str, url: str, formato: str) -> str:
 
         # --- Paso 6: Limpiar espacios multiples generados por los pasos anteriores ---
         contenido = re.sub(r'  +', ' ', contenido)
+
+        # --- Paso 7: Eliminar el caracter guardian (ya cumplio su funcion) ---
+        contenido = contenido.replace(_G, '')
 
     return contenido or '(No se pudo extraer contenido principal)'
 

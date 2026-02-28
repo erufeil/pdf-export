@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reordenar Paginas - PDF-Export & Import</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 260px;
+            gap: 30px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        .options-panel {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--color-border);
+        }
+        .options-panel h4 {
+            margin: 0 0 14px 0;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .option-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .option-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* Info del archivo */
+        .file-info-card {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+        .file-info-card h3 { margin: 0 0 8px 0; font-size: 1rem; }
+        .file-info-meta { display: flex; gap: 20px; flex-wrap: wrap; }
+        .file-info-meta span { font-size: 0.85rem; color: var(--color-text-secondary); }
+
+        /* Grilla de miniaturas drag & drop */
+        .thumbnails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .thumb-item {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            user-select: none;
+            position: relative;
+        }
+        .thumb-item:active { cursor: grabbing; }
+        .thumb-item.seleccionada {
+            border-color: var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+        }
+        .thumb-item.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+        .thumb-item.drag-over {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 40%, transparent);
+            transform: scale(1.03);
+        }
+
+        .thumb-img {
+            width: 100%;
+            aspect-ratio: 0.707; /* A4 */
+            object-fit: contain;
+            background: #fff;
+            border-radius: 4px;
+            display: block;
+        }
+        .thumb-img-placeholder {
+            width: 100%;
+            aspect-ratio: 0.707;
+            background: #f0f0f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 0.75rem;
+        }
+
+        .thumb-num {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+        .thumb-check {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.7rem;
+        }
+        .thumb-item.seleccionada .thumb-check { display: flex; }
+
+        /* Acciones rapidas */
+        .acciones-rapidas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .acciones-rapidas button {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+
+        /* Paginador */
+        .paginador {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            font-size: 0.875rem;
+        }
+        .paginador button {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+        }
+
+        /* Vista de lista compacta para docs grandes */
+        .vista-lista {
+            display: none;
+        }
+        .vista-lista.activa {
+            display: block;
+        }
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: grab;
+        }
+        .list-item:active { cursor: grabbing; }
+        .list-item.dragging { opacity: 0.4; }
+        .list-item.drag-over {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+        }
+        .list-item.seleccionada {
+            border-color: var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+        }
+        .list-drag-handle {
+            color: var(--color-text-secondary);
+            font-size: 1.1rem;
+            cursor: grab;
+        }
+        .list-num {
+            font-weight: 600;
+            min-width: 30px;
+        }
+        .list-label { flex: 1; font-size: 0.875rem; }
+        .list-check {
+            width: 18px;
+            height: 18px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.65rem;
+        }
+        .list-item.seleccionada .list-check { display: flex; }
+
+        /* Mover a posicion */
+        .mover-pos {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .mover-pos input {
+            width: 70px;
+            text-align: center;
+        }
+        .mover-pos label { font-size: 0.85rem; }
+
+        /* Toggle vista */
+        .toggle-vista {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .toggle-vista button {
+            font-size: 0.8rem;
+            padding: 5px 14px;
+        }
+        .toggle-vista button.activo {
+            background: var(--color-primary);
+            color: #fff;
+            border-color: var(--color-primary);
+        }
+
+        /* Resumen */
+        .resumen-box {
+            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+            border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+        }
+        .resumen-box span { font-weight: 600; color: var(--color-primary); }
+
+        /* Zona de carga */
+        .upload-zone {
+            border: 2px dashed var(--color-border);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 20px;
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+        }
+        .upload-zone p { margin: 8px 0 0 0; color: var(--color-text-secondary); font-size: 0.9rem; }
+
+        /* Archivos del servidor */
+        .server-files { margin-bottom: 20px; }
+        .server-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .server-file-item:hover { border-color: var(--color-primary); }
+        .server-file-item.activo { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
+        .server-file-info { font-size: 0.85rem; }
+        .server-file-name { font-weight: 500; }
+        .server-file-meta { color: var(--color-text-secondary); font-size: 0.78rem; }
+
+        /* Progreso */
+        .progress-section { margin-top: 20px; }
+        .progress-bar-wrap {
+            background: var(--color-border);
+            border-radius: 99px;
+            height: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        .progress-msg { font-size: 0.85rem; color: var(--color-text-secondary); }
+
+        .section-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-secondary);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-content">
+            <a href="/" class="site-logo">
+                <span class="logo-icon">PDF</span>
+                <span class="logo-text">Export &amp; Import</span>
+            </a>
+            <nav class="header-nav">
+                <a href="/" class="nav-link">← Inicio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Reordenar Paginas</h1>
+            <p class="page-desc">Arrastra las miniaturas para cambiar el orden de las paginas del PDF.</p>
+        </div>
+
+        <!-- Zona de carga -->
+        <div id="upload-section">
+            <div class="upload-zone" id="drop-zone">
+                <div style="font-size:2.5rem">📄</div>
+                <strong>Arrastra un PDF aqui o haz click para seleccionar</strong>
+                <p>Maximo 1 GB</p>
+                <input type="file" id="file-input" accept=".pdf" style="display:none">
+            </div>
+
+            <!-- Archivos disponibles en el servidor -->
+            <div id="server-files-section" class="server-files" style="display:none">
+                <div class="section-label">Archivos disponibles en el servidor</div>
+                <div id="server-files-list"></div>
+            </div>
+
+            <!-- Barra de progreso de subida -->
+            <div id="upload-progress" style="display:none" class="progress-section">
+                <div class="progress-msg" id="upload-msg">Subiendo...</div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="upload-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seccion principal (oculta hasta cargar PDF) -->
+        <div id="main-section" style="display:none">
+            <div class="content-grid">
+                <!-- Columna izquierda: miniaturas -->
+                <div>
+                    <div class="file-info-card">
+                        <h3 id="nombre-archivo">—</h3>
+                        <div class="file-info-meta">
+                            <span id="info-paginas">—</span>
+                            <span id="info-tamano">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Acciones rapidas -->
+                    <div class="acciones-rapidas">
+                        <button class="btn btn-secondary" onclick="seleccionarTodas()">Seleccionar todas</button>
+                        <button class="btn btn-secondary" onclick="deseleccionarTodas()">Deseleccionar</button>
+                        <button class="btn btn-secondary" onclick="invertirOrden()">Invertir orden</button>
+                        <button class="btn btn-secondary" onclick="restaurarOrden()">Restaurar original</button>
+                        <button class="btn btn-secondary" onclick="moverSelAlInicio()">↑ Sel. al inicio</button>
+                        <button class="btn btn-secondary" onclick="moverSelAlFinal()">↓ Sel. al final</button>
+                    </div>
+
+                    <!-- Toggle grilla/lista (visible solo para docs grandes) -->
+                    <div class="toggle-vista" id="toggle-vista" style="display:none">
+                        <button class="activo" id="btn-grilla" onclick="cambiarVista('grilla')">Grilla</button>
+                        <button id="btn-lista" onclick="cambiarVista('lista')">Lista compacta</button>
+                    </div>
+
+                    <!-- Grilla de miniaturas -->
+                    <div id="thumbnails-grid" class="thumbnails-grid"></div>
+
+                    <!-- Vista de lista compacta (docs grandes) -->
+                    <div id="vista-lista" class="vista-lista">
+                        <div id="list-items"></div>
+                        <!-- Mover a posicion -->
+                        <div class="mover-pos">
+                            <label>Mover pagina</label>
+                            <input type="number" id="mover-desde" min="1" placeholder="N°">
+                            <label>a posicion</label>
+                            <input type="number" id="mover-hasta" min="1" placeholder="N°">
+                            <button class="btn btn-secondary" onclick="moverAPosicion()">Aplicar</button>
+                        </div>
+                    </div>
+
+                    <!-- Paginador (grilla) -->
+                    <div class="paginador" id="paginador" style="display:none">
+                        <button class="btn btn-secondary" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
+                        <span id="paginador-info">Paginas 1-20 de 45</span>
+                        <button class="btn btn-secondary" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
+                    </div>
+                </div>
+
+                <!-- Columna derecha: opciones y acciones -->
+                <div>
+                    <div class="options-panel">
+                        <div class="option-section">
+                            <h4>Resumen</h4>
+                            <div class="resumen-box" id="resumen-box">
+                                <span id="resumen-sel">0</span> paginas seleccionadas<br>
+                                Orden actual: <span id="resumen-cambios">sin cambios</span>
+                            </div>
+                        </div>
+
+                        <div class="option-section">
+                            <button class="btn btn-primary" style="width:100%" onclick="aplicarNuevoOrden()" id="btn-aplicar" disabled>
+                                Aplicar Nuevo Orden
+                            </button>
+                            <p style="font-size:0.78rem; color:var(--color-text-secondary); margin:8px 0 0 0; text-align:center">
+                                Descarga automatica al terminar
+                            </p>
+                        </div>
+
+                        <!-- Progreso del trabajo -->
+                        <div id="job-progress" style="display:none" class="option-section">
+                            <h4>Progreso</h4>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" id="job-bar"></div>
+                            </div>
+                            <div class="progress-msg" id="job-msg">Procesando...</div>
+                        </div>
+
+                        <div class="option-section">
+                            <button class="btn btn-secondary" style="width:100%; font-size:0.8rem"
+                                    onclick="cambiarArchivo()">Cambiar archivo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+    // ==================== ESTADO ====================
+    let archivoId = null;
+    let numPaginasTotal = 0;
+    let nombreArchivo = '';
+    // ordenActual: array de objetos {paginaOriginal, label}
+    // paginaOriginal: numero 1-indexed de la pagina en el PDF original
+    let ordenActual = [];
+    let seleccionadas = new Set(); // indices en ordenActual
+
+    // Paginacion de grilla
+    const THUMB_POR_PAGINA = 20;
+    let paginaGrilla = 0; // 0-indexed
+
+    // Vista actual
+    let vistaActual = 'grilla'; // 'grilla' | 'lista'
+
+    // Drag & drop state
+    let dragSrcIdx = null; // indice en ordenActual del elemento que se arrastra
+
+    // API base
+    const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', () => {
+        configurarDropZone();
+        cargarArchivosServidor();
+    });
+
+    // ==================== UPLOAD ====================
+    function configurarDropZone() {
+        const zone = document.getElementById('drop-zone');
+        const input = document.getElementById('file-input');
+
+        zone.addEventListener('click', () => input.click());
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            const f = e.dataTransfer.files[0];
+            if (f && f.type === 'application/pdf') procesarArchivo(f);
+        });
+        input.addEventListener('change', () => {
+            if (input.files[0]) procesarArchivo(input.files[0]);
+        });
+    }
+
+    async function cargarArchivosServidor() {
+        try {
+            const r = await fetch(`${API}/files`);
+            const data = await r.json();
+            const archivos = data.data?.archivos || [];
+            if (!archivos.length) return;
+
+            const sec = document.getElementById('server-files-section');
+            const lista = document.getElementById('server-files-list');
+            sec.style.display = 'block';
+
+            archivos.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'server-file-item';
+                div.dataset.id = a.id;
+                div.innerHTML = `
+                    <div class="server-file-info">
+                        <div class="server-file-name">${a.nombre_original}</div>
+                        <div class="server-file-meta">${a.num_paginas} pags · ${formatearTamano(a.tamano_bytes)}</div>
+                    </div>
+                    <button class="btn btn-secondary" style="font-size:0.78rem;padding:4px 10px">Usar</button>`;
+                div.querySelector('button').addEventListener('click', () => seleccionarArchivoServidor(a));
+                lista.appendChild(div);
+            });
+        } catch (e) {
+            console.warn('No se pudieron cargar archivos del servidor:', e);
+        }
+    }
+
+    function seleccionarArchivoServidor(archivo) {
+        archivoId = archivo.id;
+        numPaginasTotal = archivo.num_paginas;
+        nombreArchivo = archivo.nombre_original;
+        iniciarVistaReorder(archivo.tamano_bytes);
+    }
+
+    async function procesarArchivo(file) {
+        // Verificar duplicado en servidor
+        const archivosR = await fetch(`${API}/files`).then(r => r.json()).catch(() => ({ data: { archivos: [] } }));
+        const existente = (archivosR.data?.archivos || []).find(
+            a => a.nombre_original === file.name && a.tamano_bytes === file.size
+        );
+        if (existente) {
+            archivoId = existente.id;
+            numPaginasTotal = existente.num_paginas;
+            nombreArchivo = existente.nombre_original;
+            iniciarVistaReorder(existente.tamano_bytes);
+            return;
+        }
+
+        // Subir
+        document.getElementById('upload-progress').style.display = 'block';
+        const upMsg = document.getElementById('upload-msg');
+        const upBar = document.getElementById('upload-bar');
+
+        const formData = new FormData();
+        formData.append('archivo', file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API}/upload`);
+        xhr.upload.onprogress = e => {
+            if (e.lengthComputable) {
+                const pct = Math.round(e.loaded / e.total * 100);
+                upBar.style.width = pct + '%';
+                upMsg.textContent = `Subiendo... ${pct}%`;
+            }
+        };
+        xhr.onload = () => {
+            document.getElementById('upload-progress').style.display = 'none';
+            const resp = JSON.parse(xhr.responseText);
+            if (resp.success) {
+                const a = resp.data;
+                archivoId = a.id;
+                numPaginasTotal = a.num_paginas;
+                nombreArchivo = a.nombre_original;
+                iniciarVistaReorder(a.tamano_bytes);
+            } else {
+                mostrarError('Error al subir: ' + (resp.error?.message || 'Error desconocido'));
+            }
+        };
+        xhr.onerror = () => {
+            document.getElementById('upload-progress').style.display = 'none';
+            mostrarError('Error de conexion al subir el archivo');
+        };
+        xhr.send(formData);
+    }
+
+    // ==================== INIT VISTA ====================
+    function iniciarVistaReorder(tamanoBytes) {
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('main-section').style.display = 'block';
+
+        document.getElementById('nombre-archivo').textContent = nombreArchivo;
+        document.getElementById('info-paginas').textContent = `${numPaginasTotal} paginas`;
+        document.getElementById('info-tamano').textContent = formatearTamano(tamanoBytes);
+
+        // Construir orden inicial (1, 2, 3, ... N)
+        ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({
+            paginaOriginal: i + 1,
+            label: `Pagina ${i + 1}`
+        }));
+        seleccionadas.clear();
+        paginaGrilla = 0;
+
+        // Mostrar toggle de vista para docs grandes
+        if (numPaginasTotal > 20) {
+            document.getElementById('toggle-vista').style.display = 'flex';
+        }
+
+        document.getElementById('btn-aplicar').disabled = false;
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    // ==================== RENDER ====================
+    function renderizarVista() {
+        if (vistaActual === 'grilla') {
+            renderizarGrilla();
+        } else {
+            renderizarLista();
+        }
+    }
+
+    function renderizarGrilla() {
+        const grid = document.getElementById('thumbnails-grid');
+        const paginador = document.getElementById('paginador');
+        grid.innerHTML = '';
+
+        const inicio = paginaGrilla * THUMB_POR_PAGINA;
+        const fin = Math.min(inicio + THUMB_POR_PAGINA, ordenActual.length);
+        const totalPaginas = Math.ceil(ordenActual.length / THUMB_POR_PAGINA);
+
+        // Paginador
+        if (totalPaginas > 1) {
+            paginador.style.display = 'flex';
+            document.getElementById('paginador-info').textContent =
+                `Paginas ${inicio + 1}-${fin} de ${ordenActual.length}`;
+            document.getElementById('btn-prev').disabled = paginaGrilla === 0;
+            document.getElementById('btn-next').disabled = paginaGrilla >= totalPaginas - 1;
+        } else {
+            paginador.style.display = 'none';
+        }
+
+        // Crear items
+        for (let i = inicio; i < fin; i++) {
+            const item = ordenActual[i];
+            const div = document.createElement('div');
+            div.className = 'thumb-item' + (seleccionadas.has(i) ? ' seleccionada' : '');
+            div.draggable = true;
+            div.dataset.idx = i;
+
+            div.innerHTML = `
+                <div class="thumb-img-placeholder" id="ph-${i}">Pag ${item.paginaOriginal}</div>
+                <div class="thumb-num">Pos ${i + 1} · Orig ${item.paginaOriginal}</div>
+                <div class="thumb-check">✓</div>`;
+
+            // Click para seleccionar/deseleccionar
+            div.addEventListener('click', () => toggleSeleccion(i));
+
+            // Drag & drop
+            div.addEventListener('dragstart', e => onDragStart(e, i));
+            div.addEventListener('dragover', e => onDragOver(e, i, div));
+            div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+            div.addEventListener('drop', e => onDrop(e, i));
+            div.addEventListener('dragend', () => limpiarDragClases());
+
+            grid.appendChild(div);
+
+            // Cargar miniatura
+            cargarMiniatura(item.paginaOriginal, `ph-${i}`, i);
+        }
+    }
+
+    function renderizarLista() {
+        const container = document.getElementById('list-items');
+        container.innerHTML = '';
+
+        ordenActual.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'list-item' + (seleccionadas.has(i) ? ' seleccionada' : '');
+            div.draggable = true;
+            div.dataset.idx = i;
+            div.innerHTML = `
+                <span class="list-drag-handle">⠿</span>
+                <span class="list-num">${i + 1}</span>
+                <span class="list-label">Pagina ${item.paginaOriginal}</span>
+                <span class="list-check">✓</span>`;
+
+            div.addEventListener('click', () => toggleSeleccion(i));
+            div.addEventListener('dragstart', e => onDragStart(e, i));
+            div.addEventListener('dragover', e => onDragOver(e, i, div));
+            div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+            div.addEventListener('drop', e => onDrop(e, i));
+            div.addEventListener('dragend', () => limpiarDragClases());
+
+            container.appendChild(div);
+        });
+
+        // Inputs de mover a posicion
+        document.getElementById('mover-desde').max = ordenActual.length;
+        document.getElementById('mover-hasta').max = ordenActual.length;
+    }
+
+    // Carga miniatura del servidor
+    async function cargarMiniatura(numPag, placeholderId, idx) {
+        const ph = document.getElementById(placeholderId);
+        if (!ph) return;
+        try {
+            const r = await fetch(`${API}/files/${archivoId}/thumbnail/${numPag}`);
+            if (!r.ok) return;
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const img = document.createElement('img');
+            img.className = 'thumb-img';
+            img.src = url;
+            img.alt = `Pagina ${numPag}`;
+            ph.replaceWith(img);
+        } catch (e) {
+            // Dejar placeholder si falla
+        }
+    }
+
+    // ==================== DRAG & DROP ====================
+    function onDragStart(e, idx) {
+        dragSrcIdx = idx;
+        e.dataTransfer.effectAllowed = 'move';
+        // Marcar el elemento como dragging despues de un tick (evita que afecte la imagen del drag)
+        setTimeout(() => {
+            const el = document.querySelector(`[data-idx="${idx}"]`);
+            if (el) el.classList.add('dragging');
+        }, 0);
+    }
+
+    function onDragOver(e, idx, el) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (idx !== dragSrcIdx) {
+            limpiarDragClases();
+            el.classList.add('drag-over');
+        }
+    }
+
+    function onDrop(e, targetIdx) {
+        e.preventDefault();
+        if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+
+        moverElemento(dragSrcIdx, targetIdx);
+        dragSrcIdx = null;
+    }
+
+    function limpiarDragClases() {
+        document.querySelectorAll('.dragging, .drag-over').forEach(el => {
+            el.classList.remove('dragging', 'drag-over');
+        });
+    }
+
+    // Mueve el elemento del indice src al indice dst en ordenActual
+    function moverElemento(srcIdx, dstIdx) {
+        const item = ordenActual.splice(srcIdx, 1)[0];
+        ordenActual.splice(dstIdx, 0, item);
+
+        // Actualizar seleccionadas
+        const nuevasSeleccionadas = new Set();
+        seleccionadas.forEach(s => {
+            if (s === srcIdx) {
+                nuevasSeleccionadas.add(dstIdx);
+            } else if (srcIdx < dstIdx) {
+                if (s > srcIdx && s <= dstIdx) nuevasSeleccionadas.add(s - 1);
+                else nuevasSeleccionadas.add(s);
+            } else {
+                if (s >= dstIdx && s < srcIdx) nuevasSeleccionadas.add(s + 1);
+                else nuevasSeleccionadas.add(s);
+            }
+        });
+        seleccionadas = nuevasSeleccionadas;
+
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    // ==================== SELECCION ====================
+    function toggleSeleccion(idx) {
+        if (seleccionadas.has(idx)) seleccionadas.delete(idx);
+        else seleccionadas.add(idx);
+        actualizarResumen();
+        // Re-render solo el item afectado para no recargar miniaturas
+        const el = document.querySelector(`[data-idx="${idx}"]`);
+        if (el) el.classList.toggle('seleccionada', seleccionadas.has(idx));
+    }
+
+    function seleccionarTodas() {
+        ordenActual.forEach((_, i) => seleccionadas.add(i));
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    function deseleccionarTodas() {
+        seleccionadas.clear();
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    // ==================== ACCIONES ====================
+    function invertirOrden() {
+        ordenActual.reverse();
+        // Las seleccionadas se invierten tambien
+        const n = ordenActual.length;
+        seleccionadas = new Set([...seleccionadas].map(i => n - 1 - i));
+        paginaGrilla = 0;
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    function restaurarOrden() {
+        ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({
+            paginaOriginal: i + 1,
+            label: `Pagina ${i + 1}`
+        }));
+        seleccionadas.clear();
+        paginaGrilla = 0;
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    function moverSelAlInicio() {
+        if (!seleccionadas.size) return;
+        const sel = ordenActual.filter((_, i) => seleccionadas.has(i));
+        const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
+        ordenActual = [...sel, ...resto];
+        seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => i));
+        paginaGrilla = 0;
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    function moverSelAlFinal() {
+        if (!seleccionadas.size) return;
+        const sel = ordenActual.filter((_, i) => seleccionadas.has(i));
+        const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
+        ordenActual = [...resto, ...sel];
+        const n = ordenActual.length;
+        seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => n - sel.length + i));
+        paginaGrilla = Math.floor((n - 1) / THUMB_POR_PAGINA);
+        renderizarVista();
+        actualizarResumen();
+    }
+
+    function moverAPosicion() {
+        const desde = parseInt(document.getElementById('mover-desde').value);
+        const hasta = parseInt(document.getElementById('mover-hasta').value);
+        if (isNaN(desde) || isNaN(hasta)) return;
+        if (desde < 1 || desde > ordenActual.length) return;
+        if (hasta < 1 || hasta > ordenActual.length) return;
+        moverElemento(desde - 1, hasta - 1);
+    }
+
+    function cambiarVista(v) {
+        vistaActual = v;
+        document.getElementById('thumbnails-grid').style.display = v === 'grilla' ? 'grid' : 'none';
+        document.getElementById('vista-lista').classList.toggle('activa', v === 'lista');
+        document.getElementById('paginador').style.display = (v === 'grilla') ? '' : 'none';
+        document.getElementById('btn-grilla').classList.toggle('activo', v === 'grilla');
+        document.getElementById('btn-lista').classList.toggle('activo', v === 'lista');
+        renderizarVista();
+    }
+
+    function cambiarPagina(delta) {
+        const total = Math.ceil(ordenActual.length / THUMB_POR_PAGINA);
+        paginaGrilla = Math.max(0, Math.min(paginaGrilla + delta, total - 1));
+        renderizarGrilla();
+    }
+
+    // ==================== RESUMEN ====================
+    function actualizarResumen() {
+        document.getElementById('resumen-sel').textContent = seleccionadas.size;
+        const esOriginal = ordenActual.every((item, i) => item.paginaOriginal === i + 1);
+        document.getElementById('resumen-cambios').textContent = esOriginal ? 'sin cambios' : 'modificado';
+    }
+
+    // ==================== EJECUTAR ====================
+    async function aplicarNuevoOrden() {
+        if (!archivoId) return;
+
+        const nuevoOrden = ordenActual.map(item => item.paginaOriginal);
+
+        document.getElementById('btn-aplicar').disabled = true;
+        document.getElementById('job-progress').style.display = 'block';
+        document.getElementById('job-bar').style.width = '0%';
+        document.getElementById('job-msg').textContent = 'Enviando trabajo...';
+
+        try {
+            const resp = await fetch(`${API}/convert/reorder`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_id: archivoId, nuevo_orden: nuevoOrden })
+            });
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.error?.message || 'Error al encolar');
+
+            const jobId = data.data.job_id;
+            esperarTrabajo(jobId);
+        } catch (e) {
+            mostrarError('Error: ' + e.message);
+            document.getElementById('btn-aplicar').disabled = false;
+            document.getElementById('job-progress').style.display = 'none';
+        }
+    }
+
+    function esperarTrabajo(jobId) {
+        const intervalo = setInterval(async () => {
+            try {
+                const r = await fetch(`${API}/jobs/${jobId}`);
+                const data = await r.json();
+                const job = data.data;
+
+                document.getElementById('job-bar').style.width = (job.progreso || 0) + '%';
+                document.getElementById('job-msg').textContent = job.mensaje || 'Procesando...';
+
+                if (job.estado === 'completado') {
+                    clearInterval(intervalo);
+                    document.getElementById('job-msg').textContent = '¡Listo! Descargando...';
+                    window.location.href = `${API}/download/${jobId}`;
+                    setTimeout(() => {
+                        document.getElementById('btn-aplicar').disabled = false;
+                    }, 2000);
+                } else if (job.estado === 'error') {
+                    clearInterval(intervalo);
+                    mostrarError('Error en el proceso: ' + (job.mensaje || 'Error desconocido'));
+                    document.getElementById('btn-aplicar').disabled = false;
+                }
+            } catch (e) {
+                clearInterval(intervalo);
+                mostrarError('Error de conexion al consultar el trabajo');
+                document.getElementById('btn-aplicar').disabled = false;
+            }
+        }, 1500);
+    }
+
+    // ==================== UTILS ====================
+    function formatearTamano(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function mostrarError(msg) {
+        alert(msg);
+    }
+
+    function cambiarArchivo() {
+        document.getElementById('main-section').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+        archivoId = null;
+        ordenActual = [];
+        seleccionadas.clear();
+    }
+    </script>
+</body>
+</html>

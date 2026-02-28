@@ -845,8 +845,12 @@ def convertir_merge():
 @bp.route('/extract-pages', methods=['POST'])
 def convertir_extract_pages():
     """
-    Extrae paginas especificas de un PDF.
-    (Placeholder para Etapa 12)
+    Extrae paginas especificas de un PDF (Etapa 12).
+
+    Espera JSON:
+    - file_id: ID del archivo PDF
+    - paginas: Lista de numeros de pagina [1, 3, 5, 6, ...]
+    - formato_salida: 'unico' (un PDF) | 'separados' (un PDF por pagina)
     """
     datos = request.get_json()
 
@@ -854,13 +858,38 @@ def convertir_extract_pages():
         return respuesta_error('NO_DATA', 'No se enviaron datos')
 
     archivo_id = datos.get('file_id')
-
     archivo, error = validar_archivo(archivo_id)
     if error:
         return error
 
-    # TODO: Implementar en Etapa 12
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    paginas = datos.get('paginas', [])
+    if not paginas or not isinstance(paginas, list):
+        return respuesta_error('NO_PAGES', 'Debe seleccionar al menos una pagina')
+
+    formato_salida = datos.get('formato_salida', 'unico')
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='extract-pages',
+            parametros={
+                'paginas': paginas,
+                'formato_salida': formato_salida,
+            }
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'paginas_seleccionadas': len(paginas),
+            'formato_salida': formato_salida,
+        }, f'Extraccion de {len(paginas)} paginas iniciada')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo extract-pages: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
 
 
 @bp.route('/scrape-url', methods=['POST'])
@@ -986,11 +1015,64 @@ def preview_scrape_url():
         return respuesta_error('SCRAPE_ERROR', str(e), 500)
 
 
-@bp.route('/reorder', methods=['POST'])
-def convertir_reorder():
+@bp.route('/to-csv', methods=['POST'])
+def convertir_to_csv():
     """
-    Reordena paginas de un PDF.
-    (Placeholder para Etapa 13)
+    Extrae tablas de un PDF y genera archivos CSV (Etapa 15).
+
+    Espera JSON:
+    - file_id: ID del archivo PDF
+    - opciones:
+        - unificar_iguales: bool — unifica tablas con mismas cabeceras
+        - separador: ';' o ','
+        - saltos_linea: 'CRLF' o 'LF'
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    opciones = datos.get('opciones', {})
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='to-csv',
+            parametros=opciones
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Extraccion de tablas iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo to-csv: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/to-csv/analyze', methods=['POST'])
+def analizar_to_csv():
+    """
+    Analiza un PDF para detectar cuantas tablas contiene (respuesta sincrona).
+    Se usa en el frontend antes de ejecutar la extraccion.
+
+    Espera JSON:
+    - file_id: ID del archivo PDF
+
+    Retorna:
+    - num_tablas, tablas_iguales, mensaje, encoding
     """
     datos = request.get_json()
 
@@ -1003,5 +1085,44 @@ def convertir_reorder():
     if error:
         return error
 
-    # TODO: Implementar en Etapa 13
-    return respuesta_error('NOT_IMPLEMENTED', 'Servicio en desarrollo', 501)
+    try:
+        from services.pdf_to_csv import analizar_tablas
+        info = analizar_tablas(archivo_id)
+        return respuesta_exitosa(info, 'Analisis completado')
+
+    except Exception as e:
+        logger.error(f"Error analizando tablas CSV: {e}")
+        return respuesta_error('ANALYZE_ERROR', str(e), 500)
+
+
+@bp.route('/reorder', methods=['POST'])
+def convertir_reorder():
+    """
+    Reordena paginas de un PDF segun el nuevo orden indicado.
+    Etapa 13.
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    nuevo_orden = datos.get('nuevo_orden', [])
+
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    if not nuevo_orden or not isinstance(nuevo_orden, list):
+        return respuesta_error('INVALID_ORDER', 'Debe proporcionar el nuevo orden de paginas')
+
+    trabajo_id = job_manager.encolar_trabajo(
+        archivo_id=archivo_id,
+        tipo_conversion='reorder',
+        parametros={'nuevo_orden': nuevo_orden}
+    )
+
+    return respuesta_exitosa(
+        {'job_id': trabajo_id},
+        f'Reordenamiento encolado: {len(nuevo_orden)} paginas'
+    )
