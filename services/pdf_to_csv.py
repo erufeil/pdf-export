@@ -16,6 +16,7 @@ import csv
 import io
 import logging
 import re
+import threading
 import unicodedata
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
@@ -27,6 +28,11 @@ import models
 from utils import file_manager, job_manager
 
 logger = logging.getLogger(__name__)
+
+# Timeout maximo por pagina para find_tables().
+# Si la pagina no termina en este tiempo, se usa extraccion por texto como fallback.
+# Valor en segundos. 10s es mas que suficiente para paginas normales.
+TIMEOUT_PAGINA_SEG = 10
 
 # pdfminer es dependencia de pdfplumber y genera miles de lineas DEBUG por pagina.
 # Lo silenciamos aqui ademas de en app.py para mayor seguridad.
@@ -224,6 +230,124 @@ def _extraer_tablas_pdfplumber(
     return tablas
 
 
+def _find_tables_con_timeout(page, timeout_seg: int = TIMEOUT_PAGINA_SEG):
+    """
+    Ejecuta page.find_tables() en un thread daemon con timeout.
+
+    Si la pagina supera el tiempo limite (e.g. paginas con celdas muy complejas
+    que disparan O(n^2) en el algoritmo de interseccion), retorna None.
+    El thread interno queda como daemon y se limpia al salir el proceso.
+
+    Returns:
+        Objeto TableFinder de fitz, o None si hubo timeout.
+    """
+    resultado = {'tablas': None}
+
+    def _worker():
+        try:
+            tabs = page.find_tables()
+            if not tabs.tables:
+                tabs = page.find_tables(strategy="text")
+            resultado['tablas'] = tabs
+        except Exception:
+            pass  # resultado queda en None
+
+    hilo = threading.Thread(target=_worker, daemon=True)
+    hilo.start()
+    hilo.join(timeout=timeout_seg)
+
+    if hilo.is_alive():
+        # find_tables() sigue corriendo: timeout alcanzado
+        return None
+    return resultado['tablas']
+
+
+def _extraer_por_palabras(page) -> List[List[str]]:
+    """
+    Extrae el contenido de una pagina como tabla usando posicion de palabras.
+    Fallback garantizado sin cuelgue: solo llama a page.get_text("words").
+
+    Algoritmo:
+    1. Obtener palabras con posiciones (x0, y0, x1, y1, texto)
+    2. Agrupar por fila (Y similar con tolerancia de 3pt)
+    3. Detectar columnas: los X0 de inicio se agrupan en zonas
+    4. Asignar cada palabra a su columna y concatenar multi-palabra
+
+    Returns:
+        Lista de filas (lista de strings). Vacio si no parece tabular.
+    """
+    words = page.get_text("words")   # (x0, y0, x1, y1, texto, blk, ln, wrd)
+    if not words:
+        return []
+
+    TOLERANCIA_Y  = 3.0   # puntos de tolerancia vertical para agrupar en misma fila
+    GAP_COLUMNA   = 15.0  # separacion minima en X para que sea columna nueva
+
+    # --- Paso 1: agrupar palabras por fila ---
+    filas: Dict[float, list] = {}
+    for w in words:
+        x0, y0, x1, y1, texto = w[0], w[1], w[2], w[3], w[4]
+        y_key = None
+        for yk in filas:
+            if abs(yk - y0) <= TOLERANCIA_Y:
+                y_key = yk
+                break
+        if y_key is None:
+            y_key = y0
+        filas.setdefault(y_key, []).append((x0, x1, texto))
+
+    if not filas:
+        return []
+
+    # --- Paso 2: ordenar filas por Y, palabras por X dentro de cada fila ---
+    filas_ordenadas = [
+        sorted(filas[yk], key=lambda w: w[0])
+        for yk in sorted(filas)
+    ]
+
+    # --- Paso 3: detectar columnas por clustering de X0 ---
+    all_x0 = sorted(set(round(w[0]) for fila in filas_ordenadas for w in fila))
+    if not all_x0:
+        return []
+
+    columnas = [all_x0[0]]
+    for x in all_x0[1:]:
+        if x - columnas[-1] > GAP_COLUMNA:
+            columnas.append(x)
+
+    if len(columnas) < 2:
+        return []   # menos de 2 columnas → no es tabla
+
+    # --- Paso 4: asignar palabras a columnas y construir filas ---
+    def _asignar_col(x0_palabra: float) -> int:
+        mejor = 0
+        for i, col_x in enumerate(columnas):
+            if x0_palabra >= col_x - GAP_COLUMNA / 2:
+                mejor = i
+        return mejor
+
+    datos = []
+    for fila in filas_ordenadas:
+        celda = [''] * len(columnas)
+        for x0, x1, texto in fila:
+            col = _asignar_col(x0)
+            if col < len(columnas):
+                celda[col] = (celda[col] + ' ' + texto).strip()
+        if any(c for c in celda):
+            datos.append(celda)
+
+    if not datos:
+        return []
+
+    # Descartar filas con muy pocas celdas ocupadas (probables headers/footers)
+    max_ocup = max(sum(1 for c in fila if c) for fila in datos)
+    if max_ocup < 2:
+        return []
+    datos = [f for f in datos if sum(1 for c in f if c) >= max(2, max_ocup * 0.4)]
+
+    return datos
+
+
 def _extraer_tablas_fitz(
     ruta_pdf: Path,
     max_paginas: int = None,
@@ -261,24 +385,44 @@ def _extraer_tablas_fitz(
             )
 
         try:
-            tabs = page.find_tables()
-            if not tabs.tables:
-                tabs = page.find_tables(strategy="text")
+            # Llamar find_tables() con timeout para evitar cuelgue en paginas complejas
+            tabs = _find_tables_con_timeout(page, TIMEOUT_PAGINA_SEG)
 
             encontradas_pag = 0
-            for idx_t, tabla in enumerate(tabs.tables, start=1):
-                datos = _limpiar_datos_tabla(tabla.extract())
-                if not datos:
-                    continue
-                cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
-                tablas.append({
-                    'pagina':    num_pagina,
-                    'tabla_num': idx_t,
-                    'datos':     datos,
-                    'titulo':    f'tabla_{num_pagina}_{idx_t}',
-                    'cabeceras': cabeceras,
-                })
-                encontradas_pag += 1
+
+            if tabs is None:
+                # TIMEOUT: find_tables() tardo mas de TIMEOUT_PAGINA_SEG segundos.
+                # Usar extraccion por texto como fallback (nunca cuelga).
+                logger.warning(
+                    f"[to-csv] fitz  pag {num_pagina:>4}/{total}  "
+                    f"TIMEOUT ({TIMEOUT_PAGINA_SEG}s) → usando extraccion por texto"
+                )
+                datos = _extraer_por_palabras(page)
+                if datos:
+                    cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+                    tablas.append({
+                        'pagina':    num_pagina,
+                        'tabla_num': 1,
+                        'datos':     datos,
+                        'titulo':    f'tabla_{num_pagina}_1',
+                        'cabeceras': cabeceras,
+                    })
+                    encontradas_pag = 1
+            else:
+                # find_tables() completado normalmente
+                for idx_t, tabla in enumerate(tabs.tables, start=1):
+                    datos = _limpiar_datos_tabla(tabla.extract())
+                    if not datos:
+                        continue
+                    cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+                    tablas.append({
+                        'pagina':    num_pagina,
+                        'tabla_num': idx_t,
+                        'datos':     datos,
+                        'titulo':    f'tabla_{num_pagina}_{idx_t}',
+                        'cabeceras': cabeceras,
+                    })
+                    encontradas_pag += 1
 
             logger.info(
                 f"[to-csv] fitz        pag {num_pagina:>4}/{total}  "
