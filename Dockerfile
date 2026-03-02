@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copiar requirements e instalar en directorio aislado
 COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --prefer-binary --prefix=/install -r requirements.txt
 
 # ============================================================
 # ETAPA 2: Runtime - Imagen final liviana
