@@ -23,6 +23,8 @@ services:
       - RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
       # 1Gb = 1024 * 1024 * 1024 bytes
+      - NLM_INGESTOR_URL= ${NLM_INGESTOR_URL}
+      # vacio si no esta instaladp  ${NLM_INGESTOR_URL:-http://}
 
     # Puertos expuestos
     ports:

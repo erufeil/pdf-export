@@ -348,6 +348,136 @@ def _extraer_por_palabras(page) -> List[List[str]]:
     return datos
 
 
+def _convertir_nlm_tabla(table_rows: list) -> List[List[str]]:
+    """
+    Convierte table_rows de nlm-ingestor a List[List[str]].
+    Expande col_span repitiendo el valor de la celda.
+
+    Estructura de entrada (por fila):
+        {"type": "table_header"|"table_row",
+         "cells": [{"cell_value": str|dict, "col_span": int}, ...]}
+    """
+    datos = []
+    for row in table_rows:
+        cells = row.get('cells', [])
+        fila = []
+        for cell in cells:
+            val = cell.get('cell_value', '')
+            # cell_value puede ser string o un dict tipo Paragraph de nlm
+            if isinstance(val, dict):
+                val = (val.get('block_text')
+                       or ' '.join(val.get('sentences', []))
+                       or '')
+            col_span = max(1, int(cell.get('col_span', 1)))
+            txt = str(val).replace('\n', ' ').strip()
+            fila.extend([txt] * col_span)
+        if any(c for c in fila):
+            datos.append(fila)
+    return datos
+
+
+def _extraer_tablas_nlm(
+    ruta_pdf: Path,
+    trabajo_id: str = None,
+    progreso_offset: int = 2,
+    progreso_rango: int = 68,
+) -> List[Dict]:
+    """
+    Extrae tablas enviando el PDF al servicio nlm-ingestor via HTTP.
+    Es el extractor PRIMARIO cuando NLM_INGESTOR_URL esta configurado.
+
+    nlm-ingestor (github.com/nlmatics/nlm-ingestor) usa Apache Tika + Tesseract
+    y produce un JSON con bloques tipificados (header, para, table, list_item...).
+    Detecta mejor tablas sin bordes y estructuras complejas que PyMuPDF o pdfplumber.
+
+    El servicio procesa el PDF completo en una sola llamada HTTP, por lo que
+    la barra de progreso no puede actualizarse por pagina.
+
+    Returns:
+        Lista de dicts: pagina, tabla_num, datos, titulo, cabeceras
+        Lista vacia si el servicio no esta disponible o no hay tablas.
+    """
+    import requests as _requests
+
+    url_api = f"{config.NLM_INGESTOR_URL}/api/parseDocument"
+
+    if trabajo_id:
+        job_manager.actualizar_progreso(
+            trabajo_id, progreso_offset,
+            "Enviando PDF a nlm-ingestor para extraccion avanzada..."
+        )
+
+    try:
+        with open(str(ruta_pdf), 'rb') as f_pdf:
+            resp = _requests.post(
+                url_api,
+                params={'renderFormat': 'all', 'applyOcr': 'no'},
+                files={'file': (ruta_pdf.name, f_pdf, 'application/pdf')},
+                timeout=300,   # 5 min para PDFs grandes
+            )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        logger.warning(f"[to-csv] nlm-ingestor no disponible o error: {exc}")
+        return []
+
+    bloques = data.get('return_dict', {}).get('result', {}).get('blocks', [])
+    if not bloques:
+        logger.warning("[to-csv] nlm-ingestor: respuesta valida pero sin bloques")
+        return []
+
+    # Indexar bloques por block_idx para buscar titulos adyacentes
+    indice_bloques = {b.get('block_idx', i): b for i, b in enumerate(bloques)}
+
+    tablas = []
+    tabla_num_por_pagina: Dict[int, int] = {}
+
+    for bloque in bloques:
+        if bloque.get('tag') != 'table':
+            continue
+
+        table_rows = bloque.get('table_rows', [])
+        if not table_rows:
+            continue
+
+        datos = _convertir_nlm_tabla(table_rows)
+        if not datos:
+            continue
+
+        pagina = bloque.get('page_idx', 0) + 1   # 0-indexed → 1-indexed
+        tabla_num_por_pagina[pagina] = tabla_num_por_pagina.get(pagina, 0) + 1
+        tabla_num = tabla_num_por_pagina[pagina]
+
+        # Buscar titulo: buscar hasta 5 bloques atras (header o parrafo)
+        block_idx = bloque.get('block_idx', 0)
+        titulo = 'sin_titulo'
+        for idx_prev in range(block_idx - 1, max(block_idx - 6, -1), -1):
+            prev = indice_bloques.get(idx_prev)
+            if prev and prev.get('tag') in ('header', 'para'):
+                texto = ' '.join(prev.get('sentences', []))
+                titulo = _normalizar_nombre_archivo(texto)
+                break
+
+        cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+        tablas.append({
+            'pagina':    pagina,
+            'tabla_num': tabla_num,
+            'datos':     datos,
+            'titulo':    titulo,
+            'cabeceras': cabeceras,
+        })
+
+    if trabajo_id:
+        pct_fin = progreso_offset + progreso_rango
+        job_manager.actualizar_progreso(
+            trabajo_id, pct_fin,
+            f"nlm-ingestor: {len(tablas)} tabla(s) encontrada(s)"
+        )
+
+    logger.info(f"[to-csv] nlm-ingestor encontro {len(tablas)} tabla(s) en {ruta_pdf.name}")
+    return tablas
+
+
 def _extraer_tablas_fitz(
     ruta_pdf: Path,
     max_paginas: int = None,
@@ -732,19 +862,40 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     if saltos_linea not in ['CRLF', 'LF']: saltos_linea = 'CRLF'
 
     # --- Paso 1: extraer tablas ---
-    # PyMuPDF primero: implementacion en C, ~10x mas rapido que pdfplumber.
-    # pdfplumber como fallback: mejor deteccion en tablas muy complejas.
+    # Orden de prioridad de extractores:
+    #   1. nlm-ingestor (servicio externo, mejor calidad, usa Tika + layout analysis)
+    #   2. PyMuPDF fitz  (local, rapido, C nativo, para PDFs con bordes visibles)
+    #   3. pdfplumber    (local, fallback final para tablas complejas)
     job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando extraccion de tablas...")
     logger.info(f"[to-csv] Iniciando extraccion: {nombre_original}")
 
-    tablas = _extraer_tablas_fitz(
-        ruta_pdf,
-        trabajo_id=trabajo_id,
-        progreso_offset=2,
-        progreso_rango=68,
-    )
-    logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
+    tablas = []
 
+    # Extractor 1: nlm-ingestor (si esta configurado y accesible)
+    if config.NLM_INGESTOR_URL:
+        logger.info(f"[to-csv] Intentando nlm-ingestor: {config.NLM_INGESTOR_URL}")
+        tablas = _extraer_tablas_nlm(
+            ruta_pdf,
+            trabajo_id=trabajo_id,
+            progreso_offset=2,
+            progreso_rango=68,
+        )
+        logger.info(f"[to-csv] nlm-ingestor encontro {len(tablas)} seccion(es)")
+
+    # Extractor 2: PyMuPDF fitz (fallback local si nlm no esta disponible o no encontro tablas)
+    if not tablas:
+        if config.NLM_INGESTOR_URL:
+            logger.info("[to-csv] nlm-ingestor sin tablas, usando PyMuPDF como fallback...")
+        job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas con PyMuPDF...")
+        tablas = _extraer_tablas_fitz(
+            ruta_pdf,
+            trabajo_id=trabajo_id,
+            progreso_offset=2,
+            progreso_rango=68,
+        )
+        logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
+
+    # Extractor 3: pdfplumber (ultimo recurso)
     if not tablas:
         logger.info("[to-csv] PyMuPDF no encontro tablas, probando pdfplumber...")
         job_manager.actualizar_progreso(trabajo_id, 2, "Probando extractor alternativo...")
