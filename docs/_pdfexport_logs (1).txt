@@ -1,0 +1,100 @@
+2026-03-02 12:04:37,746 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   22/121  → 1 tabla(s)
+2026-03-02 12:04:37,814 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:37] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:39,542 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   23/121  → 1 tabla(s)
+2026-03-02 12:04:39,883 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:39] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:40,452 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 12:04:40] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 12:04:40,580 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:40] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:41,296 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   24/121  → 1 tabla(s)
+2026-03-02 12:04:42,826 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:42] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:43,299 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   25/121  → 1 tabla(s)
+2026-03-02 12:04:43,838 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:43] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:45,022 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   26/121  → 1 tabla(s)
+2026-03-02 12:04:45,809 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:45] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:46,778 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   27/121  → 1 tabla(s)
+2026-03-02 12:04:46,779 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:46] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:48,606 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   28/121  → 1 tabla(s)
+2026-03-02 12:04:48,845 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:48] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:49,686 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:49] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:50,712 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   29/121  → 1 tabla(s)
+2026-03-02 12:04:51,803 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:51] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:52,487 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   30/121  → 1 tabla(s)
+2026-03-02 12:04:52,793 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:52] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:54,438 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   31/121  → 1 tabla(s)
+2026-03-02 12:04:54,843 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:54] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:55,588 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:55] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:56,100 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   32/121  → 1 tabla(s)
+2026-03-02 12:04:57,769 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:57] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:04:58,227 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   33/121  → 1 tabla(s)
+2026-03-02 12:04:58,830 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:04:58] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:00,043 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   34/121  → 1 tabla(s)
+2026-03-02 12:05:00,852 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:00] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:01,866 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   35/121  → 1 tabla(s)
+2026-03-02 12:05:03,562 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   36/121  → 1 tabla(s)
+2026-03-02 12:05:04,598 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:04] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:05,318 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   37/121  → 1 tabla(s)
+2026-03-02 12:05:07,460 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   38/121  → 1 tabla(s)
+2026-03-02 12:05:09,333 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   39/121  → 1 tabla(s)
+2026-03-02 12:05:10,891 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 12:05:10] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 12:05:11,192 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   40/121  → 1 tabla(s)
+2026-03-02 12:05:13,087 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   41/121  → 1 tabla(s)
+2026-03-02 12:05:14,995 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   42/121  → 1 tabla(s)
+2026-03-02 12:05:17,238 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   43/121  → 1 tabla(s)
+2026-03-02 12:05:19,012 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   44/121  → 1 tabla(s)
+2026-03-02 12:05:20,819 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   45/121  → 1 tabla(s)
+2026-03-02 12:05:22,670 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   46/121  → 1 tabla(s)
+2026-03-02 12:05:24,649 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   47/121  → 1 tabla(s)
+2026-03-02 12:05:26,934 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   48/121  → 1 tabla(s)
+2026-03-02 12:05:26,963 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:26] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:28,381 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:28] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:28,765 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   49/121  → 1 tabla(s)
+2026-03-02 12:05:30,035 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:30] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:30,650 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   50/121  → 1 tabla(s)
+2026-03-02 12:05:31,588 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:31] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:32,664 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   51/121  → 1 tabla(s)
+2026-03-02 12:05:33,851 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:33] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:34,612 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:34] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:34,617 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   52/121  → 1 tabla(s)
+2026-03-02 12:05:36,565 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   53/121  → 1 tabla(s)
+2026-03-02 12:05:37,170 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:37] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:37,586 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:37] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:38,493 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   54/121  → 1 tabla(s)
+2026-03-02 12:05:39,769 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:39] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:40,774 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:40] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:40,931 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   55/121  → 1 tabla(s)
+2026-03-02 12:05:41,325 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 12:05:41] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 12:05:42,857 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   56/121  → 1 tabla(s)
+2026-03-02 12:05:44,069 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:44] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:44,471 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:44] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:44,602 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   57/121  → 1 tabla(s)
+2026-03-02 12:05:45,796 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:45] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:46,355 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   58/121  → 1 tabla(s)
+2026-03-02 12:05:46,783 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:46] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:48,224 - services.pdf_to_csv - INFO - [to-csv] pdfplumber  pag   59/121  → 1 tabla(s)
+2026-03-02 12:05:48,775 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:48] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+config.js generado con deteccion dinamica de host
+  - timeout: 10000ms
+  - retryAttempts: 3
+  - maxFileSize: 1073741824 bytes
+  - version: 1.1.21
+2026-03-02 12:05:51,492 - models - INFO - Base de datos inicializada correctamente
+2026-03-02 12:05:51,509 - utils.job_manager - INFO - Worker de trabajos iniciado
+2026-03-02 12:05:51,509 - utils.job_manager - INFO - Thread worker iniciado
+2026-03-02 12:05:51,515 - utils.job_manager - WARNING - Trabajo interrumpido marcado como error: a267b1c6-d145-449e-93dc-bdaae53edf80 (to-csv)
+2026-03-02 12:05:51,515 - utils.job_manager - INFO - Marcados como error 1 trabajos interrumpidos
+2026-03-02 12:05:51,518 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-02 12:05:51,519 - apscheduler.scheduler - INFO - Added job "Limpieza de archivos expirados" to job store "default"
+2026-03-02 12:05:51,519 - apscheduler.scheduler - INFO - Scheduler started
+2026-03-02 12:05:51,519 - __main__ - INFO - Scheduler iniciado - limpieza programada cada hora
+2026-03-02 12:05:51,519 - __main__ - INFO - Iniciando PDFexport en 0.0.0.0:9019
+2026-03-02 12:05:51,519 - __main__ - INFO - Debug: False
+2026-03-02 12:05:51,519 - __main__ - INFO - Retencion de archivos: 24 horas
+ * Serving Flask app 'app'
+ * Debug mode: off
+2026-03-02 12:05:51,521 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:9019
+ * Running on http://172.18.0.2:9019
+2026-03-02 12:05:51,521 - werkzeug - INFO - Press CTRL+C to quit
+2026-03-02 12:05:52,134 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:52] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:52,627 - werkzeug - INFO - 45.191.192.20 - - [02/Mar/2026 12:05:52] "GET /api/v1/jobs/a267b1c6-d145-449e-93dc-bdaae53edf80 HTTP/1.1" 200 -
+2026-03-02 12:05:54,827 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 12:05:54] "GET /api/v1/status HTTP/1.1" 200 -

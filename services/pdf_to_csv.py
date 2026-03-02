@@ -144,15 +144,21 @@ def _limpiar_datos_tabla(datos_raw: List) -> List[List[str]]:
     return resultado
 
 
-def _extraer_tablas_pdfplumber(ruta_pdf: Path, max_paginas: int = None) -> List[Dict]:
+def _extraer_tablas_pdfplumber(
+    ruta_pdf: Path,
+    max_paginas: int = None,
+    trabajo_id: str = None,
+    progreso_offset: int = 2,
+    progreso_rango: int = 68,
+) -> List[Dict]:
     """
-    Extrae tablas usando pdfplumber (extractor principal).
+    Extrae tablas usando pdfplumber (fallback cuando PyMuPDF no encuentra nada).
 
     Estrategia por pagina:
       1. Bordes visibles   (vertical_strategy="lines", horizontal_strategy="lines")
       2. Alineacion texto  (strategy="text")  si paso 1 no encuentra nada
 
-    Loguea cada pagina procesada para visibilidad del progreso.
+    Actualiza la barra de progreso del UI en cada pagina si se provee trabajo_id.
 
     Returns:
         Lista de dicts: pagina, tabla_num, datos, titulo, cabeceras
@@ -167,6 +173,15 @@ def _extraer_tablas_pdfplumber(ruta_pdf: Path, max_paginas: int = None) -> List[
 
         for idx, page in enumerate(paginas):
             num_pagina = idx + 1
+
+            # Actualizar UI: progreso de extraccion pagina a pagina
+            if trabajo_id:
+                pct = progreso_offset + int((idx / total) * progreso_rango)
+                job_manager.actualizar_progreso(
+                    trabajo_id, pct,
+                    f"[pdfplumber] Extrayendo página {num_pagina}/{total}..."
+                )
+
             tablas_pag = []
             try:
                 # Estrategia 1: tablas con bordes dibujados (la mas precisa)
@@ -209,14 +224,22 @@ def _extraer_tablas_pdfplumber(ruta_pdf: Path, max_paginas: int = None) -> List[
     return tablas
 
 
-def _extraer_tablas_fitz(ruta_pdf: Path, max_paginas: int = None) -> List[Dict]:
+def _extraer_tablas_fitz(
+    ruta_pdf: Path,
+    max_paginas: int = None,
+    trabajo_id: str = None,
+    progreso_offset: int = 2,
+    progreso_rango: int = 68,
+) -> List[Dict]:
     """
-    Extrae tablas usando PyMuPDF (fallback cuando pdfplumber no esta disponible).
+    Extrae tablas usando PyMuPDF — extractor PRIMARIO (implementacion en C, ~10x mas rapido).
     Requiere PyMuPDF >= 1.23.
 
     Estrategia por pagina:
-      1. Deteccion automatica (bordes)
-      2. Estrategia texto si paso 1 no encuentra nada
+      1. Deteccion automatica (bordes visibles)
+      2. Estrategia texto si paso 1 no encuentra nada (tablas sin bordes)
+
+    Actualiza la barra de progreso del UI en cada pagina si se provee trabajo_id.
 
     Returns:
         Lista de dicts: pagina, tabla_num, datos, titulo, cabeceras
@@ -228,6 +251,15 @@ def _extraer_tablas_fitz(ruta_pdf: Path, max_paginas: int = None) -> List[Dict]:
     for i in range(total):
         num_pagina = i + 1
         page       = doc[i]
+
+        # Actualizar UI: progreso de extraccion pagina a pagina
+        if trabajo_id:
+            pct = progreso_offset + int((i / total) * progreso_rango)
+            job_manager.actualizar_progreso(
+                trabajo_id, pct,
+                f"Extrayendo página {num_pagina}/{total}..."
+            )
+
         try:
             tabs = page.find_tables()
             if not tabs.tables:
@@ -243,7 +275,7 @@ def _extraer_tablas_fitz(ruta_pdf: Path, max_paginas: int = None) -> List[Dict]:
                     'pagina':    num_pagina,
                     'tabla_num': idx_t,
                     'datos':     datos,
-                    'titulo':    f'tabla_fitz_{num_pagina}_{idx_t}',
+                    'titulo':    f'tabla_{num_pagina}_{idx_t}',
                     'cabeceras': cabeceras,
                 })
                 encontradas_pag += 1
@@ -533,21 +565,33 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     if saltos_linea not in ['CRLF', 'LF']: saltos_linea = 'CRLF'
 
     # --- Paso 1: extraer tablas ---
-    job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas del PDF...")
+    # PyMuPDF primero: implementacion en C, ~10x mas rapido que pdfplumber.
+    # pdfplumber como fallback: mejor deteccion en tablas muy complejas.
+    job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando extraccion de tablas...")
     logger.info(f"[to-csv] Iniciando extraccion: {nombre_original}")
 
-    tablas = []
-    try:
-        import pdfplumber  # noqa: F401  (fuerza ImportError si no esta instalado)
-        tablas = _extraer_tablas_pdfplumber(ruta_pdf)
-        logger.info(f"[to-csv] pdfplumber encontro {len(tablas)} seccion(es)")
-    except ImportError:
-        logger.warning("[to-csv] pdfplumber no disponible, usando PyMuPDF como fallback")
+    tablas = _extraer_tablas_fitz(
+        ruta_pdf,
+        trabajo_id=trabajo_id,
+        progreso_offset=2,
+        progreso_rango=68,
+    )
+    logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
 
     if not tablas:
-        logger.info("[to-csv] Probando con PyMuPDF...")
-        tablas = _extraer_tablas_fitz(ruta_pdf)
-        logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
+        logger.info("[to-csv] PyMuPDF no encontro tablas, probando pdfplumber...")
+        job_manager.actualizar_progreso(trabajo_id, 2, "Probando extractor alternativo...")
+        try:
+            import pdfplumber  # noqa: F401
+            tablas = _extraer_tablas_pdfplumber(
+                ruta_pdf,
+                trabajo_id=trabajo_id,
+                progreso_offset=2,
+                progreso_rango=68,
+            )
+            logger.info(f"[to-csv] pdfplumber encontro {len(tablas)} seccion(es)")
+        except ImportError:
+            logger.warning("[to-csv] pdfplumber no disponible")
 
     if not tablas:
         raise ValueError(
