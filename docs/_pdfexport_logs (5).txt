@@ -1,0 +1,100 @@
+2026-03-02 18:02:17,123 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:17] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:17,302 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   19/121  → 1 tabla(s)
+2026-03-02 18:02:17,793 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:17] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:20,396 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:20] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:21,236 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:21] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:24,023 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:24] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:24,475 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:24] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:26,881 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:26] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:27,737 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:27] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:31,513 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   20/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:02:31,540 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:31] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:31,818 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:31] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:33,051 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   20/121  → 1 tabla(s)
+2026-03-02 18:02:33,423 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:33] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:33,956 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:33] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:35,054 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:35] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:36,056 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:36] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:38,516 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:38] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:44,047 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   21/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:02:45,045 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   21/121  → 1 tabla(s)
+2026-03-02 18:02:53,249 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:02:53] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:02:59,406 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:02:59] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:02:59,453 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   22/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:03:00,605 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   22/121  → 1 tabla(s)
+2026-03-02 18:03:14,779 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   23/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:03:15,646 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   23/121  → 1 tabla(s)
+2026-03-02 18:03:27,315 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   24/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:03:28,174 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   24/121  → 1 tabla(s)
+2026-03-02 18:03:33,977 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:03:33] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:03:43,967 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   25/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:03:45,429 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   25/121  → 1 tabla(s)
+2026-03-02 18:03:57,814 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   26/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:03:58,827 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:03:58] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:03:59,318 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   26/121  → 1 tabla(s)
+2026-03-02 18:04:13,266 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   27/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:04:14,954 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:04:14] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:04:15,021 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   27/121  → 1 tabla(s)
+2026-03-02 18:04:31,105 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   28/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:04:31,542 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   28/121  → 1 tabla(s)
+2026-03-02 18:04:47,737 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   29/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:04:48,236 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   29/121  → 1 tabla(s)
+2026-03-02 18:04:53,173 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:04:53] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:05:00,650 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   30/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:05:01,429 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   30/121  → 1 tabla(s)
+2026-03-02 18:05:03,827 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:05:03] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:05:14,328 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   31/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:05:15,944 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   31/121  → 1 tabla(s)
+2026-03-02 18:05:28,981 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   32/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:05:29,688 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   32/121  → 1 tabla(s)
+2026-03-02 18:05:39,319 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:05:39] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:05:47,223 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   33/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:05:47,766 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   33/121  → 1 tabla(s)
+2026-03-02 18:06:00,029 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   34/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:06:02,620 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   34/121  → 1 tabla(s)
+2026-03-02 18:06:03,181 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:06:03] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:06:17,132 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   35/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:06:17,890 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   35/121  → 1 tabla(s)
+2026-03-02 18:06:25,714 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:06:25] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:06:32,021 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   36/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:06:34,463 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   36/121  → 1 tabla(s)
+2026-03-02 18:06:53,861 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   37/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:06:55,673 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   37/121  → 1 tabla(s)
+2026-03-02 18:07:02,736 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:07:02] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:07:03,555 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:07:03] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:07:13,154 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   38/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:07:13,729 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   38/121  → 1 tabla(s)
+2026-03-02 18:07:28,156 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   39/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:07:29,378 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   39/121  → 1 tabla(s)
+2026-03-02 18:07:36,370 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:07:36] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:07:43,952 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   40/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:07:49,575 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   40/121  → 1 tabla(s)
+2026-03-02 18:08:02,055 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:08:02] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:08:04,728 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   41/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:08:07,181 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   41/121  → 1 tabla(s)
+2026-03-02 18:08:19,983 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   42/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:08:22,422 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   42/121  → 1 tabla(s)
+2026-03-02 18:08:23,370 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:08:23] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:08:40,310 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   43/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:08:41,497 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   43/121  → 1 tabla(s)
+2026-03-02 18:08:57,118 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   44/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:08:58,700 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   44/121  → 1 tabla(s)
+2026-03-02 18:09:02,324 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:09:02] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:09:13,949 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:09:13] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:09:14,966 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   45/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:09:21,284 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   45/121  → 1 tabla(s)
+2026-03-02 18:09:33,778 - services.pdf_to_csv - WARNING - [to-csv] fitz  pag   46/121  TIMEOUT (10s) → usando extraccion por texto
+2026-03-02 18:09:35,203 - services.pdf_to_csv - INFO - [to-csv] fitz        pag   46/121  → 1 tabla(s)
+2026-03-02 18:09:43,421 - models - ERROR - Error en base de datos: database is locked
+2026-03-02 18:09:50,668 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:09:50] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:09:52,017 - utils.job_manager - ERROR - Error en trabajo 9587dff0-37c9-44f4-a19d-f019ecdeccba: database is locked
+2026-03-02 18:10:06,080 - werkzeug - INFO - 190.220.244.14 - - [02/Mar/2026 18:10:06] "GET /api/v1/jobs/9587dff0-37c9-44f4-a19d-f019ecdeccba HTTP/1.1" 200 -
+2026-03-02 18:10:34,479 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:10:34] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:11:11,389 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:11:11] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:11:42,842 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:11:42] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:12:25,474 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:12:25] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:13:03,206 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:13:03] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:13:46,844 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:13:46] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:14:28,716 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:14:28] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:15:09,350 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:15:09] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-02 18:15:50,033 - werkzeug - INFO - 127.0.0.1 - - [02/Mar/2026 18:15:50] "GET /api/v1/status HTTP/1.1" 200 -

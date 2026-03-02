@@ -372,6 +372,11 @@ def _extraer_tablas_fitz(
     doc    = fitz.open(str(ruta_pdf))
     total  = min(len(doc), max_paginas) if max_paginas else len(doc)
 
+    # FLAG: una vez que find_tables() hace timeout en cualquier pagina,
+    # todas las paginas restantes usan extraccion por texto directamente.
+    # Esto evita acumular threads daemon bloqueados al 100% CPU.
+    usar_solo_texto = False
+
     for i in range(total):
         num_pagina = i + 1
         page       = doc[i]
@@ -385,18 +390,11 @@ def _extraer_tablas_fitz(
             )
 
         try:
-            # Llamar find_tables() con timeout para evitar cuelgue en paginas complejas
-            tabs = _find_tables_con_timeout(page, TIMEOUT_PAGINA_SEG)
-
             encontradas_pag = 0
 
-            if tabs is None:
-                # TIMEOUT: find_tables() tardo mas de TIMEOUT_PAGINA_SEG segundos.
-                # Usar extraccion por texto como fallback (nunca cuelga).
-                logger.warning(
-                    f"[to-csv] fitz  pag {num_pagina:>4}/{total}  "
-                    f"TIMEOUT ({TIMEOUT_PAGINA_SEG}s) → usando extraccion por texto"
-                )
+            if usar_solo_texto:
+                # Modo texto: find_tables() desactivado para el resto del documento.
+                # Se activa al primer timeout para evitar acumular threads bloqueados.
                 datos = _extraer_por_palabras(page)
                 if datos:
                     cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
@@ -409,20 +407,45 @@ def _extraer_tablas_fitz(
                     })
                     encontradas_pag = 1
             else:
-                # find_tables() completado normalmente
-                for idx_t, tabla in enumerate(tabs.tables, start=1):
-                    datos = _limpiar_datos_tabla(tabla.extract())
-                    if not datos:
-                        continue
-                    cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
-                    tablas.append({
-                        'pagina':    num_pagina,
-                        'tabla_num': idx_t,
-                        'datos':     datos,
-                        'titulo':    f'tabla_{num_pagina}_{idx_t}',
-                        'cabeceras': cabeceras,
-                    })
-                    encontradas_pag += 1
+                # Llamar find_tables() con timeout para evitar cuelgue en paginas complejas
+                tabs = _find_tables_con_timeout(page, TIMEOUT_PAGINA_SEG)
+
+                if tabs is None:
+                    # TIMEOUT: activar modo texto para TODAS las paginas restantes.
+                    # Si esta pagina tarda demasiado, las siguientes tambien lo haran
+                    # (mismo formato de documento). Evita acumular threads al 100% CPU.
+                    usar_solo_texto = True
+                    logger.warning(
+                        f"[to-csv] fitz  pag {num_pagina:>4}/{total}  "
+                        f"TIMEOUT ({TIMEOUT_PAGINA_SEG}s) → modo texto activado "
+                        f"para páginas {num_pagina}-{total}"
+                    )
+                    datos = _extraer_por_palabras(page)
+                    if datos:
+                        cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+                        tablas.append({
+                            'pagina':    num_pagina,
+                            'tabla_num': 1,
+                            'datos':     datos,
+                            'titulo':    f'tabla_{num_pagina}_1',
+                            'cabeceras': cabeceras,
+                        })
+                        encontradas_pag = 1
+                else:
+                    # find_tables() completado normalmente
+                    for idx_t, tabla in enumerate(tabs.tables, start=1):
+                        datos = _limpiar_datos_tabla(tabla.extract())
+                        if not datos:
+                            continue
+                        cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+                        tablas.append({
+                            'pagina':    num_pagina,
+                            'tabla_num': idx_t,
+                            'datos':     datos,
+                            'titulo':    f'tabla_{num_pagina}_{idx_t}',
+                            'cabeceras': cabeceras,
+                        })
+                        encontradas_pag += 1
 
             logger.info(
                 f"[to-csv] fitz        pag {num_pagina:>4}/{total}  "
