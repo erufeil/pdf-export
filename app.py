@@ -26,6 +26,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Silenciar loggers extremadamente verbosos que generan miles de lineas por pagina
+# pdfminer registra cada token, caracter y operacion de bajo nivel en DEBUG
+for _logger_ruidoso in [
+    'pdfminer', 'pdfminer.psparser', 'pdfminer.pdfinterp',
+    'pdfminer.cmapdb', 'pdfminer.pdfpage', 'pdfminer.converter',
+    'pdfminer.pdfdevice', 'pdfminer.pdfdocument', 'pdfminer.pdfparser',
+]:
+    logging.getLogger(_logger_ruidoso).setLevel(logging.WARNING)
+
 
 def crear_app():
     """Factory para crear la aplicacion Flask."""
