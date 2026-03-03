@@ -400,12 +400,16 @@ def _extraer_tablas_nlm(
     import requests as _requests
 
     url_base = config.NLM_INGESTOR_URL.rstrip('/')
+    # Agregar esquema http:// si la URL no lo tiene (ej: usuario puso solo IP:puerto)
+    if url_base and not url_base.startswith(('http://', 'https://')):
+        url_base = f"http://{url_base}"
     url_api  = f"{url_base}/api/parseDocument"
 
     # Verificar disponibilidad del servicio antes de enviar el PDF completo
-    logger.info(f"[to-csv] nlm-ingestor health check: {url_base}/health")
+    # nlm-ingestor usa "/" como health check y devuelve "Service is running"
+    logger.info(f"[to-csv] nlm-ingestor health check: {url_base}/")
     try:
-        r_health = _requests.get(f"{url_base}/health", timeout=5)
+        r_health = _requests.get(f"{url_base}/", timeout=5)
         logger.info(f"[to-csv] nlm-ingestor health: HTTP {r_health.status_code} → {r_health.text[:80]}")
         if r_health.status_code != 200:
             logger.warning("[to-csv] nlm-ingestor no disponible (health != 200), usando fallback")
@@ -893,6 +897,7 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     logger.info(f"[to-csv] Iniciando extraccion: {nombre_original}")
 
     tablas = []
+    extractor_final = 'ninguno'
 
     # Extractor 1: nlm-ingestor (si esta configurado y accesible)
     if config.NLM_INGESTOR_URL:
@@ -903,6 +908,8 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
             progreso_offset=2,
             progreso_rango=68,
         )
+        if tablas:
+            extractor_final = 'nlm-ingestor'
         logger.info(f"[to-csv] nlm-ingestor encontro {len(tablas)} seccion(es)")
 
     # Extractor 2: PyMuPDF fitz (fallback local si nlm no esta disponible o no encontro tablas)
@@ -916,6 +923,8 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
             progreso_offset=2,
             progreso_rango=68,
         )
+        if tablas:
+            extractor_final = 'fitz'
         logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
 
     # Extractor 3: pdfplumber (ultimo recurso)
@@ -930,6 +939,8 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
                 progreso_offset=2,
                 progreso_rango=68,
             )
+            if tablas:
+                extractor_final = 'pdfplumber'
             logger.info(f"[to-csv] pdfplumber encontro {len(tablas)} seccion(es)")
         except ImportError:
             logger.warning("[to-csv] pdfplumber no disponible")
@@ -994,7 +1005,9 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
             ruta_temp.unlink()
 
     n_csv = len(archivos_para_zip)
-    logger.info(f"[to-csv] Finalizado: {n_csv} CSV en {nombre_zip}")
+    # Este mensaje es siempre visible aunque el log este truncado (es el ultimo del job)
+    logger.info(f"[to-csv] Finalizado v{config.VERSION}: {n_csv} CSV "
+                f"[extractor={extractor_final}] en {nombre_zip}")
     return {
         'ruta_resultado': str(ruta_zip),
         'mensaje':        f'{n_csv} archivo(s) CSV generado(s)',

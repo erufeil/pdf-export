@@ -26,6 +26,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Log de inicio: confirma version del codigo y configuracion clave
+logger.info(f"=== PDFexport v{config.VERSION} iniciando ===")
+logger.info(f"[config] NLM_INGESTOR_URL = '{config.NLM_INGESTOR_URL}' "
+            f"({'habilitado' if config.NLM_INGESTOR_URL else 'DESHABILITADO'})")
+
 # Silenciar loggers extremadamente verbosos que generan miles de lineas por pagina
 # pdfminer registra cada token, caracter y operacion de bajo nivel en DEBUG
 for _logger_ruidoso in [
