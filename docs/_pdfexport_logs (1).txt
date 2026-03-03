@@ -1,0 +1,58 @@
+config.js generado con deteccion dinamica de host
+  - timeout: 10000ms
+  - retryAttempts: 3
+  - maxFileSize: 1073741824 bytes
+  - version: 1.1.32
+2026-03-03 18:47:38,648 - __main__ - INFO - === PDFexport v1.1.32 iniciando ===
+2026-03-03 18:47:38,648 - __main__ - INFO - [config] NLM_INGESTOR_URL = '172.21.0.19:5001' (habilitado)
+2026-03-03 18:47:38,649 - models - INFO - Base de datos inicializada correctamente
+2026-03-03 18:47:38,667 - utils.job_manager - INFO - Worker de trabajos iniciado
+2026-03-03 18:47:38,667 - utils.job_manager - INFO - Thread worker iniciado
+2026-03-03 18:47:38,671 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-03 18:47:38,671 - apscheduler.scheduler - INFO - Added job "Limpieza de archivos expirados" to job store "default"
+2026-03-03 18:47:38,671 - apscheduler.scheduler - INFO - Scheduler started
+2026-03-03 18:47:38,671 - __main__ - INFO - Scheduler iniciado - limpieza programada cada hora
+2026-03-03 18:47:38,672 - __main__ - INFO - Iniciando PDFexport en 0.0.0.0:9019
+2026-03-03 18:47:38,672 - __main__ - INFO - Debug: False
+2026-03-03 18:47:38,672 - __main__ - INFO - Retencion de archivos: 24 horas
+ * Serving Flask app 'app'
+ * Debug mode: off
+2026-03-03 18:47:38,674 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:9019
+ * Running on http://172.21.0.20:9019
+2026-03-03 18:47:38,674 - werkzeug - INFO - Press CTRL+C to quit
+2026-03-03 18:47:42,098 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 18:47:42] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 18:48:04,194 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:04] "GET / HTTP/1.1" 200 -
+2026-03-03 18:48:04,425 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:04] "GET /static/css/styles.css HTTP/1.1" 200 -
+2026-03-03 18:48:04,602 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:04] "GET /static/js/common.js HTTP/1.1" 200 -
+2026-03-03 18:48:04,603 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:04] "GET /config.js HTTP/1.1" 200 -
+2026-03-03 18:48:05,194 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:05] "GET /static/fav.ico HTTP/1.1" 200 -
+2026-03-03 18:48:05,195 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:05] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:48:05,197 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:05] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-03-03 18:48:05,197 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:05] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-03-03 18:48:08,617 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:08] "GET /pdf-to-csv.html HTTP/1.1" 200 -
+2026-03-03 18:48:08,814 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:08] "GET /static/css/styles.css HTTP/1.1" 304 -
+2026-03-03 18:48:09,206 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:09] "GET /static/js/common.js HTTP/1.1" 304 -
+2026-03-03 18:48:09,615 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:48:09] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:48:12,407 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 18:48:12] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 18:48:42,711 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 18:48:42] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 18:49:10,552 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:10] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:49:10,953 - api.routes_convert - ERROR - Error analizando tablas CSV: name 'logger' is not defined
+2026-03-03 18:49:10,954 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:10] "POST /api/v1/convert/to-csv/analyze HTTP/1.1" 500 -
+2026-03-03 18:49:13,011 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 18:49:13] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 18:49:16,439 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:16] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:49:16,440 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:16] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-03-03 18:49:16,441 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:16] "GET /api/v1/downloads HTTP/1.1" 200 -
+2026-03-03 18:49:17,885 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:17] "GET /web-scraper.html HTTP/1.1" 200 -
+2026-03-03 18:49:18,143 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:18] "GET /static/css/styles.css HTTP/1.1" 304 -
+2026-03-03 18:49:18,535 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:18] "GET /static/js/common.js HTTP/1.1" 304 -
+2026-03-03 18:49:21,455 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:21] "GET /api/v1/jobs HTTP/1.1" 200 -
+2026-03-03 18:49:22,646 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:22] "GET /pdf-to-csv.html HTTP/1.1" 304 -
+2026-03-03 18:49:22,857 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:22] "GET /static/css/styles.css HTTP/1.1" 304 -
+2026-03-03 18:49:23,153 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:23] "GET /static/js/common.js HTTP/1.1" 304 -
+2026-03-03 18:49:23,651 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:23] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:49:32,152 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:32] "GET /api/v1/files HTTP/1.1" 200 -
+2026-03-03 18:49:32,559 - api.routes_convert - ERROR - Error analizando tablas CSV: name 'logger' is not defined
+2026-03-03 18:49:32,560 - werkzeug - INFO - 45.191.192.20 - - [03/Mar/2026 18:49:32] "POST /api/v1/convert/to-csv/analyze HTTP/1.1" 500 -
+2026-03-03 18:49:43,315 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 18:49:43] "GET /api/v1/status HTTP/1.1" 200 -

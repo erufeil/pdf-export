@@ -27,6 +27,7 @@ import config
 import models
 from utils import file_manager, job_manager
 
+logger = logging.getLogger(__name__)
 
 # Timeout maximo por pagina para find_tables().
 # Si la pagina no termina en este tiempo, se usa extraccion por texto como fallback.
