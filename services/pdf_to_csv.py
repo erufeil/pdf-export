@@ -351,7 +351,13 @@ def _extraer_por_palabras(page) -> List[List[str]]:
 def _convertir_nlm_tabla(table_rows: list) -> List[List[str]]:
     """
     Convierte table_rows de nlm-ingestor a List[List[str]].
-    Expande col_span repitiendo el valor de la celda.
+
+    col_span: el texto va en la primera columna del span, las demas quedan vacias.
+    Ej: celda "Nombre" con col_span=2 → ["Nombre", ""]
+    Esto preserva el alineamiento de columnas sin duplicar texto.
+
+    Al final normaliza todas las filas al mismo ancho (la mas larga del grupo),
+    rellenando con "" las filas cortas (evita datos faltantes al final de pagina).
 
     Estructura de entrada (por fila):
         {"type": "table_header"|"table_row",
@@ -370,9 +376,18 @@ def _convertir_nlm_tabla(table_rows: list) -> List[List[str]]:
                        or '')
             col_span = max(1, int(cell.get('col_span', 1)))
             txt = str(val).replace('\n', ' ').strip()
-            fila.extend([txt] * col_span)
+            # Texto en la primera columna del span, vacias el resto
+            fila.append(txt)
+            if col_span > 1:
+                fila.extend([''] * (col_span - 1))
         if any(c for c in fila):
             datos.append(fila)
+
+    # Normalizar ancho: todas las filas al maximo de columnas del grupo
+    if datos:
+        max_cols = max(len(f) for f in datos)
+        datos = [f + [''] * (max_cols - len(f)) for f in datos]
+
     return datos
 
 
@@ -639,12 +654,20 @@ def _consolidar_continuaciones(tablas: List[Dict]) -> List[Dict]:
     # Ordenar por pagina y numero de tabla dentro de la pagina
     ordenadas = sorted(tablas, key=lambda t: (t['pagina'], t['tabla_num']))
 
+    def _num_cols_predominante(datos: list) -> int:
+        """Numero de columnas mas frecuente en la tabla (modo estadistico).
+        Mas robusto que len(datos[0]) cuando la cabecera tiene col_span diferente."""
+        if not datos:
+            return 0
+        lens = [len(f) for f in datos]
+        return max(set(lens), key=lens.count)
+
     grupos = [[ordenadas[0]]]
 
     for tabla_curr in ordenadas[1:]:
         tabla_prev  = grupos[-1][-1]
-        cols_prev   = len(tabla_prev['datos'][0]) if tabla_prev['datos'] else 0
-        cols_curr   = len(tabla_curr['datos'][0]) if tabla_curr['datos'] else 0
+        cols_prev   = _num_cols_predominante(tabla_prev['datos'])
+        cols_curr   = _num_cols_predominante(tabla_curr['datos'])
         gap_paginas = tabla_curr['pagina'] - tabla_prev['pagina']
         es_cercana  = 1 <= gap_paginas <= MAX_GAP_PAGINAS_CONTINUACION
         mismas_cols = cols_prev == cols_curr and cols_prev > 0
