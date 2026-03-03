@@ -27,7 +27,6 @@ import config
 import models
 from utils import file_manager, job_manager
 
-logger = logging.getLogger(__name__)
 
 # Timeout maximo por pagina para find_tables().
 # Si la pagina no termina en este tiempo, se usa extraccion por texto como fallback.
@@ -241,8 +240,8 @@ def _extraer_tablas_pdfplumber(
                 except Exception as exc:
                     logger.warning(f"[to-csv] pdfplumber  pag {num_pagina}/{total}: {exc}")
 
-        # Cerrar el PDF y forzar liberacion de memoria antes del siguiente chunk
-        gc.collect()
+        # Cerrar el PDF y devolver memoria al SO antes del siguiente chunk
+        job_manager.liberar_memoria()
 
     return tablas
 
@@ -1089,6 +1088,11 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     # Este mensaje es siempre visible aunque el log este truncado (es el ultimo del job)
     logger.info(f"[to-csv] Finalizado v{config.VERSION}: {n_csv} CSV "
                 f"[extractor={extractor_final}] en {nombre_zip}")
+
+    # Liberar memoria de extraccion y devolver paginas al SO
+    tablas = None   # soltar referencia antes de malloc_trim
+    job_manager.liberar_memoria()
+
     return {
         'ruta_resultado': str(ruta_zip),
         'mensaje':        f'{n_csv} archivo(s) CSV generado(s)',

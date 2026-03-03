@@ -4,6 +4,8 @@ Gestor de trabajos de conversion para PDFexport.
 Maneja la cola de trabajos y ejecucion en segundo plano.
 """
 
+import ctypes
+import gc
 import threading
 import queue
 import json
@@ -15,6 +17,23 @@ import models
 import config
 
 logger = logging.getLogger(__name__)
+
+
+def liberar_memoria():
+    """
+    Libera objetos de Python Y devuelve paginas de memoria al sistema operativo.
+
+    gc.collect() libera objetos del heap de Python pero el allocator (pymalloc)
+    no devuelve esas paginas al SO por si solo. malloc_trim(0) de glibc fuerza
+    la devolucion, reduciendo el RSS del proceso visible en Docker/htop.
+
+    Llamado automaticamente al finalizar cada trabajo (exito o error).
+    """
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass  # Windows o sistema sin glibc: gc.collect() igual libera objetos
 
 # Cola global de trabajos
 cola_trabajos = queue.Queue()
@@ -129,6 +148,11 @@ def procesar_trabajo(trabajo_id: str):
             mensaje=str(e)
         )
         logger.error(f"Error en trabajo {trabajo_id}: {e}")
+
+    finally:
+        # Liberar memoria del procesador y devolver paginas al SO.
+        # Se ejecuta siempre: exito, error o cancelacion.
+        liberar_memoria()
 
 
 def actualizar_progreso(trabajo_id: str, progreso: int, mensaje: str = None):
