@@ -240,20 +240,23 @@ quiero que cargue el pdf a separar en partes, y que mientras se carga me muestre
 
 **Página:** `static/pdf-to-png.html`
 
-**Descripción:** Convierte cada página del PDF en una imagen PNG individual.
+**Descripción:** Convierte cada página del PDF en una imagen PNG individual o extrae las imagenes que hay en el PDF manteniendo la calidad original.
 
 **Interfaz de usuario:**
 1. Zona de carga de archivo
-2. Configuración de calidad:
+2. Modo de conversion
+- [ ] Pagina completa (Convierte cada pagina a una imagen PNG)
+- [ ] Extraer imagenes (Extrae solo las imagenes)
+3. Configuración de calidad:
    - DPI: [72 | 150 | 300 | 600] (slider o selector)
    - Mostrar tamaño estimado del resultado según DPI seleccionado
-3. Rango de páginas:
+4. Rango de páginas:
    - ( ) Todas las páginas
    - ( ) Rango: desde [__] hasta [__]
    - ( ) Páginas específicas: [1, 3, 5-10]
-4. Vista previa de primera página con calidad seleccionada
-5. Información: "X páginas → aproximadamente Y MB"
-6. Botón "Convertir a PNG"
+5. Vista previa de primera página con calidad seleccionada
+6. Información: "X páginas → aproximadamente Y MB"
+7. Botón "Convertir a PNG"
 
 **Endpoint:** `POST /api/v1/convert/to-png`
 

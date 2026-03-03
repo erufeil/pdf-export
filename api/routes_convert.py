@@ -1126,3 +1126,107 @@ def convertir_reorder():
         {'job_id': trabajo_id},
         f'Reordenamiento encolado: {len(nuevo_orden)} paginas'
     )
+
+
+@bp.route('/img-to-1pdf', methods=['POST'])
+def convertir_img_to_1pdf():
+    """
+    Convierte multiples imagenes en un unico archivo PDF (Etapa 17).
+
+    Espera JSON:
+    - archivos: [{"file_id": str, "orden": int}, ...]  (minimo 1)
+    - opciones:
+        - tamano_pagina: 'natural'|'A4'|'A4H'|'A3'|'A3H'|'letter'|'letterH'
+        - margen: int (0, 15 o 30 puntos PDF)
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivos = datos.get('archivos', [])
+    opciones = datos.get('opciones', {})
+
+    if not archivos:
+        return respuesta_error('MISSING_FILES', 'Se requiere al menos una imagen')
+
+    # Verificar que todos los archivos existen en la BD
+    for item in archivos:
+        fid = item.get('file_id')
+        if not fid:
+            return respuesta_error('MISSING_FILE_ID', 'Cada imagen debe tener file_id')
+        archivo = models.obtener_archivo(fid)
+        if not archivo:
+            return respuesta_error('FILE_NOT_FOUND', f'Archivo no encontrado: {fid}', 404)
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=None,    # servicio trabaja con lista de imagenes, no un unico archivo
+            tipo_conversion='img-to-1pdf',
+            parametros={
+                'archivos': archivos,
+                'opciones': opciones
+            }
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': f'Conversion de {len(archivos)} imagen(es) a PDF iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo img-to-1pdf: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/webp-to-png', methods=['POST'])
+def convertir_webp_to_png():
+    """
+    Convierte un archivo WEBP a PNG (Etapa 18).
+    Conversion directa sin opciones. Si el WEBP es animado, extrae el primer frame.
+
+    Espera JSON:
+    - file_id: ID del archivo WEBP ya subido
+
+    Retorna:
+    - Info del trabajo creado
+    """
+    datos = request.get_json()
+
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Verificar que el archivo sea WEBP
+    nombre = archivo['nombre_original'].lower()
+    if not nombre.endswith('.webp'):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser un WEBP')
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='webp-to-png',
+            parametros={}
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion WEBP a PNG iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo webp-to-png: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)

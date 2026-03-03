@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBP a PNG - PDF-Export & Import</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 800px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        .options-panel {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            border: 1px solid var(--color-border);
+            position: sticky;
+            top: 20px;
+        }
+
+        /* Zona de drop */
+        .drop-zone {
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--color-surface);
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--color-primary);
+            background: #eff6ff;
+        }
+
+        .drop-zone.archivo-cargado {
+            border-color: var(--color-success);
+            background: #f0fdf4;
+        }
+
+        .drop-zone p {
+            color: var(--color-text-light);
+            margin: 8px 0 0;
+            font-size: 0.9rem;
+        }
+
+        /* Preview de la imagen */
+        .preview-wrap {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-wrap.visible { display: block; }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .preview-info {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
+        /* Progreso */
+        .progress-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-section.visible { display: block; }
+
+        .progress-bar-wrap {
+            background: var(--color-border);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-msg {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+        }
+
+        /* Info del archivo cargado */
+        .archivo-info {
+            display: none;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-size: 0.88rem;
+            margin-top: 10px;
+        }
+
+        .archivo-info.visible { display: block; }
+
+        .archivo-info strong { color: var(--color-success-dark, #166534); }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <header class="header">
+            <h1 style="font-size: 1.8rem;">WEBP a PNG</h1>
+            <p class="subtitle">Convierte una imagen WEBP a PNG conservando la maxima calidad</p>
+        </header>
+
+        <div class="content-grid">
+
+            <!-- Columna principal -->
+            <div>
+                <!-- Drop zone -->
+                <div class="drop-zone" id="drop-zone">
+                    <div style="font-size: 2.5rem;">🖼️</div>
+                    <strong>Arrastra un WEBP aqui o haz click para seleccionar</strong>
+                    <p>Solo archivos .webp &mdash; tamaño maximo 1 GB</p>
+                    <input type="file" id="input-archivo" accept=".webp" style="display:none">
+                </div>
+
+                <!-- Info del archivo cargado -->
+                <div class="archivo-info" id="archivo-info">
+                    <strong id="archivo-nombre"></strong><br>
+                    <span id="archivo-meta"></span>
+                </div>
+
+                <!-- Preview -->
+                <div class="preview-wrap" id="preview-wrap">
+                    <img id="preview-img" class="preview-img" src="" alt="Vista previa">
+                    <div class="preview-info" id="preview-info"></div>
+                </div>
+
+                <!-- Progreso -->
+                <div class="progress-section" id="progress-section">
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+                    </div>
+                    <div class="progress-msg" id="progress-msg">Iniciando...</div>
+                </div>
+            </div>
+
+            <!-- Panel lateral -->
+            <div class="options-panel">
+                <h3 style="margin-bottom: 15px; font-size: 1rem;">Conversion</h3>
+
+                <div style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 20px; line-height: 1.5;">
+                    <p>Conversion directa WEBP → PNG.</p>
+                    <p style="margin-top: 6px;">PNG es sin perdida: la calidad de la imagen se mantiene intacta.</p>
+                    <p style="margin-top: 6px;">La transparencia (canal alpha) se preserva.</p>
+                    <p style="margin-top: 6px;">Si el WEBP es animado se extrae solo el primer frame.</p>
+                </div>
+
+                <button class="btn btn-primary" id="btn-convertir" disabled style="width:100%; padding:12px;">
+                    Convertir a PNG
+                </button>
+
+                <div id="resultado-section" style="display:none; margin-top:15px;">
+                    <a id="link-descarga" class="btn btn-success"
+                       style="width:100%; text-align:center; padding:12px; display:block;">
+                        Descargar PNG
+                    </a>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <a href="/" class="btn btn-secondary" style="width:100%; text-align:center; display:block;">
+                        ← Volver al inicio
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF</p>
+            <p class="footer-info"><a href="/">Volver al inicio</a></p>
+            <p class="footer-info" id="app-version"></p>
+        </footer>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script>
+    // ============================================================
+    // Estado
+    // ============================================================
+    const estado = {
+        archivoId: null,
+        jobId: null
+    };
+
+    // ============================================================
+    // Referencias al DOM
+    // ============================================================
+    const dropZone      = document.getElementById('drop-zone');
+    const inputArchivo  = document.getElementById('input-archivo');
+    const archivoInfo   = document.getElementById('archivo-info');
+    const archivoNombre = document.getElementById('archivo-nombre');
+    const archivoMeta   = document.getElementById('archivo-meta');
+    const previewWrap   = document.getElementById('preview-wrap');
+    const previewImg    = document.getElementById('preview-img');
+    const previewInfo   = document.getElementById('preview-info');
+    const btnConvertir  = document.getElementById('btn-convertir');
+    const progressSec   = document.getElementById('progress-section');
+    const progressFill  = document.getElementById('progress-fill');
+    const progressMsg   = document.getElementById('progress-msg');
+    const resultadoSec  = document.getElementById('resultado-section');
+    const linkDescarga  = document.getElementById('link-descarga');
+    const API           = window.AppConfig.API_BASE_URL;
+
+    // ============================================================
+    // Drop zone
+    // ============================================================
+    dropZone.addEventListener('click', () => inputArchivo.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const archivos = Array.from(e.dataTransfer.files);
+        const webp = archivos.find(f => f.name.toLowerCase().endsWith('.webp'));
+        if (webp) {
+            procesarArchivo(webp);
+        } else {
+            window.PDFExport.mostrarMensaje('Solo se aceptan archivos .webp', 'warning');
+        }
+    });
+
+    inputArchivo.addEventListener('change', () => {
+        if (inputArchivo.files[0]) procesarArchivo(inputArchivo.files[0]);
+        inputArchivo.value = '';
+    });
+
+    // ============================================================
+    // Procesar archivo: mostrar preview local y subir al servidor
+    // ============================================================
+    async function procesarArchivo(archivo) {
+        // Mostrar preview inmediato desde el archivo local
+        const urlLocal = URL.createObjectURL(archivo);
+        previewImg.src = urlLocal;
+        previewWrap.classList.add('visible');
+
+        // Esperar a que cargue para obtener dimensiones
+        previewImg.onload = () => {
+            previewInfo.textContent =
+                `${previewImg.naturalWidth} × ${previewImg.naturalHeight} px · ` +
+                `${window.PDFExport.formatearTamano(archivo.size)}`;
+        };
+
+        // Actualizar info del archivo
+        archivoNombre.textContent = archivo.name;
+        archivoMeta.textContent = window.PDFExport.formatearTamano(archivo.size);
+        archivoInfo.classList.add('visible');
+        dropZone.classList.add('archivo-cargado');
+
+        // Deshabilitar boton mientras sube
+        btnConvertir.disabled = true;
+        resultadoSec.style.display = 'none';
+
+        await subirArchivoSiNecesario(archivo);
+    }
+
+    async function subirArchivoSiNecesario(archivo) {
+        // Verificar si ya existe en el servidor
+        try {
+            const checkResp = await fetch(`${API}/check-duplicate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: archivo.name,
+                    tamano: archivo.size,
+                    fecha_modificacion: new Date(archivo.lastModified).toISOString()
+                })
+            });
+            const checkData = await checkResp.json();
+
+            if (checkData.success && checkData.data.exists) {
+                estado.archivoId = checkData.data.file.id;
+                btnConvertir.disabled = false;
+                return;
+            }
+        } catch (e) {
+            // Si falla la verificacion, intentar subir directamente
+        }
+
+        // Subir el archivo
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        formData.append('nombre', archivo.name);
+        formData.append('tamano', archivo.size);
+        formData.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
+
+        try {
+            const resp = await fetch(`${API}/upload`, { method: 'POST', body: formData });
+            const data = await resp.json();
+
+            if (data.success) {
+                estado.archivoId = data.data.id;
+                btnConvertir.disabled = false;
+            } else {
+                window.PDFExport.mostrarMensaje(`Error al subir: ${data.error.message}`, 'error');
+                btnConvertir.disabled = true;
+            }
+        } catch (e) {
+            window.PDFExport.mostrarMensaje('Error de red al subir el archivo', 'error');
+            btnConvertir.disabled = true;
+        }
+    }
+
+    // ============================================================
+    // Ejecutar conversion
+    // ============================================================
+    btnConvertir.addEventListener('click', async () => {
+        if (!estado.archivoId) return;
+
+        btnConvertir.disabled = true;
+        resultadoSec.style.display = 'none';
+        progressSec.classList.add('visible');
+        progressFill.style.width = '0%';
+        progressFill.style.background = 'var(--color-primary)';
+        progressMsg.textContent = 'Iniciando...';
+
+        try {
+            const resp = await fetch(`${API}/convert/webp-to-png`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_id: estado.archivoId })
+            });
+            const data = await resp.json();
+
+            if (!data.success) {
+                window.PDFExport.mostrarMensaje(`Error: ${data.error.message}`, 'error');
+                btnConvertir.disabled = false;
+                progressSec.classList.remove('visible');
+                return;
+            }
+
+            monitorearProgreso(data.data.job_id);
+
+        } catch (e) {
+            window.PDFExport.mostrarMensaje('Error de red al iniciar la conversion', 'error');
+            btnConvertir.disabled = false;
+            progressSec.classList.remove('visible');
+        }
+    });
+
+    // ============================================================
+    // Monitorear progreso via SSE
+    // ============================================================
+    function monitorearProgreso(jobId) {
+        estado.jobId = jobId;
+        const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+
+        sse.onmessage = (e) => {
+            try {
+                const datos = JSON.parse(e.data);
+
+                progressFill.style.width = datos.progreso + '%';
+                progressMsg.textContent = datos.mensaje || `${datos.progreso}%`;
+
+                if (datos.estado === 'completado') {
+                    sse.close();
+                    progressFill.style.width = '100%';
+                    progressMsg.textContent = 'Completado. Descargando...';
+
+                    const urlDescarga = `${API}/download/${jobId}`;
+                    linkDescarga.href = urlDescarga;
+                    resultadoSec.style.display = 'block';
+
+                    // Descarga automatica
+                    const a = document.createElement('a');
+                    a.href = urlDescarga;
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    btnConvertir.disabled = false;
+
+                } else if (datos.estado === 'error') {
+                    sse.close();
+                    progressMsg.textContent = 'Error: ' + (datos.mensaje || 'Fallo desconocido');
+                    progressFill.style.background = 'var(--color-danger)';
+                    window.PDFExport.mostrarMensaje(datos.mensaje || 'Error en la conversion', 'error');
+                    btnConvertir.disabled = false;
+                }
+
+            } catch (err) { /* ignorar errores de parseo */ }
+        };
+
+        sse.onerror = () => {
+            sse.close();
+            progressMsg.textContent = 'Verificando estado...';
+            verificarEstadoFinal(jobId);
+        };
+    }
+
+    async function verificarEstadoFinal(jobId) {
+        try {
+            const resp = await fetch(`${API}/jobs/${jobId}`);
+            const data = await resp.json();
+            if (data.success && data.data.estado === 'completado') {
+                progressFill.style.width = '100%';
+                progressMsg.textContent = 'Completado.';
+                const urlDescarga = `${API}/download/${jobId}`;
+                linkDescarga.href = urlDescarga;
+                resultadoSec.style.display = 'block';
+            }
+        } catch (e) { /* silencioso */ }
+        btnConvertir.disabled = false;
+    }
+    </script>
+</body>
+</html>

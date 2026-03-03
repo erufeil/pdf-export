@@ -31,7 +31,7 @@ DATA_FOLDER = BASE_DIR / 'data'
 MAX_CONTENT_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB en bytes
 
 # Extensiones permitidas
-ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json'}
+ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp'}
 
 # Tiempo de retencion de archivos en horas (configurable via entorno)
 FILE_RETENTION_HOURS = int(os.getenv('FILE_RETENTION_HOURS', 4))
