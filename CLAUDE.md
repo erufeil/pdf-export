@@ -905,6 +905,21 @@ Cargar o enviar una cantidad de imagenes de cualquier tipo y crear (1) solo PDF 
 | 16 | Web Scraper de Contenido | Media | beautifulsoup4, trafilatura, markdownify |
 
 ---
+### Etapa 18. De WEBP a PNG
+
+## Nombre del boton para index.html
+<div class="card-icon">WEBP</div>
+<h3>WEBP a PNG</h3>
+<p>Convierte imagen Webp</p>
+
+**Página:** `static/webp-to-png.html`
+
+**Endpoint:** `POST /api/v1/convert/webp-to-png`
+
+## Objetivo
+Convertir imagenes Webp a imagenes PNG.
+
+---
 
 ## Estructura de Carpetas Propuesta
 

@@ -164,68 +164,85 @@ def _extraer_tablas_pdfplumber(
       1. Bordes visibles   (vertical_strategy="lines", horizontal_strategy="lines")
       2. Alineacion texto  (strategy="text")  si paso 1 no encuentra nada
 
+    Procesamiento en chunks: cierra y reabre el PDF cada CHUNK_SIZE paginas para
+    liberar la memoria acumulada por pdfplumber. Sin esto, PDFs grandes con muchas
+    lineas dibujadas (charts, mapas) agotan la RAM y matan el contenedor por OOM.
+
     Actualiza la barra de progreso del UI en cada pagina si se provee trabajo_id.
 
     Returns:
         Lista de dicts: pagina, tabla_num, datos, titulo, cabeceras
     """
     import pdfplumber   # import diferido: puede no estar instalado
+    import gc
+
+    # Paginas a procesar por apertura de PDF. Valor bajo = menos memoria en pico.
+    CHUNK_SIZE = 10
 
     tablas = []
 
-    with pdfplumber.open(str(ruta_pdf)) as pdf:
-        paginas = pdf.pages[:max_paginas] if max_paginas else pdf.pages
-        total   = len(paginas)
+    # Primer paso: determinar total de paginas sin procesar
+    with pdfplumber.open(str(ruta_pdf)) as pdf_tmp:
+        total = min(len(pdf_tmp.pages), max_paginas) if max_paginas else len(pdf_tmp.pages)
 
-        for idx, page in enumerate(paginas):
-            num_pagina = idx + 1
+    # Procesar en chunks para mantener memoria controlada
+    for chunk_inicio in range(0, total, CHUNK_SIZE):
+        chunk_fin = min(chunk_inicio + CHUNK_SIZE, total)
 
-            # Actualizar UI: progreso de extraccion pagina a pagina
-            if trabajo_id:
-                pct = progreso_offset + int((idx / total) * progreso_rango)
-                job_manager.actualizar_progreso(
-                    trabajo_id, pct,
-                    f"[pdfplumber] Extrayendo página {num_pagina}/{total}..."
-                )
+        with pdfplumber.open(str(ruta_pdf)) as pdf:
+            for idx in range(chunk_inicio, chunk_fin):
+                num_pagina = idx + 1
+                page       = pdf.pages[idx]
 
-            tablas_pag = []
-            try:
-                # Estrategia 1: tablas con bordes dibujados (la mas precisa)
-                tablas_pag = page.find_tables(table_settings={
-                    "vertical_strategy":   "lines",
-                    "horizontal_strategy": "lines",
-                })
+                # Actualizar UI: progreso de extraccion pagina a pagina
+                if trabajo_id:
+                    pct = progreso_offset + int((idx / total) * progreso_rango)
+                    job_manager.actualizar_progreso(
+                        trabajo_id, pct,
+                        f"[pdfplumber] Extrayendo página {num_pagina}/{total}..."
+                    )
 
-                # Estrategia 2: tablas sin bordes, detectadas por alineacion de texto
-                if not tablas_pag:
+                tablas_pag = []
+                try:
+                    # Estrategia 1: tablas con bordes dibujados (la mas precisa)
                     tablas_pag = page.find_tables(table_settings={
-                        "vertical_strategy":   "text",
-                        "horizontal_strategy": "text",
+                        "vertical_strategy":   "lines",
+                        "horizontal_strategy": "lines",
                     })
 
-                encontradas_pag = 0
-                for idx_t, tabla_obj in enumerate(tablas_pag, start=1):
-                    datos = _limpiar_datos_tabla(tabla_obj.extract())
-                    if not datos:
-                        continue
-                    titulo    = _detectar_titulo_tabla(page, tabla_obj.bbox)
-                    cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
-                    tablas.append({
-                        'pagina':    num_pagina,
-                        'tabla_num': idx_t,
-                        'datos':     datos,
-                        'titulo':    titulo,
-                        'cabeceras': cabeceras,
-                    })
-                    encontradas_pag += 1
+                    # Estrategia 2: tablas sin bordes, detectadas por alineacion de texto
+                    if not tablas_pag:
+                        tablas_pag = page.find_tables(table_settings={
+                            "vertical_strategy":   "text",
+                            "horizontal_strategy": "text",
+                        })
 
-                logger.info(
-                    f"[to-csv] pdfplumber  pag {num_pagina:>4}/{total}  "
-                    f"→ {encontradas_pag} tabla(s)"
-                )
+                    encontradas_pag = 0
+                    for idx_t, tabla_obj in enumerate(tablas_pag, start=1):
+                        datos = _limpiar_datos_tabla(tabla_obj.extract())
+                        if not datos:
+                            continue
+                        titulo    = _detectar_titulo_tabla(page, tabla_obj.bbox)
+                        cabeceras = [_normalizar_cabecera(c) for c in datos[0]]
+                        tablas.append({
+                            'pagina':    num_pagina,
+                            'tabla_num': idx_t,
+                            'datos':     datos,
+                            'titulo':    titulo,
+                            'cabeceras': cabeceras,
+                        })
+                        encontradas_pag += 1
 
-            except Exception as exc:
-                logger.warning(f"[to-csv] pdfplumber  pag {num_pagina}/{total}: {exc}")
+                    logger.info(
+                        f"[to-csv] pdfplumber  pag {num_pagina:>4}/{total}  "
+                        f"→ {encontradas_pag} tabla(s)"
+                    )
+
+                except Exception as exc:
+                    logger.warning(f"[to-csv] pdfplumber  pag {num_pagina}/{total}: {exc}")
+
+        # Cerrar el PDF y forzar liberacion de memoria antes del siguiente chunk
+        gc.collect()
 
     return tablas
 
