@@ -911,49 +911,29 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     if separador   not in [',', ';']:    separador   = ';'
     if saltos_linea not in ['CRLF', 'LF']: saltos_linea = 'CRLF'
 
-    # --- Paso 1: extraer tablas ---
-    # Orden de prioridad de extractores:
-    #   1. nlm-ingestor (servicio externo, mejor calidad, usa Tika + layout analysis)
-    #   2. PyMuPDF fitz  (local, rapido, C nativo, para PDFs con bordes visibles)
-    #   3. pdfplumber    (local, fallback final para tablas complejas)
+    # --- Paso 1: detectar tipo de tabla para elegir el mejor extractor ---
     job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando extraccion de tablas...")
     logger.info(f"[to-csv] Iniciando extraccion: {nombre_original}")
+
+    info_tipo  = _analizar_rapido_fitz(ruta_pdf, max_paginas=5)
+    tipo_tabla = info_tipo.get('tipo', 'ninguno')   # 'bordes' | 'texto' | 'ninguno'
+    logger.info(f"[to-csv] Tipo de tabla detectado: {tipo_tabla}")
 
     tablas = []
     extractor_final = 'ninguno'
 
-    # Extractor 1: nlm-ingestor (si esta configurado y accesible)
-    if config.NLM_INGESTOR_URL:
-        logger.info(f"[to-csv] Intentando nlm-ingestor: {config.NLM_INGESTOR_URL}")
-        tablas = _extraer_tablas_nlm(
-            ruta_pdf,
-            trabajo_id=trabajo_id,
-            progreso_offset=2,
-            progreso_rango=68,
-        )
-        if tablas:
-            extractor_final = 'nlm-ingestor'
-        logger.info(f"[to-csv] nlm-ingestor encontro {len(tablas)} seccion(es)")
+    # Prioridad segun tipo de tabla:
+    #
+    # tipo='bordes' → la tabla tiene lineas dibujadas (cuadricula)
+    #   Mejor: pdfplumber (usa las lineas geometricas del PDF para segmentar celdas)
+    #   NLM no ve las lineas del PDF, usa layout de texto → falla en columnas adyacentes
+    #
+    # tipo='texto'  → la tabla se detecta por alineacion de texto (sin lineas)
+    #   Mejor: nlm-ingestor (analiza layout complejo, fuera de pagina, columnas variables)
 
-    # Extractor 2: PyMuPDF fitz (fallback local si nlm no esta disponible o no encontro tablas)
-    if not tablas:
-        if config.NLM_INGESTOR_URL:
-            logger.info("[to-csv] nlm-ingestor sin tablas, usando PyMuPDF como fallback...")
-        job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas con PyMuPDF...")
-        tablas = _extraer_tablas_fitz(
-            ruta_pdf,
-            trabajo_id=trabajo_id,
-            progreso_offset=2,
-            progreso_rango=68,
-        )
-        if tablas:
-            extractor_final = 'fitz'
-        logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
-
-    # Extractor 3: pdfplumber (ultimo recurso)
-    if not tablas:
-        logger.info("[to-csv] PyMuPDF no encontro tablas, probando pdfplumber...")
-        job_manager.actualizar_progreso(trabajo_id, 2, "Probando extractor alternativo...")
+    if tipo_tabla == 'bordes':
+        # --- Extractor 1 para BORDES: pdfplumber ---
+        job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas con bordes (pdfplumber)...")
         try:
             import pdfplumber  # noqa: F401
             tablas = _extraer_tablas_pdfplumber(
@@ -966,7 +946,68 @@ def procesar_to_csv(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
                 extractor_final = 'pdfplumber'
             logger.info(f"[to-csv] pdfplumber encontro {len(tablas)} seccion(es)")
         except ImportError:
-            logger.warning("[to-csv] pdfplumber no disponible")
+            logger.warning("[to-csv] pdfplumber no disponible, usando PyMuPDF")
+
+        # --- Extractor 2 para BORDES: fitz (si pdfplumber no encontro nada) ---
+        if not tablas:
+            logger.info("[to-csv] pdfplumber sin tablas, usando PyMuPDF...")
+            job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas con PyMuPDF...")
+            tablas = _extraer_tablas_fitz(
+                ruta_pdf,
+                trabajo_id=trabajo_id,
+                progreso_offset=2,
+                progreso_rango=68,
+            )
+            if tablas:
+                extractor_final = 'fitz'
+            logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
+
+    else:
+        # --- Extractor 1 para TEXTO: nlm-ingestor ---
+        if config.NLM_INGESTOR_URL:
+            logger.info(f"[to-csv] Intentando nlm-ingestor: {config.NLM_INGESTOR_URL}")
+            tablas = _extraer_tablas_nlm(
+                ruta_pdf,
+                trabajo_id=trabajo_id,
+                progreso_offset=2,
+                progreso_rango=68,
+            )
+            if tablas:
+                extractor_final = 'nlm-ingestor'
+            logger.info(f"[to-csv] nlm-ingestor encontro {len(tablas)} seccion(es)")
+
+        # --- Extractor 2 para TEXTO: fitz ---
+        if not tablas:
+            if config.NLM_INGESTOR_URL:
+                logger.info("[to-csv] nlm-ingestor sin tablas, usando PyMuPDF...")
+            job_manager.actualizar_progreso(trabajo_id, 2, "Extrayendo tablas con PyMuPDF...")
+            tablas = _extraer_tablas_fitz(
+                ruta_pdf,
+                trabajo_id=trabajo_id,
+                progreso_offset=2,
+                progreso_rango=68,
+            )
+            if tablas:
+                extractor_final = 'fitz'
+            logger.info(f"[to-csv] PyMuPDF encontro {len(tablas)} seccion(es)")
+
+        # --- Extractor 3 para TEXTO: pdfplumber (ultimo recurso) ---
+        if not tablas:
+            logger.info("[to-csv] PyMuPDF sin tablas, probando pdfplumber...")
+            job_manager.actualizar_progreso(trabajo_id, 2, "Probando extractor alternativo...")
+            try:
+                import pdfplumber  # noqa: F401
+                tablas = _extraer_tablas_pdfplumber(
+                    ruta_pdf,
+                    trabajo_id=trabajo_id,
+                    progreso_offset=2,
+                    progreso_rango=68,
+                )
+                if tablas:
+                    extractor_final = 'pdfplumber'
+                logger.info(f"[to-csv] pdfplumber encontro {len(tablas)} seccion(es)")
+            except ImportError:
+                logger.warning("[to-csv] pdfplumber no disponible")
 
     if not tablas:
         raise ValueError(
