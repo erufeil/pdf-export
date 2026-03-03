@@ -1,0 +1,100 @@
+2026-03-03 14:32:07,466 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag16_1_tabla_16_1.csv (109 filas)
+2026-03-03 14:32:07,517 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag17_1_tabla_17_1.csv (109 filas)
+2026-03-03 14:32:07,589 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag18_1_tabla_18_1.csv (109 filas)
+2026-03-03 14:32:07,665 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:07] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:07,666 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag19_1_tabla_19_1.csv (109 filas)
+2026-03-03 14:32:07,742 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag20_1_tabla_20_1.csv (109 filas)
+2026-03-03 14:32:07,810 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag21_1_tabla_21_1.csv (109 filas)
+2026-03-03 14:32:07,950 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag22_1_tabla_22_1.csv (109 filas)
+2026-03-03 14:32:08,006 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag23_1_tabla_23_1.csv (109 filas)
+2026-03-03 14:32:08,090 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag24_1_tabla_24_1.csv (109 filas)
+2026-03-03 14:32:08,231 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag25_1_tabla_25_1.csv (109 filas)
+2026-03-03 14:32:08,283 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag26_1_tabla_26_1.csv (109 filas)
+2026-03-03 14:32:08,359 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag27_1_tabla_27_1.csv (109 filas)
+2026-03-03 14:32:08,410 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag28_1_tabla_28_1.csv (218 filas)
+2026-03-03 14:32:08,472 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag30_1_tabla_30_1.csv (109 filas)
+2026-03-03 14:32:08,539 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag31_1_tabla_31_1.csv (218 filas)
+2026-03-03 14:32:08,606 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag33_1_tabla_33_1.csv (109 filas)
+2026-03-03 14:32:08,733 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag34_1_tabla_34_1.csv (109 filas)
+2026-03-03 14:32:08,799 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag35_1_tabla_35_1.csv (109 filas)
+2026-03-03 14:32:08,882 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag36_1_tabla_36_1.csv (109 filas)
+2026-03-03 14:32:09,022 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag37_1_tabla_37_1.csv (109 filas)
+2026-03-03 14:32:09,094 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag38_1_tabla_38_1.csv (109 filas)
+2026-03-03 14:32:09,166 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag39_1_tabla_39_1.csv (109 filas)
+2026-03-03 14:32:09,218 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag40_1_tabla_40_1.csv (218 filas)
+2026-03-03 14:32:09,290 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag42_1_tabla_42_1.csv (109 filas)
+2026-03-03 14:32:09,347 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag43_1_tabla_43_1.csv (327 filas)
+2026-03-03 14:32:09,476 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag46_1_tabla_46_1.csv (109 filas)
+2026-03-03 14:32:09,532 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag47_1_tabla_47_1.csv (109 filas)
+2026-03-03 14:32:09,622 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag48_1_tabla_48_1.csv (109 filas)
+2026-03-03 14:32:09,622 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:09] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:09,695 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag49_1_tabla_49_1.csv (218 filas)
+2026-03-03 14:32:09,821 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag51_1_tabla_51_1.csv (109 filas)
+2026-03-03 14:32:09,835 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag52_1_tabla_52_1.csv (218 filas)
+2026-03-03 14:32:09,873 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag54_1_tabla_54_1.csv (109 filas)
+2026-03-03 14:32:09,933 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag55_1_tabla_55_1.csv (109 filas)
+2026-03-03 14:32:10,018 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag56_1_tabla_56_1.csv (109 filas)
+2026-03-03 14:32:10,087 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag57_1_tabla_57_1.csv (109 filas)
+2026-03-03 14:32:10,145 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag58_1_tabla_58_1.csv (109 filas)
+2026-03-03 14:32:10,200 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag59_1_tabla_59_1.csv (109 filas)
+2026-03-03 14:32:10,340 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag60_1_tabla_60_1.csv (109 filas)
+2026-03-03 14:32:10,412 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag61_1_tabla_61_1.csv (109 filas)
+2026-03-03 14:32:10,468 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag62_1_tabla_62_1.csv (109 filas)
+2026-03-03 14:32:10,520 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag63_1_tabla_63_1.csv (109 filas)
+2026-03-03 14:32:10,628 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag64_1_tabla_64_1.csv (109 filas)
+2026-03-03 14:32:10,655 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:10] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:10,668 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag65_1_tabla_65_1.csv (218 filas)
+2026-03-03 14:32:10,726 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag67_1_tabla_67_1.csv (109 filas)
+2026-03-03 14:32:10,802 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag68_1_tabla_68_1.csv (218 filas)
+2026-03-03 14:32:10,858 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag70_1_tabla_70_1.csv (109 filas)
+2026-03-03 14:32:10,930 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag71_1_tabla_71_1.csv (109 filas)
+2026-03-03 14:32:10,987 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag72_1_tabla_72_1.csv (218 filas)
+2026-03-03 14:32:11,119 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag74_1_tabla_74_1.csv (327 filas)
+2026-03-03 14:32:11,186 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag77_1_tabla_77_1.csv (109 filas)
+2026-03-03 14:32:11,263 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag78_1_tabla_78_1.csv (109 filas)
+2026-03-03 14:32:11,315 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag79_1_tabla_79_1.csv (109 filas)
+2026-03-03 14:32:11,466 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag80_1_tabla_80_1.csv (43 filas)
+2026-03-03 14:32:11,533 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag81_1_tabla_81_1.csv (65 filas)
+2026-03-03 14:32:11,606 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag82_1_tabla_82_1.csv (64 filas)
+2026-03-03 14:32:11,691 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag83_1_tabla_83_1.csv (64 filas)
+2026-03-03 14:32:11,752 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag84_1_tabla_84_1.csv (65 filas)
+2026-03-03 14:32:11,889 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag85_1_tabla_85_1.csv (65 filas)
+2026-03-03 14:32:11,961 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag86_1_tabla_86_1.csv (65 filas)
+2026-03-03 14:32:12,038 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag87_1_tabla_87_1.csv (65 filas)
+2026-03-03 14:32:12,105 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag88_1_tabla_88_1.csv (65 filas)
+2026-03-03 14:32:12,257 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag89_1_tabla_89_1.csv (65 filas)
+2026-03-03 14:32:12,324 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag90_1_tabla_90_1.csv (65 filas)
+2026-03-03 14:32:12,396 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag91_1_tabla_91_1.csv (259 filas)
+2026-03-03 14:32:12,479 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag95_1_tabla_95_1.csv (64 filas)
+2026-03-03 14:32:12,530 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag96_1_tabla_96_1.csv (64 filas)
+2026-03-03 14:32:12,587 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag97_1_tabla_97_1.csv (128 filas)
+2026-03-03 14:32:12,709 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:12] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:12,736 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag99_1_tabla_99_1.csv (48 filas)
+2026-03-03 14:32:12,784 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag100_1_tabla_100_1.csv (27 filas)
+2026-03-03 14:32:12,863 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag101_1_tabla_101_1.csv (469 filas)
+2026-03-03 14:32:12,925 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag105_1_tabla_105_1.csv (117 filas)
+2026-03-03 14:32:13,059 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag106_1_tabla_106_1.csv (50 filas)
+2026-03-03 14:32:13,115 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag107_1_tabla_107_1.csv (45 filas)
+2026-03-03 14:32:13,202 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag108_1_tabla_108_1.csv (90 filas)
+2026-03-03 14:32:13,264 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag110_1_tabla_110_1.csv (180 filas)
+2026-03-03 14:32:13,337 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag114_1_tabla_114_1.csv (135 filas)
+2026-03-03 14:32:13,404 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag117_1_tabla_117_1.csv (90 filas)
+2026-03-03 14:32:13,549 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag119_1_tabla_119_1.csv (45 filas)
+2026-03-03 14:32:13,634 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag120_1_tabla_120_1.csv (45 filas)
+2026-03-03 14:32:13,673 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:13] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:13,673 - services.pdf_to_csv - INFO - [to-csv] CSV creado: tabla_pag121_1_tabla_121_1.csv (5 filas)
+2026-03-03 14:32:15,695 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:15] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:16,661 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:16] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:18,196 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 14:32:18] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 14:32:18,703 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:18] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:19,445 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:19] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:21,764 - utils.file_manager - INFO - ZIP creado: /app/outputs/58684434-8029-47fb-8aee-d233523a2509_Carta Marina 2019_csv.zip (157497 bytes)
+2026-03-03 14:32:21,796 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:21] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:22,455 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:22] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:23,027 - services.pdf_to_csv - INFO - [to-csv] Finalizado: 92 CSV en 58684434-8029-47fb-8aee-d233523a2509_Carta Marina 2019_csv.zip
+2026-03-03 14:32:23,082 - utils.job_manager - INFO - Trabajo completado: 58684434-8029-47fb-8aee-d233523a2509
+2026-03-03 14:32:24,729 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:24] "GET /api/v1/jobs/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:26,490 - werkzeug - INFO - 190.220.244.14 - - [03/Mar/2026 14:32:26] "GET /api/v1/download/58684434-8029-47fb-8aee-d233523a2509 HTTP/1.1" 200 -
+2026-03-03 14:32:48,672 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 14:32:48] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 14:33:19,187 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 14:33:19] "GET /api/v1/status HTTP/1.1" 200 -
+2026-03-03 14:33:49,691 - werkzeug - INFO - 127.0.0.1 - - [03/Mar/2026 14:33:49] "GET /api/v1/status HTTP/1.1" 200 -

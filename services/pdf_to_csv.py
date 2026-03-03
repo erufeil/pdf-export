@@ -399,7 +399,20 @@ def _extraer_tablas_nlm(
     """
     import requests as _requests
 
-    url_api = f"{config.NLM_INGESTOR_URL}/api/parseDocument"
+    url_base = config.NLM_INGESTOR_URL.rstrip('/')
+    url_api  = f"{url_base}/api/parseDocument"
+
+    # Verificar disponibilidad del servicio antes de enviar el PDF completo
+    logger.info(f"[to-csv] nlm-ingestor health check: {url_base}/health")
+    try:
+        r_health = _requests.get(f"{url_base}/health", timeout=5)
+        logger.info(f"[to-csv] nlm-ingestor health: HTTP {r_health.status_code} → {r_health.text[:80]}")
+        if r_health.status_code != 200:
+            logger.warning("[to-csv] nlm-ingestor no disponible (health != 200), usando fallback")
+            return []
+    except Exception as exc_health:
+        logger.warning(f"[to-csv] nlm-ingestor no alcanzable ({url_base}): {exc_health}")
+        return []
 
     if trabajo_id:
         job_manager.actualizar_progreso(
@@ -408,6 +421,7 @@ def _extraer_tablas_nlm(
         )
 
     try:
+        logger.info(f"[to-csv] Enviando {ruta_pdf.name} a {url_api}")
         with open(str(ruta_pdf), 'rb') as f_pdf:
             resp = _requests.post(
                 url_api,
@@ -415,10 +429,11 @@ def _extraer_tablas_nlm(
                 files={'file': (ruta_pdf.name, f_pdf, 'application/pdf')},
                 timeout=300,   # 5 min para PDFs grandes
             )
+        logger.info(f"[to-csv] nlm-ingestor respuesta: HTTP {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
     except Exception as exc:
-        logger.warning(f"[to-csv] nlm-ingestor no disponible o error: {exc}")
+        logger.warning(f"[to-csv] nlm-ingestor error al procesar PDF: {exc}")
         return []
 
     bloques = data.get('return_dict', {}).get('result', {}).get('blocks', [])
@@ -593,19 +608,26 @@ def _extraer_tablas_fitz(
 # Consolidacion de tablas multi-pagina
 # ---------------------------------------------------------------------------
 
+# Maximo gap de paginas entre dos tramos de la misma tabla para considerarlos continuacion.
+# Las paginas intermedias sin tabla (portadillas, graficos, paginas en blanco) no deben
+# romper la fusion. Un gap de 5 cubre los casos observados en PDFs tipo Excel impreso.
+MAX_GAP_PAGINAS_CONTINUACION = 5
+
+
 def _consolidar_continuaciones(tablas: List[Dict]) -> List[Dict]:
     """
-    Fusiona tablas que son continuacion de la tabla de la pagina anterior.
+    Fusiona tablas que son continuacion de la misma tabla en paginas siguientes.
 
-    Caso tipico: tabla de N paginas donde la cabecera solo aparece en pag 1.
+    Caso tipico: tabla de N paginas donde la cabecera solo aparece en pag 1,
+    o un Excel impreso en PDF donde algunas paginas intermedias no tienen tabla.
     Cada extractor ve N tablas separadas; esta funcion las fusiona en una.
 
     Criterio de continuacion:
-      - Paginas consecutivas (pag_actual == pag_anterior + 1)
-      - Mismo numero de columnas
+      - Misma cantidad de columnas
+      - Pagina actual dentro de MAX_GAP_PAGINAS_CONTINUACION de la anterior
 
     La primera tabla del grupo conserva su titulo y cabecera.
-    Las tablas siguientes aportan sus filas de datos (sin repetir cabecera).
+    Las tablas siguientes aportan sus filas de datos.
     """
     if len(tablas) <= 1:
         return tablas
@@ -616,13 +638,14 @@ def _consolidar_continuaciones(tablas: List[Dict]) -> List[Dict]:
     grupos = [[ordenadas[0]]]
 
     for tabla_curr in ordenadas[1:]:
-        tabla_prev   = grupos[-1][-1]
-        cols_prev    = len(tabla_prev['datos'][0]) if tabla_prev['datos'] else 0
-        cols_curr    = len(tabla_curr['datos'][0]) if tabla_curr['datos'] else 0
-        consecutivas = tabla_curr['pagina'] == tabla_prev['pagina'] + 1
-        mismas_cols  = cols_prev == cols_curr and cols_prev > 0
+        tabla_prev  = grupos[-1][-1]
+        cols_prev   = len(tabla_prev['datos'][0]) if tabla_prev['datos'] else 0
+        cols_curr   = len(tabla_curr['datos'][0]) if tabla_curr['datos'] else 0
+        gap_paginas = tabla_curr['pagina'] - tabla_prev['pagina']
+        es_cercana  = 1 <= gap_paginas <= MAX_GAP_PAGINAS_CONTINUACION
+        mismas_cols = cols_prev == cols_curr and cols_prev > 0
 
-        if consecutivas and mismas_cols:
+        if es_cercana and mismas_cols:
             grupos[-1].append(tabla_curr)
         else:
             grupos.append([tabla_curr])

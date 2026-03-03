@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.25')
+VERSION = os.getenv('APP_VERSION', '1.1.26')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
@@ -49,7 +49,7 @@ THUMBNAIL_DPI = 72
 # URL base del servicio nlm-ingestor para extraccion avanzada de tablas de PDF.
 # Dejar vacio ('') para deshabilitar y usar solo PyMuPDF/pdfplumber como fallback.
 # Configurar NLM_INGESTOR_URL en el entorno para apuntar al contenedor correcto.
-NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://172.21.0.19:5001')
+NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://172.21.0.19:5001').strip()
 
 # Ruta a poppler (necesario para pdf2image en Windows)
 # En Linux/Docker generalmente no es necesario si poppler-utils esta instalado

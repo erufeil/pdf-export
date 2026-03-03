@@ -23,12 +23,16 @@ services:
       - RETRY_ATTEMPTS=${RETRY_ATTEMPTS:-3}
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-1073741824}
       # 1Gb = 1024 * 1024 * 1024 bytes
-      - NLM_INGESTOR_URL= ${NLM_INGESTOR_URL}
-      # vacio si no esta instaladp  ${NLM_INGESTOR_URL:-http://}
+      # URL del servicio nlm-ingestor (contenedor pdfacsv en front-net 172.21.0.19:5001).
+      # Dejar vacio para deshabilitar nlm y usar solo PyMuPDF/pdfplumber como fallback.
+      - NLM_INGESTOR_URL=${NLM_INGESTOR_URL:-http://172.21.0.19:5001}
 
     # Puertos expuestos
     ports:
       - "${PORT:-5000}:${PORT:-5000}"
+    networks: 
+      front-net:
+        ipv4_address: 172.21.0.20
 
     # Volumenes para persistencia
     volumes:
@@ -71,3 +75,8 @@ volumes:
   pdfexport_outputs:
     name: pdfexport_outputs
 
+
+
+networks: 
+  front-net:        
+    external: true
