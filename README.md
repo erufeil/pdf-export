@@ -16,6 +16,10 @@ Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autoconten
 - **Extraer paginas**: Extrae paginas especificas a PDF unico o separados
 - **Reordenar paginas**: Cambia el orden de las paginas via drag & drop
 - **Migrar SQL (NDM)**: Genera orden secuencial de migracion de tablas SQL a partir de archivos Navicat Data Modeler (.ndm2)
+- **PDF a CSV**: Detecta y extrae todas las tablas del PDF como archivos CSV individuales
+- **Web Scraper**: Extrae contenido estructurado de una URL (titulo, cuerpo, footer, links) en TXT o Markdown
+- **IMG a PDF**: Convierte multiples imagenes (JPG, PNG, WEBP, etc.) en un unico PDF
+- **WEBP a PNG**: Convierte imagenes WEBP a PNG sin perdida de calidad
 
 ## Requisitos
 
@@ -204,7 +208,8 @@ PDFexport/
 
 - Tamanio maximo de archivo: **1 GB**
 - Retencion de archivos: **4 horas** (configurable con `FILE_RETENTION_HOURS`)
-- Formatos de entrada: `.pdf`, `.ndm2`, `.json`
+- Formatos de entrada PDF: `.pdf`, `.ndm2`, `.json`
+- Formatos de entrada imagenes: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`
 - Maximo de cortes en "Cortar PDF": **20**
 
 ---
@@ -785,6 +790,143 @@ El archivo resultante contiene:
 - Lista numerada de tablas en orden de migracion (primero las que no tienen FK, luego las que dependen de otras)
 - Notas al pie con advertencias de dependencias circulares o FK a otras bases de datos
 
+### 19. PDF a CSV (extraer tablas)
+
+Detecta y extrae todas las tablas del PDF, generando un CSV por tabla.
+
+```bash
+# Paso 1: subir el PDF
+curl -X POST http://localhost:5000/api/v1/upload \
+  -F "archivo=@informe.pdf"
+
+# Paso 2: extraer tablas a CSV
+curl -X POST http://localhost:5000/api/v1/convert/to-csv \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_id": "FILE_ID",
+    "opciones": {
+      "unificar_iguales": true,
+      "separador": ";",
+      "saltos_linea": "CRLF"
+    }
+  }'
+
+# Paso 3: descargar el ZIP con los CSV
+curl http://localhost:5000/api/v1/download/JOB_ID --output tablas.zip
+```
+
+Parametros disponibles:
+
+| Parametro | Tipo | Descripcion |
+|-----------|------|-------------|
+| `unificar_iguales` | bool | Une tablas con las mismas cabeceras en un solo CSV |
+| `separador` | string | `";"` (decimales con coma) o `","` (decimales con punto) |
+| `saltos_linea` | string | `"CRLF"` (Windows) o `"LF"` (Unix) |
+
+---
+
+### 20. Web Scraper
+
+Extrae contenido estructurado de una URL y lo devuelve en TXT o Markdown.
+
+```bash
+# Iniciar el scraping (asyncrono — devuelve job_id)
+curl -X POST http://localhost:5000/api/v1/convert/scrape-url \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://ejemplo.com/articulo",
+    "opciones": {
+      "formato_salida": "markdown",
+      "incluir_metadatos": true,
+      "incluir_contenido": true,
+      "incluir_footer": true,
+      "incluir_links": true
+    }
+  }'
+
+# Preview sincrónico (respuesta inmediata, no genera descarga)
+curl -X POST http://localhost:5000/api/v1/convert/scrape-url/preview \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://ejemplo.com/articulo", "opciones": {"formato_salida": "markdown"}}'
+
+# Descargar el ZIP con el TXT resultante
+curl http://localhost:5000/api/v1/download/JOB_ID --output contenido.zip
+```
+
+Parametros disponibles:
+
+| Parametro | Tipo | Descripcion |
+|-----------|------|-------------|
+| `formato_salida` | string | `"markdown"` o `"texto"` |
+| `incluir_metadatos` | bool | Incluye titulo, URL, fecha, autor, descripcion |
+| `incluir_contenido` | bool | Incluye el cuerpo principal de la pagina |
+| `incluir_footer` | bool | Incluye emails, telefonos y texto del footer |
+| `incluir_links` | bool | Incluye lista de todos los enlaces encontrados |
+
+---
+
+### 21. IMG a PDF
+
+Convierte una o varias imagenes en un unico archivo PDF.
+
+```bash
+# Paso 1: subir cada imagen (repetir por cada imagen)
+curl -X POST http://localhost:5000/api/v1/upload \
+  -F "archivo=@foto1.jpg"
+# guardar el file_id retornado por cada upload
+
+# Paso 2: crear el PDF
+curl -X POST http://localhost:5000/api/v1/convert/img-to-1pdf \
+  -H "Content-Type: application/json" \
+  -d '{
+    "archivos": [
+      {"file_id": "FILE_ID_1", "orden": 1},
+      {"file_id": "FILE_ID_2", "orden": 2}
+    ],
+    "opciones": {
+      "tamano_pagina": "A4",
+      "margen": 0
+    }
+  }'
+
+# Paso 3: descargar el PDF resultante
+curl http://localhost:5000/api/v1/download/JOB_ID --output resultado.pdf
+```
+
+Parametros disponibles:
+
+| Parametro | Tipo | Descripcion |
+|-----------|------|-------------|
+| `tamano_pagina` | string | `"natural"` (dimensiones de la imagen), `"A4"`, `"A4H"`, `"A3"`, `"A3H"`, `"letter"`, `"letterH"` |
+| `margen` | int | Margen en puntos: `0`, `15` o `30` |
+
+Formatos de imagen soportados: JPG, JPEG, PNG, GIF, BMP, TIFF, WEBP.
+
+El resultado es un archivo PDF directo (sin comprimir en ZIP).
+
+---
+
+### 22. WEBP a PNG
+
+Convierte una imagen WEBP a PNG sin perdida de calidad.
+Si el WEBP es animado, extrae solo el primer frame.
+
+```bash
+# Paso 1: subir el archivo WEBP
+curl -X POST http://localhost:5000/api/v1/upload \
+  -F "archivo=@imagen.webp"
+
+# Paso 2: iniciar la conversion
+curl -X POST http://localhost:5000/api/v1/convert/webp-to-png \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": "FILE_ID"}'
+
+# Paso 3: descargar el PNG resultante
+curl http://localhost:5000/api/v1/download/JOB_ID --output imagen.png
+```
+
+El resultado es un archivo PNG directo (sin comprimir en ZIP).
+
 ---
 
 ### Flujo completo de ejemplo en un script bash
@@ -834,9 +976,10 @@ fi
 - **Backend**: Python 3.10+, Flask
 - **Base de datos**: SQLite3
 - **Frontend**: HTML5, CSS3, JavaScript vanilla (sin frameworks)
-- **PDF**: PyMuPDF (fitz), pdf2image, pdfminer.six, python-docx
+- **PDF**: PyMuPDF (fitz), pdf2image, pdfminer.six, python-docx, pdfplumber
 - **HTML a PDF**: WeasyPrint
-- **Imagenes**: pdf2image + poppler
+- **Imagenes**: pdf2image + poppler, Pillow
+- **Web scraping**: beautifulsoup4 + lxml, trafilatura, markdownify
 - **Contenedor**: Docker (imagen multi-stage para menor tamanio)
 
 ## Licencia

@@ -254,8 +254,9 @@ if (r.ok) {
 | `'reorder'`        | pdf_reorder                     |
 | `'ndm-to-tables-seq'` | ndm_to_tables_seq            |
 | `'scrape-url'`     | web_scraper                     |
-| `'to-csv'`         | pdf_to_csv (pendiente)          |
-| `'img-to-1pdf'`    | img_to_1pdf (pendiente)         |
+| `'to-csv'`         | pdf_to_csv                      |
+| `'img-to-1pdf'`    | img_to_1pdf                     |
+| `'webp-to-png'`    | webp_to_png                     |
 
 ---
 
