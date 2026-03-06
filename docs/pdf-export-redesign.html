@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF-Export — Rediseño Propuesto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0D1117;
+    --sidebar:   #161B22;
+    --card:      #1C2128;
+    --card-hover:#21262D;
+    --border:    #30363D;
+    --red:       #E63946;
+    --orange:    #F4A261;
+    --blue:      #58A6FF;
+    --green:     #3FB950;
+    --purple:    #A371F7;
+    --text:      #E6EDF3;
+    --text-muted:#8B949E;
+    --sidebar-w: 240px;
+    --sidebar-w-collapsed: 60px;
+    --header-h:  54px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── SIDEBAR ─── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: width 0.25s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+  }
+
+  #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    min-height: var(--header-h);
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--red);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+    letter-spacing: -1px;
+  }
+
+  .logo-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+  /* NAV SECTIONS */
+  .nav-section {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 8px 14px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+  #sidebar.collapsed .nav-section-label { opacity: 0; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+    position: relative;
+    white-space: nowrap;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    background: rgba(230,57,70,0.1);
+    border-left-color: var(--red);
+  }
+  .nav-item.active .nav-label { color: var(--text); }
+
+  .nav-icon {
+    font-size: 18px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .nav-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: opacity 0.2s, color 0.15s;
+    overflow: hidden;
+  }
+  .nav-item:hover .nav-label { color: var(--text); }
+  #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    transition: opacity 0.2s;
+  }
+  #sidebar.collapsed .nav-badge { opacity: 0; }
+
+  /* Tooltip on collapsed */
+  #sidebar.collapsed .nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(var(--sidebar-w-collapsed) + 8px);
+    background: #2D333B;
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+
+  /* Collapse toggle */
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .collapse-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 6px 0;
+    user-select: none;
+  }
+  .collapse-btn:hover { color: var(--text); }
+  .collapse-icon {
+    font-size: 18px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+  #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+  .collapse-label { transition: opacity 0.2s; }
+  #sidebar.collapsed .collapse-label { opacity: 0; }
+
+  /* ─── MAIN ─── */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+  }
+  #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+  /* HEADER */
+  .header {
+    height: var(--header-h);
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .breadcrumb .home-link {
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.15s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+  .breadcrumb .home-link:hover { color: var(--red); }
+  .breadcrumb .sep { color: var(--border); }
+  .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: text;
+    transition: border-color 0.15s;
+  }
+  .search-box:hover { border-color: var(--text-muted); }
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    width: 160px;
+  }
+  .search-box input::placeholder { color: var(--text-muted); }
+
+  .kbd {
+    background: var(--border);
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .home-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  .home-btn:hover {
+    background: var(--card-hover);
+    border-color: var(--red);
+    color: var(--text);
+  }
+
+  /* ─── CONTENT ─── */
+  .content {
+    padding: 28px 32px;
+    flex: 1;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .section-icon { font-size: 28px; }
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .section-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .section-count {
+    margin-left: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    border-left: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 12px;
+  }
+  .card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .card:hover::before { opacity: 1; }
+
+  /* Color per category */
+  .card.cat-export { border-left-color: var(--red); }
+  .card.cat-export:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(230,57,70,.15); }
+  .card.cat-create { border-left-color: var(--orange); }
+  .card.cat-create:hover { border-color: var(--orange); box-shadow: 0 8px 24px rgba(244,162,97,.15); }
+  .card.cat-misc { border-left-color: var(--purple); }
+  .card.cat-misc:hover { border-color: var(--purple); box-shadow: 0 8px 24px rgba(163,113,247,.15); }
+
+  .card-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .badge-new { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+  .badge-popular { background: rgba(230,57,70,.15); color: var(--red); border: 1px solid rgba(230,57,70,.3); }
+
+  .card-icon {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    display: inline-block;
+    margin-bottom: 12px;
+    letter-spacing: .02em;
+  }
+  .card.cat-export .card-icon { color: var(--red); border-color: rgba(230,57,70,.3); }
+  .card.cat-create .card-icon { color: var(--orange); border-color: rgba(244,162,97,.3); }
+  .card.cat-misc .card-icon { color: var(--purple); border-color: rgba(163,113,247,.3); }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .card-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* STATUS PANEL */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .status-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .status-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .status-panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .4; }
+  }
+  .status-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ABOUT */
+  .about-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 700px;
+  }
+  .about-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .about-title span { color: var(--red); }
+  .about-body {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+  .about-body p { margin-bottom: 10px; }
+  .about-tag {
+    display: inline-block;
+    background: rgba(88,166,255,.1);
+    color: var(--blue);
+    border: 1px solid rgba(88,166,255,.2);
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin: 3px 3px 0 0;
+  }
+
+  /* HIDDEN sections */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  /* Stat chips in header */
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+  .stat-chip .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* PREVIEW LABEL */
+  .preview-banner {
+    background: linear-gradient(90deg, rgba(230,57,70,.12), rgba(244,162,97,.08));
+    border: 1px solid rgba(230,57,70,.2);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-banner strong { color: var(--orange); }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <a class="sidebar-logo" onclick="showView('home')" href="#">
+    <div class="logo-icon">PDF</div>
+    <div class="logo-text">
+      PDF-Export<br>
+      <span class="logo-sub">& Import · ERF</span>
+    </div>
+  </a>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Operaciones</div>
+
+    <div class="nav-item active" data-tooltip="Tengo un PDF..." onclick="showView('export')">
+      <span class="nav-icon">📄</span>
+      <span class="nav-label">Tengo un PDF...</span>
+    </div>
+
+    <div class="nav-item" data-tooltip="Quiero un PDF" onclick="showView('create')">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Quiero un PDF</span>
+    </div>
+
+    <div class="nav-item" data-tooltip="Misceláneos" onclick="showView('misc')">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Misceláneos</span>
+      <span class="nav-badge">3</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Sistema</div>
+
+    <div class="nav-item" data-tooltip="Archivos en Caché" onclick="showView('cache')">
+      <span class="nav-icon">🗄️</span>
+      <span class="nav-label">Archivos en Caché</span>
+    </div>
+
+    <div class="nav-item" data-tooltip="Acerca de PDF-Export" onclick="showView('about')">
+      <span class="nav-icon">ℹ️</span>
+      <span class="nav-label">Acerca de PDF-Export</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="collapse-btn" onclick="toggleSidebar()">
+      <span class="collapse-icon">◀</span>
+      <span class="collapse-label">Colapsar</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="breadcrumb">
+      <a class="home-link" onclick="showView('home')" href="#" title="Ir al inicio">🏠</a>
+      <span class="sep">/</span>
+      <span class="current" id="breadcrumb-current">Tengo un PDF...</span>
+    </div>
+    <div class="header-right">
+      <div class="stat-chip"><span class="dot"></span>Online</div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="Buscar herramienta..." id="search-input" oninput="filterCards(this.value)">
+        <span class="kbd">⌘K</span>
+      </div>
+      <button class="home-btn" onclick="showView('home')">🏠 Inicio</button>
+    </div>
+  </header>
+
+  <!-- CONTENT AREA -->
+  <main class="content">
+
+    <div class="preview-banner">
+      🎨 <strong>Vista previa del rediseño</strong> — Este es un prototipo interactivo. Hacé clic en el menú lateral para navegar entre categorías.
+    </div>
+
+    <!-- ── HOME ── -->
+    <div class="view active" id="view-home">
+      <div class="section-header">
+        <div>
+          <div class="section-title">PDF-Export & Import</div>
+          <div class="section-desc">Herramientas de conversión y manipulación de PDF — ERF</div>
+        </div>
+      </div>
+      <div class="cards-grid" id="all-cards">
+        <!-- Export cards -->
+        <div class="card cat-export" onclick="showView('export')">
+          <span class="card-badge badge-popular">Popular</span>
+          <div class="card-icon">TXT</div>
+          <div class="card-title">PDF a TXT</div>
+          <div class="card-desc">Extrae texto plano del PDF</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">DOCX</div>
+          <div class="card-title">PDF a DOCX</div>
+          <div class="card-desc">Convierte a documento Word</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">PNG</div>
+          <div class="card-title">PDF a PNG</div>
+          <div class="card-desc">Convierte páginas a imágenes PNG</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">JPG</div>
+          <div class="card-title">PDF a JPG</div>
+          <div class="card-desc">Convierte páginas a imágenes JPG</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">ZIP</div>
+          <div class="card-title">Comprimir PDF</div>
+          <div class="card-desc">Reduce el tamaño del archivo</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">IMG</div>
+          <div class="card-title">Extraer Imágenes</div>
+          <div class="card-desc">Extrae imágenes incrustadas</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">CUT</div>
+          <div class="card-title">Cortar PDF</div>
+          <div class="card-desc">Divide el PDF en partes</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">ROT</div>
+          <div class="card-title">Rotar PDF</div>
+          <div class="card-desc">Rota páginas individuales</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">PAG</div>
+          <div class="card-title">Extraer Páginas</div>
+          <div class="card-desc">Extrae páginas específicas</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">ORD</div>
+          <div class="card-title">Reordenar Páginas</div>
+          <div class="card-desc">Cambia el orden de las páginas</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">JOIN</div>
+          <div class="card-title">Unir PDFs</div>
+          <div class="card-desc">Combina múltiples PDFs</div>
+        </div>
+        <div class="card cat-export">
+          <div class="card-icon">CSV</div>
+          <div class="card-title">PDF a CSV</div>
+          <div class="card-desc">Extrae tablas a CSV</div>
+        </div>
+        <!-- Create cards -->
+        <div class="card cat-create">
+          <div class="card-icon">WEB</div>
+          <div class="card-title">HTML a PDF</div>
+          <div class="card-desc">Convierte página web a PDF</div>
+        </div>
+        <div class="card cat-create">
+          <span class="card-badge badge-new">Nuevo</span>
+          <div class="card-icon">IMG</div>
+          <div class="card-title">IMG a PDF</div>
+          <div class="card-desc">Carga imágenes en 1 PDF</div>
+        </div>
+        <!-- Misc cards -->
+        <div class="card cat-misc">
+          <div class="card-icon">NDM</div>
+          <div class="card-title">Migrar SQL</div>
+          <div class="card-desc">Ordenar tablas para export</div>
+        </div>
+        <div class="card cat-misc">
+          <div class="card-icon">SCR</div>
+          <div class="card-title">Scraper Web</div>
+          <div class="card-desc">Extraer contenido para IA</div>
+        </div>
+        <div class="card cat-misc">
+          <span class="card-badge badge-new">Nuevo</span>
+          <div class="card-icon">WEBP</div>
+          <div class="card-title">WEBP a PNG</div>
+          <div class="card-desc">Convierte imagen Webp</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TENGO UN PDF ── -->
+    <div class="view" id="view-export">
+      <div class="section-header">
+        <div class="section-icon">📄</div>
+        <div>
+          <div class="section-title">Tengo un PDF...</div>
+          <div class="section-desc">Convierte, divide, rota y extrae contenido de tus PDFs</div>
+        </div>
+        <div class="section-count">12 herramientas</div>
+      </div>
+      <div class="cards-grid">
+        <div class="card cat-export"><span class="card-badge badge-popular">Popular</span><div class="card-icon">TXT</div><div class="card-title">PDF a TXT</div><div class="card-desc">Extrae texto plano del PDF</div></div>
+        <div class="card cat-export"><div class="card-icon">DOCX</div><div class="card-title">PDF a DOCX</div><div class="card-desc">Convierte a documento Word</div></div>
+        <div class="card cat-export"><div class="card-icon">PNG</div><div class="card-title">PDF a PNG</div><div class="card-desc">Convierte páginas a imágenes PNG</div></div>
+        <div class="card cat-export"><div class="card-icon">JPG</div><div class="card-title">PDF a JPG</div><div class="card-desc">Convierte páginas a imágenes JPG</div></div>
+        <div class="card cat-export"><div class="card-icon">ZIP</div><div class="card-title">Comprimir PDF</div><div class="card-desc">Reduce el tamaño del archivo</div></div>
+        <div class="card cat-export"><div class="card-icon">IMG</div><div class="card-title">Extraer Imágenes</div><div class="card-desc">Extrae imágenes incrustadas</div></div>
+        <div class="card cat-export"><div class="card-icon">CUT</div><div class="card-title">Cortar PDF</div><div class="card-desc">Divide el PDF en partes</div></div>
+        <div class="card cat-export"><div class="card-icon">ROT</div><div class="card-title">Rotar PDF</div><div class="card-desc">Rota páginas individuales</div></div>
+        <div class="card cat-export"><div class="card-icon">PAG</div><div class="card-title">Extraer Páginas</div><div class="card-desc">Extrae páginas específicas</div></div>
+        <div class="card cat-export"><div class="card-icon">ORD</div><div class="card-title">Reordenar Páginas</div><div class="card-desc">Cambia el orden de las páginas</div></div>
+        <div class="card cat-export"><div class="card-icon">JOIN</div><div class="card-title">Unir PDFs</div><div class="card-desc">Combina múltiples PDFs</div></div>
+        <div class="card cat-export"><div class="card-icon">CSV</div><div class="card-title">PDF a CSV</div><div class="card-desc">Extrae tablas a CSV</div></div>
+      </div>
+    </div>
+
+    <!-- ── QUIERO UN PDF ── -->
+    <div class="view" id="view-create">
+      <div class="section-header">
+        <div class="section-icon">✨</div>
+        <div>
+          <div class="section-title">Quiero un PDF</div>
+          <div class="section-desc">Genera PDFs desde otras fuentes</div>
+        </div>
+        <div class="section-count">2 herramientas</div>
+      </div>
+      <div class="cards-grid">
+        <div class="card cat-create"><div class="card-icon">WEB</div><div class="card-title">HTML a PDF</div><div class="card-desc">Convierte página web a PDF</div></div>
+        <div class="card cat-create"><span class="card-badge badge-new">Nuevo</span><div class="card-icon">IMG</div><div class="card-title">IMG a PDF</div><div class="card-desc">Carga imágenes en 1 PDF</div></div>
+      </div>
+    </div>
+
+    <!-- ── MISCELÁNEOS ── -->
+    <div class="view" id="view-misc">
+      <div class="section-header">
+        <div class="section-icon">⚡</div>
+        <div>
+          <div class="section-title">Misceláneos</div>
+          <div class="section-desc">Herramientas de utilidad general</div>
+        </div>
+        <div class="section-count">3 herramientas</div>
+      </div>
+      <div class="cards-grid">
+        <div class="card cat-misc"><div class="card-icon">NDM</div><div class="card-title">Migrar SQL</div><div class="card-desc">Ordenar tablas para export</div></div>
+        <div class="card cat-misc"><div class="card-icon">SCR</div><div class="card-title">Scraper Web</div><div class="card-desc">Extraer contenido para IA</div></div>
+        <div class="card cat-misc"><span class="card-badge badge-new">Nuevo</span><div class="card-icon">WEBP</div><div class="card-title">WEBP a PNG</div><div class="card-desc">Convierte imagen Webp</div></div>
+      </div>
+    </div>
+
+    <!-- ── CACHÉ ── -->
+    <div class="view" id="view-cache">
+      <div class="section-header">
+        <div class="section-icon">🗄️</div>
+        <div>
+          <div class="section-title">Archivos en Caché</div>
+          <div class="section-desc">Trabajos activos y archivos cargados</div>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status-panel">
+          <div class="status-panel-header">
+            <span class="status-panel-title">Trabajos Activos</span>
+            <div class="status-dot"></div>
+          </div>
+          <div class="status-empty">No hay trabajos activos</div>
+        </div>
+        <div class="status-panel">
+          <div class="status-panel-header">
+            <span class="status-panel-title">Archivos Cargados</span>
+          </div>
+          <div class="status-empty">No hay archivos cargados</div>
+        </div>
+      </div>
+      <div class="status-panel" style="max-width:600px;">
+        <div class="status-panel-header">
+          <span class="status-panel-title">Descargas Disponibles</span>
+        </div>
+        <div class="status-empty">No hay descargas disponibles</div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:12px;color:var(--text-muted);">
+        ⏱️ Los archivos se eliminan automáticamente después de <strong style="color:var(--text)">4 horas</strong>
+      </div>
+    </div>
+
+    <!-- ── ACERCA DE ── -->
+    <div class="view" id="view-about">
+      <div class="section-header">
+        <div class="section-icon">ℹ️</div>
+        <div>
+          <div class="section-title">Acerca de PDF-Export</div>
+          <div class="section-desc">Información sobre el proyecto</div>
+        </div>
+      </div>
+      <div class="about-card">
+        <div class="about-title">PDF-Export<span>&</span>Import</div>
+        <div class="about-body">
+          <p>Herramientas de conversión PDF para la <strong style="color:var(--text)">Soberanía Digital Empresarial</strong>.</p>
+          <p>Esta aplicación y su API están destinadas a uso privado. No se implementan claves de acceso a nivel de aplicación con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
+          <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ).</p>
+          <p style="margin-top:16px;">
+            <span class="about-tag">Python 3.10+</span>
+            <span class="about-tag">Flask</span>
+            <span class="about-tag">SQLite3</span>
+            <span class="about-tag">HTML5</span>
+            <span class="about-tag">CSS3</span>
+            <span class="about-tag">JS Vanilla</span>
+          </p>
+          <p style="margin-top:16px;">
+            <a href="https://www.linkedin.com/in/eduardo-rufeil/" target="_blank" style="color:var(--blue);text-decoration:none;font-size:13px;">🔗 Eduardo Rufeil en LinkedIn</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const VIEWS = {
+    home:   { label: 'Inicio',             navIdx: -1 },
+    export: { label: 'Tengo un PDF...',    navIdx: 0  },
+    create: { label: 'Quiero un PDF',      navIdx: 1  },
+    misc:   { label: 'Misceláneos',        navIdx: 2  },
+    cache:  { label: 'Archivos en Caché',  navIdx: 3  },
+    about:  { label: 'Acerca de PDF-Export', navIdx: 4 },
+  };
+
+  function showView(id) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + id).classList.add('active');
+
+    // Update breadcrumb
+    document.getElementById('breadcrumb-current').textContent = VIEWS[id].label;
+
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach((item, i) => {
+      item.classList.remove('active');
+      if (i === VIEWS[id].navIdx) item.classList.add('active');
+    });
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('expanded');
+  }
+
+  function filterCards(query) {
+    if (!query) { showView('home'); return; }
+    // Show home view and filter cards
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-home').classList.add('active');
+    const q = query.toLowerCase();
+    document.querySelectorAll('#all-cards .card').forEach(card => {
+      const text = card.textContent.toLowerCase();
+      card.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  // Keyboard shortcut: H = home
+  document.addEventListener('keydown', e => {
+    if (e.key === 'h' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
+      showView('home');
+    }
+  });
+</script>
+</body>
+</html>

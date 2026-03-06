@@ -5,490 +5,1284 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF-Export & Import - Herramientas PDF</title>
     <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1);
+        overflow: hidden;
+      }
+
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--text);
+        min-height: var(--header-h);
+        flex-shrink: 0;
+      }
+
+      .logo-icon {
+        width: 32px; height: 32px;
+        background: var(--red);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        font-size: 13px;
+        color: white;
+        flex-shrink: 0;
+        letter-spacing: -1px;
+      }
+
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: opacity 0.2s;
+      }
+      .logo-sub {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: 400;
+        font-family: 'IBM Plex Sans', sans-serif;
+      }
+
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+      /* NAV SECTIONS */
+      .nav-section {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-section-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-muted);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: 8px 14px 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        cursor: pointer;
+        border-radius: 0;
+        transition: background 0.15s;
+        border-left: 3px solid transparent;
+        position: relative;
+        white-space: nowrap;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active {
+        background: rgba(230,57,70,0.1);
+        border-left-color: var(--red);
+      }
+      .nav-item.active .nav-label { color: var(--text); }
+
+      .nav-icon {
+        font-size: 18px;
+        width: 22px;
+        text-align: center;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+
+      .nav-label {
+        font-size: 13px;
+        color: var(--text-muted);
+        transition: opacity 0.2s, color 0.15s;
+        overflow: hidden;
+      }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+      .nav-badge {
+        margin-left: auto;
+        background: var(--red);
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 10px;
+        transition: opacity 0.2s;
+        display: none;
+      }
+      .nav-badge.visible { display: inline-block; }
+      #sidebar.collapsed .nav-badge { opacity: 0; }
+
+      /* Tooltip on collapsed */
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B;
+        color: var(--text);
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        border: 1px solid var(--border);
+        pointer-events: none;
+        z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
+
+      /* Collapse toggle */
+      .sidebar-footer {
+        margin-top: auto;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+      }
+      .collapse-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 13px;
+        padding: 6px 0;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon {
+        font-size: 18px;
+        width: 22px;
+        text-align: center;
+        flex-shrink: 0;
+        transition: transform 0.3s;
+      }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
+
+      .sidebar-version {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        padding: 6px 0 2px;
+        white-space: nowrap;
+        transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .sidebar-version { opacity: 0; }
+
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w);
+        flex: 1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+      /* HEADER */
+      .header {
+        height: var(--header-h);
+        background: var(--sidebar);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 14px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .breadcrumb .home-link {
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 16px;
+        transition: color 0.15s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+      }
+      .breadcrumb .home-link:hover { color: var(--red); }
+      .breadcrumb .sep { color: var(--border); }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+        transition: border-color 0.15s;
+      }
+      .search-box:hover { border-color: var(--text-muted); }
+      .search-box:focus-within { border-color: var(--blue); }
+      .search-box input {
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 13px;
+        font-family: inherit;
+        width: 160px;
+      }
+      .search-box input::placeholder { color: var(--text-muted); }
+
+      .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-family: 'IBM Plex Mono', monospace;
+        color: var(--text-muted);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 3px 8px;
+      }
+      .stat-chip .dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .4; }
+      }
+
+      /* ─── CONTENT ─── */
+      .content {
+        padding: 28px 32px;
+        flex: 1;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .section-icon { font-size: 28px; }
+      .section-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .section-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .section-count {
+        margin-left: auto;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      /* CARDS GRID */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+        margin-bottom: 36px;
+      }
+
+      /* Cards como enlaces */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 16px;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+        border-left: 3px solid transparent;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      .card:hover {
+        background: var(--card-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.3);
+      }
+
+      /* Color por categoria */
+      .card.cat-export { border-left-color: var(--red); }
+      .card.cat-export:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(230,57,70,.15); }
+      .card.cat-create { border-left-color: var(--orange); }
+      .card.cat-create:hover { border-color: var(--orange); box-shadow: 0 8px 24px rgba(244,162,97,.15); }
+      .card.cat-misc { border-left-color: var(--purple); }
+      .card.cat-misc:hover { border-color: var(--purple); box-shadow: 0 8px 24px rgba(163,113,247,.15); }
+
+      .card-badge {
+        position: absolute;
+        top: 10px; right: 10px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 20px;
+      }
+      .badge-new { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+      .badge-popular { background: rgba(230,57,70,.15); color: var(--red); border: 1px solid rgba(230,57,70,.3); }
+
+      .card-icon {
+        font-size: 13px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        color: var(--text-muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 8px;
+        display: inline-block;
+        margin-bottom: 12px;
+        letter-spacing: .02em;
+      }
+      .card.cat-export .card-icon { color: var(--red); border-color: rgba(230,57,70,.3); }
+      .card.cat-create .card-icon { color: var(--orange); border-color: rgba(244,162,97,.3); }
+      .card.cat-misc .card-icon { color: var(--purple); border-color: rgba(163,113,247,.3); }
+
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+      .card-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+
+      /* Clases de utilidad para el HTML */
+      .mb-14 { margin-bottom: 14px; }
+      .mt-16 { margin-top: 16px; }
+      .text-note { font-size: 12px; color: var(--text-muted); }
+      .link-linkedin { color: var(--blue); text-decoration: none; font-size: 13px; }
+      .text-strong { color: var(--text); }
+      .about-tag-section { margin-top: 16px; }
+
+      /* ─── PANELES DE ESTADO (CACHE) ─── */
+      .status-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .status-panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+      .status-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .status-panel-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .06em;
+      }
+      .status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        animation: pulse 2s infinite;
+      }
+      .status-empty {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-style: italic;
+      }
+
+      /* Items de trabajos */
+      .job-item {
+        padding: 10px 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .job-item:last-child { margin-bottom: 0; }
+      .job-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        font-size: 13px;
+      }
+      .job-name { font-weight: 500; }
+      .job-type { color: var(--text-muted); font-size: 11px; }
+      .job-progress {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .progress-bar {
+        flex: 1;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--blue);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+      }
+      .progress-text { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; }
+      .job-status { font-size: 11px; color: var(--text-muted); }
+      .job-status.procesando { color: var(--blue); }
+      .job-status.pendiente { color: var(--orange); }
+
+      /* Items de archivos */
+      .file-item, .download-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        gap: 12px;
+      }
+      .file-item:last-child, .download-item:last-child { margin-bottom: 0; }
+      .file-info, .download-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .file-name, .download-name {
+        font-size: 13px;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .file-meta, .download-type, .download-size {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .file-date, .download-date { font-size: 11px; color: var(--text-muted); }
+      .download-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+      /* Botones */
+      .btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .btn-primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #0D1117;
+        font-weight: 600;
+      }
+      .btn-primary:hover { background: #79B8FF; border-color: #79B8FF; }
+      .btn-danger {
+        background: rgba(230,57,70,.1);
+        border-color: rgba(230,57,70,.3);
+        color: var(--red);
+      }
+      .btn-danger:hover { background: rgba(230,57,70,.2); border-color: var(--red); }
+      .btn-danger:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-small { padding: 4px 10px; font-size: 11px; }
+
+      .panel-actions {
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 20px 0;
+      }
+
+      /* ─── ACERCA DE ─── */
+      .about-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px 28px;
+        max-width: 700px;
+      }
+      .about-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .about-title span { color: var(--red); }
+      .about-body {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.7;
+      }
+      .about-body p { margin-bottom: 10px; }
+      .about-tag {
+        display: inline-block;
+        background: rgba(88,166,255,.1);
+        color: var(--blue);
+        border: 1px solid rgba(88,166,255,.2);
+        border-radius: 4px;
+        padding: 1px 8px;
+        font-size: 11px;
+        font-family: 'IBM Plex Mono', monospace;
+        margin: 3px 3px 0 0;
+      }
+
+      /* ─── VISTAS ─── */
+      .view { display: none; }
+      .view.active { display: block; }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        #sidebar.collapsed { width: 0; }
+        #main.expanded { margin-left: 0; }
+        .content { padding: 20px 16px; }
+        .status-grid { grid-template-columns: 1fr; }
+        .search-box { display: none; }
+      }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo" style="font-size: 2rem;">PDF-Export & Import</h1>
-            <p class="subtitle">Herramientas de conversion y manipulacion de PDF - ERF</p>
-        </header>
 
-        <!-- Menu de servicios ERF -->
-        <main class="main-content">
-            <section class="services-grid">
-                <h2 class="section-title">Servicios Disponibles</h2>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <a class="sidebar-logo" href="#" onclick="mostrarVista('home'); return false;">
+        <div class="logo-icon">PDF</div>
+        <div class="logo-text">
+            PDF-Export<br>
+            <span class="logo-sub">& Import · ERF</span>
+        </div>
+    </a>
 
-                <div class="cards-container">
-                    <!-- PDF a TXT -->
-                    <a href="/pdf-to-txt.html" class="service-card">
-                        <div class="card-icon">TXT</div>
-                        <h3>PDF a TXT</h3>
-                        <p>Extrae texto plano del PDF</p>
-                    </a>
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
 
-                    <!-- PDF a DOCX -->
-                    <a href="/pdf-to-docx.html" class="service-card">
-                        <div class="card-icon">DOCX</div>
-                        <h3>PDF a DOCX</h3>
-                        <p>Convierte a documento Word</p>
-                    </a>
+        <div class="nav-item active" data-tooltip="Tengo un PDF..." onclick="mostrarVista('export')">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </div>
 
-                    <!-- PDF a PNG -->
-                    <a href="/pdf-to-png.html" class="service-card">
-                        <div class="card-icon">PNG</div>
-                        <h3>PDF a PNG</h3>
-                        <p>Convierte paginas a imagenes PNG</p>
-                    </a>
+        <div class="nav-item" data-tooltip="Quiero un PDF" onclick="mostrarVista('create')">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </div>
 
-                    <!-- PDF a JPG -->
-                    <a href="/pdf-to-jpg.html" class="service-card">
-                        <div class="card-icon">JPG</div>
-                        <h3>PDF a JPG</h3>
-                        <p>Convierte paginas a imagenes JPG</p>
-                    </a>
-
-                    <!-- Comprimir PDF -->
-                    <a href="/pdf-compress.html" class="service-card">
-                        <div class="card-icon">ZIP</div>
-                        <h3>Comprimir PDF</h3>
-                        <p>Reduce el tamanio del archivo</p>
-                    </a>
-
-                    <!-- Extraer imagenes -->
-                    <a href="/pdf-extract-images.html" class="service-card">
-                        <div class="card-icon">IMG</div>
-                        <h3>Extraer Imagenes</h3>
-                        <p>Extrae imagenes incrustadas</p>
-                    </a>
-
-                    <!-- Cortar PDF -->
-                    <a href="/pdf-split.html" class="service-card">
-                        <div class="card-icon">CUT</div>
-                        <h3>Cortar PDF</h3>
-                        <p>Divide el PDF en partes</p>
-                    </a>
-
-                    <!-- Rotar PDF -->
-                    <a href="/pdf-rotate.html" class="service-card">
-                        <div class="card-icon">ROT</div>
-                        <h3>Rotar PDF</h3>
-                        <p>Rota paginas individuales</p>
-                    </a>
-
-                    <!-- HTML a PDF -->
-                    <a href="/html-to-pdf.html" class="service-card">
-                        <div class="card-icon">WEB</div>
-                        <h3>HTML a PDF</h3>
-                        <p>Convierte pagina web a PDF</p>
-                    </a>
-
-                    <!-- Unir PDFs -->
-                    <a href="/pdf-merge.html" class="service-card">
-                        <div class="card-icon">JOIN</div>
-                        <h3>Unir PDFs</h3>
-                        <p>Combina multiples PDFs</p>
-                    </a>
-
-                    <!-- Extraer paginas -->
-                    <a href="/pdf-extract-pages.html" class="service-card">
-                        <div class="card-icon">PAG</div>
-                        <h3>Extraer Paginas</h3>
-                        <p>Extrae paginas especificas</p>
-                    </a>
-
-                    <!-- Reordenar paginas -->
-                    <a href="/pdf-reorder.html" class="service-card">
-                        <div class="card-icon">ORD</div>
-                        <h3>Reordenar Paginas</h3>
-                        <p>Cambia el orden de las paginas</p>
-                    </a>
-
-                    <!-- Migrar SQL -->
-                    <a href="/ndm-to-tables-seq.html" class="service-card">
-                        <div class="card-icon">NDM</div>
-                        <h3>Migrar SQL</h3>
-                        <p>Ordenar Tablas p/export</p>
-                    </a>
-
-                    <!-- Scraper Web -->
-                    <a href="/web-scraper.html" class="service-card">
-                        <div class="card-icon">SCR</div>
-                        <h3>Scraper Web</h3>
-                        <p>Extraer contenido para IA</p>
-                    </a>
-
-                    <!-- PDF a CSV -->
-                    <a href="/pdf-to-csv.html" class="service-card">
-                        <div class="card-icon">CSV</div>
-                        <h3>PDF a CSV</h3>
-                        <p>Extraer tablas a CSV</p>
-                    </a>
-
-                    <!-- WEBP a PNG -->
-                    <a href="/webp-to-png.html" class="service-card">
-                        <div class="card-icon">WEBP</div>
-                        <h3>WEBP a PNG</h3>
-                        <p>Convierte imagen Webp</p>
-                    </a>
-
-                    <!-- IMG a PDF -->
-                    <a href="/img-to-1pdf.html" class="service-card">
-                        <div class="card-icon">IMG</div>
-                        <h3>IMG a PDF</h3>
-                        <p>Cargar Imagenes en 1 PDF</p>
-                    </a>
-
-                    <!-- LinkedIn ERF -->
-                    <a href="https://www.linkedin.com/in/eduardo-rufeil/" target="_blank" class="service-card" style="background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%); color: white; border: none;">
-                        <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">LKDN</div>
-                        <h3 style="font-weight: bold; color: white;">Like a ERF</h3>
-                        <p style="color: rgba(255,255,255,0.8);">Deja un follow en Linkedin</p>
-                    </a>
-                </div>
-            </section>
-
-            <!-- Seccion de trabajos activos -->
-            <section class="active-jobs" id="seccion-trabajos">
-                <h2 class="section-title">Trabajos en Proceso</h2>
-                <div id="lista-trabajos" class="jobs-list">
-                    <p class="no-jobs">No hay trabajos activos</p>
-                </div>
-            </section>
-
-            <!-- Historial de archivos -->
-            <section class="files-history" id="seccion-archivos">
-                <h2 class="section-title">Archivos Cargados</h2>
-                <div class="files-actions">
-                    <button id="btn-eliminar-todos" class="btn btn-danger" disabled>
-                        Eliminar Todos
-                    </button>
-                </div>
-                <div id="lista-archivos" class="files-list">
-                    <p class="no-files">No hay archivos cargados</p>
-                </div>
-            </section>
-
-            <!-- Historial de descargas -->
-            <section class="downloads-history" id="seccion-descargas">
-                <h2 class="section-title">Descargas Disponibles</h2>
-                <div class="files-actions">
-                    <button id="btn-eliminar-descargas" class="btn btn-danger" disabled>
-                        Eliminar Todas las Descargas
-                    </button>
-                </div>
-                <div id="lista-descargas" class="downloads-list">
-                    <p class="no-downloads">No hay descargas disponibles</p>
-                </div>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF para la Soberanía Digital Empresarial</p>
-            <p class="footer-info">Los archivos se eliminan automaticamente despues de 4 horas</p>
-            <p class="footer-info" id="app-version"></p>
-
-
-            <div class="footer-legal" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border); font-size: 0.85rem; color: var(--color-text-light); text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--color-text);">Aviso de uso y alcance</h4>
-                <p style="margin-bottom: 10px;">Esta aplicación y su API están destinadas a uso privado.
-                No se implementan claves de acceso a nivel de aplicación con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-
-                <p style="margin-bottom: 10px;">Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ).
-                En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticación, quedando dicha configuración bajo el criterio y responsabilidad del usuario.</p>
-
-                <p style="margin-bottom: 10px;">Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberanía digital sobre los recursos informáticos utilizados para el procesamiento de documentos.</p>
-
-                <p>El código y la aplicación se distribuyen bajo una licencia de uso público y amplio, permitiendo su utilización, modificación y adaptación conforme a dicho marco.</p>
-            </div>
-        </footer>
+        <div class="nav-item" data-tooltip="Miscelaneos" onclick="mostrarVista('misc')">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">Miscelaneos</span>
+        </div>
     </div>
 
-    <script src="/config.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script>
-        // Inicializacion de la landing page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Cargar datos iniciales
-            cargarTrabajos();
-            cargarArchivos();
-            cargarDescargas();
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
 
-            // Actualizar periodicamente
-            setInterval(cargarTrabajos, 5000);
-            setInterval(cargarArchivos, 30000);
-            setInterval(cargarDescargas, 10000);
+        <div class="nav-item" data-tooltip="Archivos en Cache" id="nav-cache" onclick="mostrarVista('cache')">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+            <span class="nav-badge" id="badge-trabajos"></span>
+        </div>
 
-            // Boton eliminar todos archivos
-            document.getElementById('btn-eliminar-todos').addEventListener('click', eliminarTodosArchivos);
+        <div class="nav-item" data-tooltip="Acerca de PDF-Export" onclick="mostrarVista('about')">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </div>
+    </div>
 
-            // Boton eliminar todas descargas
-            document.getElementById('btn-eliminar-descargas').addEventListener('click', eliminarTodasDescargas);
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+        <div class="sidebar-version" id="sidebar-version"></div>
+    </div>
+</nav>
 
-            // Mostrar version desde config.js
-            if (window.AppConfig && window.AppConfig.version) {
-                document.getElementById('app-version').textContent = 'Version ' + window.AppConfig.version;
-            }
-        });
+<!-- ═══ MAIN ═══ -->
+<div id="main">
 
-        // Cargar lista de trabajos activos
-        async function cargarTrabajos() {
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/jobs`);
-                const datos = await respuesta.json();
+    <!-- HEADER -->
+    <header class="header">
+        <div class="breadcrumb">
+            <a class="home-link" href="#" onclick="mostrarVista('home'); return false;" title="Ir al inicio">🏠</a>
+            <span class="sep">/</span>
+            <span class="current" id="breadcrumb-current">Tengo un PDF...</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Online</div>
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="Buscar herramienta..." id="search-input" oninput="filtrarCards(this.value)">
+            </div>
+        </div>
+    </header>
 
-                if (datos.success) {
-                    mostrarTrabajos(datos.data);
-                }
-            } catch (error) {
-                console.error('Error cargando trabajos:', error);
-            }
-        }
+    <!-- AREA DE CONTENIDO -->
+    <main class="content">
 
-        // Mostrar trabajos en la UI
-        function mostrarTrabajos(trabajos) {
-            const contenedor = document.getElementById('lista-trabajos');
-
-            // Filtrar solo activos (pendiente, procesando)
-            const activos = trabajos.filter(t =>
-                t.estado === 'pendiente' || t.estado === 'procesando'
-            );
-
-            if (activos.length === 0) {
-                contenedor.innerHTML = '<p class="no-jobs">No hay trabajos activos</p>';
-                return;
-            }
-
-            contenedor.innerHTML = activos.map(trabajo => `
-                <div class="job-item ${trabajo.estado}">
-                    <div class="job-info">
-                        <span class="job-name">${trabajo.nombre_archivo || 'Archivo'}</span>
-                        <span class="job-type">${formatearTipoConversion(trabajo.tipo_conversion)}</span>
-                    </div>
-                    <div class="job-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${trabajo.progreso}%"></div>
-                        </div>
-                        <span class="progress-text">${trabajo.progreso}%</span>
-                    </div>
-                    <div class="job-status ${trabajo.estado}">${trabajo.estado}</div>
+        <!-- ── TENGO UN PDF (Vista activa por defecto) ── -->
+        <div class="view active" id="view-export">
+            <div class="section-header">
+                <div class="section-icon">📄</div>
+                <div>
+                    <div class="section-title">Tengo un PDF...</div>
+                    <div class="section-desc">Convierte, divide, rota y extrae contenido de tus PDFs</div>
                 </div>
-            `).join('');
-        }
+                <div class="section-count">12 herramientas</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/pdf-to-txt.html" class="card cat-export">
+                    <span class="card-badge badge-popular">Popular</span>
+                    <div class="card-icon">TXT</div>
+                    <div class="card-title">PDF a TXT</div>
+                    <div class="card-desc">Extrae texto plano del PDF</div>
+                </a>
+                <a href="/pdf-to-docx.html" class="card cat-export">
+                    <div class="card-icon">DOCX</div>
+                    <div class="card-title">PDF a DOCX</div>
+                    <div class="card-desc">Convierte a documento Word</div>
+                </a>
+                <a href="/pdf-to-png.html" class="card cat-export">
+                    <div class="card-icon">PNG</div>
+                    <div class="card-title">PDF a PNG</div>
+                    <div class="card-desc">Convierte paginas a imagenes PNG</div>
+                </a>
+                <a href="/pdf-to-jpg.html" class="card cat-export">
+                    <div class="card-icon">JPG</div>
+                    <div class="card-title">PDF a JPG</div>
+                    <div class="card-desc">Convierte paginas a imagenes JPG</div>
+                </a>
+                <a href="/pdf-compress.html" class="card cat-export">
+                    <div class="card-icon">ZIP</div>
+                    <div class="card-title">Comprimir PDF</div>
+                    <div class="card-desc">Reduce el tamanio del archivo</div>
+                </a>
+                <a href="/pdf-extract-images.html" class="card cat-export">
+                    <div class="card-icon">IMG</div>
+                    <div class="card-title">Extraer Imagenes</div>
+                    <div class="card-desc">Extrae imagenes incrustadas</div>
+                </a>
+                <a href="/pdf-split.html" class="card cat-export">
+                    <div class="card-icon">CUT</div>
+                    <div class="card-title">Cortar PDF</div>
+                    <div class="card-desc">Divide el PDF en partes</div>
+                </a>
+                <a href="/pdf-rotate.html" class="card cat-export">
+                    <div class="card-icon">ROT</div>
+                    <div class="card-title">Rotar PDF</div>
+                    <div class="card-desc">Rota paginas individuales</div>
+                </a>
+                <a href="/pdf-extract-pages.html" class="card cat-export">
+                    <div class="card-icon">PAG</div>
+                    <div class="card-title">Extraer Paginas</div>
+                    <div class="card-desc">Extrae paginas especificas</div>
+                </a>
+                <a href="/pdf-reorder.html" class="card cat-export">
+                    <div class="card-icon">ORD</div>
+                    <div class="card-title">Reordenar Paginas</div>
+                    <div class="card-desc">Cambia el orden de las paginas</div>
+                </a>
+                <a href="/pdf-merge.html" class="card cat-export">
+                    <div class="card-icon">JOIN</div>
+                    <div class="card-title">Unir PDFs</div>
+                    <div class="card-desc">Combina multiples PDFs</div>
+                </a>
+                <a href="/pdf-to-csv.html" class="card cat-export">
+                    <div class="card-icon">CSV</div>
+                    <div class="card-title">PDF a CSV</div>
+                    <div class="card-desc">Extrae tablas a CSV</div>
+                </a>
+            </div>
+        </div>
 
-        // Cargar lista de archivos
-        async function cargarArchivos() {
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
-                const datos = await respuesta.json();
-
-                if (datos.success) {
-                    mostrarArchivos(datos.data);
-                }
-            } catch (error) {
-                console.error('Error cargando archivos:', error);
-            }
-        }
-
-        // Mostrar archivos en la UI
-        function mostrarArchivos(archivos) {
-            const contenedor = document.getElementById('lista-archivos');
-            const btnEliminar = document.getElementById('btn-eliminar-todos');
-
-            if (archivos.length === 0) {
-                contenedor.innerHTML = '<p class="no-files">No hay archivos cargados</p>';
-                btnEliminar.disabled = true;
-                return;
-            }
-
-            btnEliminar.disabled = false;
-
-            contenedor.innerHTML = archivos.map(archivo => `
-                <div class="file-item" data-id="${archivo.id}">
-                    <div class="file-info">
-                        <span class="file-name">${archivo.nombre_original}</span>
-                        <span class="file-meta">
-                            ${formatearTamano(archivo.tamano_bytes)} - ${archivo.num_paginas} paginas
-                        </span>
-                        <span class="file-date">${formatearFecha(archivo.fecha_subida)}</span>
-                    </div>
-                    <button class="btn btn-small btn-danger" onclick="eliminarArchivo('${archivo.id}')">
-                        Eliminar
-                    </button>
+        <!-- ── QUIERO UN PDF ── -->
+        <div class="view" id="view-create">
+            <div class="section-header">
+                <div class="section-icon">✨</div>
+                <div>
+                    <div class="section-title">Quiero un PDF</div>
+                    <div class="section-desc">Genera PDFs desde otras fuentes</div>
                 </div>
-            `).join('');
-        }
+                <div class="section-count">2 herramientas</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/html-to-pdf.html" class="card cat-create">
+                    <div class="card-icon">WEB</div>
+                    <div class="card-title">HTML a PDF</div>
+                    <div class="card-desc">Convierte pagina web a PDF</div>
+                </a>
+                <a href="/img-to-1pdf.html" class="card cat-create">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">IMG</div>
+                    <div class="card-title">IMG a PDF</div>
+                    <div class="card-desc">Carga imagenes en 1 PDF</div>
+                </a>
+            </div>
+        </div>
 
-        // Cargar lista de descargas disponibles
-        async function cargarDescargas() {
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
-                const datos = await respuesta.json();
+        <!-- ── MISCELANEOS ── -->
+        <div class="view" id="view-misc">
+            <div class="section-header">
+                <div class="section-icon">⚡</div>
+                <div>
+                    <div class="section-title">Miscelaneos</div>
+                    <div class="section-desc">Herramientas de utilidad general</div>
+                </div>
+                <div class="section-count">3 herramientas</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/ndm-to-tables-seq.html" class="card cat-misc">
+                    <div class="card-icon">NDM</div>
+                    <div class="card-title">Migrar SQL</div>
+                    <div class="card-desc">Ordenar tablas para export</div>
+                </a>
+                <a href="/web-scraper.html" class="card cat-misc">
+                    <div class="card-icon">SCR</div>
+                    <div class="card-title">Scraper Web</div>
+                    <div class="card-desc">Extraer contenido para IA</div>
+                </a>
+                <a href="/webp-to-png.html" class="card cat-misc">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">WEBP</div>
+                    <div class="card-title">WEBP a PNG</div>
+                    <div class="card-desc">Convierte imagen Webp</div>
+                </a>
+            </div>
+        </div>
 
-                if (datos.success) {
-                    mostrarDescargas(datos.data);
-                }
-            } catch (error) {
-                console.error('Error cargando descargas:', error);
-            }
-        }
+        <!-- ── BUSQUEDA (vista temporal al buscar) ── -->
+        <div class="view" id="view-search">
+            <div class="section-header">
+                <div class="section-icon">🔍</div>
+                <div>
+                    <div class="section-title">Resultados</div>
+                    <div class="section-desc" id="search-desc">Busqueda...</div>
+                </div>
+            </div>
+            <div class="cards-grid" id="search-results"></div>
+        </div>
 
-        // Mostrar descargas en la UI
-        function mostrarDescargas(descargas) {
-            const contenedor = document.getElementById('lista-descargas');
-            const btnEliminarDescargas = document.getElementById('btn-eliminar-descargas');
+        <!-- ── ARCHIVOS EN CACHE ── -->
+        <div class="view" id="view-cache">
+            <div class="section-header">
+                <div class="section-icon">🗄️</div>
+                <div>
+                    <div class="section-title">Archivos en Cache</div>
+                    <div class="section-desc">Trabajos activos, archivos y descargas disponibles</div>
+                </div>
+            </div>
 
-            if (descargas.length === 0) {
-                contenedor.innerHTML = '<p class="no-downloads">No hay descargas disponibles</p>';
-                btnEliminarDescargas.disabled = true;
-                return;
-            }
+            <!-- Trabajos activos -->
+            <div class="status-panel mb-14">
+                <div class="status-panel-header">
+                    <span class="status-panel-title">Trabajos en Proceso</span>
+                    <div class="status-dot"></div>
+                </div>
+                <div id="lista-trabajos">
+                    <div class="status-empty">No hay trabajos activos</div>
+                </div>
+            </div>
 
-            btnEliminarDescargas.disabled = false;
-
-            contenedor.innerHTML = descargas.map(descarga => `
-                <div class="download-item" data-id="${descarga.id}">
-                    <div class="download-info">
-                        <span class="download-name">${descarga.nombre_archivo}</span>
-                        <span class="download-type">${formatearTipoConversion(descarga.tipo_conversion)}</span>
-                        <span class="download-size">${formatearTamano(descarga.tamano_resultado)}</span>
-                        <span class="download-date">${formatearFecha(descarga.fecha_fin)}</span>
+            <div class="status-grid">
+                <!-- Archivos cargados -->
+                <div class="status-panel">
+                    <div class="status-panel-header">
+                        <span class="status-panel-title">Archivos Cargados</span>
                     </div>
-                    <div class="download-actions">
-                        <a href="${window.AppConfig.API_BASE_URL}/download/${descarga.id}"
-                           class="btn btn-primary btn-small" download>
-                            Descargar
-                        </a>
-                        <button class="btn btn-small btn-danger" onclick="eliminarDescarga('${descarga.id}')">
-                            Eliminar
+                    <div class="panel-actions">
+                        <button type="button" id="btn-eliminar-todos" class="btn btn-danger btn-small" disabled onclick="eliminarTodosArchivos()">
+                            Eliminar Todos
                         </button>
                     </div>
+                    <div id="lista-archivos">
+                        <div class="status-empty">No hay archivos cargados</div>
+                    </div>
                 </div>
-            `).join('');
+
+                <!-- Descargas disponibles -->
+                <div class="status-panel">
+                    <div class="status-panel-header">
+                        <span class="status-panel-title">Descargas Disponibles</span>
+                    </div>
+                    <div class="panel-actions">
+                        <button type="button" id="btn-eliminar-descargas" class="btn btn-danger btn-small" disabled onclick="eliminarTodasDescargas()">
+                            Eliminar Todas
+                        </button>
+                    </div>
+                    <div id="lista-descargas">
+                        <div class="status-empty">No hay descargas disponibles</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="text-note">
+                ⏱️ Los archivos se eliminan automaticamente despues de <strong class="text-strong">4 horas</strong>
+            </div>
+        </div>
+
+        <!-- ── ACERCA DE ── -->
+        <div class="view" id="view-about">
+            <div class="section-header">
+                <div class="section-icon">ℹ️</div>
+                <div>
+                    <div class="section-title">Acerca de PDF-Export</div>
+                    <div class="section-desc">Informacion sobre el proyecto</div>
+                </div>
+            </div>
+            <div class="about-card">
+                <div class="about-title">PDF-Export<span>&</span>Import</div>
+                <div class="about-body">
+                    <p>Herramientas de conversion PDF para la <strong class="text-strong">Soberania Digital Empresarial</strong>.</p>
+                    <p>Esta aplicacion y su API estan destinadas a uso privado. No se implementan claves de acceso a nivel de aplicacion con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
+                    <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ). En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticacion.</p>
+                    <p class="about-tag-section">
+                        <span class="about-tag">Python 3.10+</span>
+                        <span class="about-tag">Flask</span>
+                        <span class="about-tag">SQLite3</span>
+                        <span class="about-tag">HTML5</span>
+                        <span class="about-tag">CSS3</span>
+                        <span class="about-tag">JS Vanilla</span>
+                        <span class="about-tag">PyMuPDF</span>
+                        <span class="about-tag">Docker</span>
+                    </p>
+                    <p class="mt-16">
+                        <a href="https://www.linkedin.com/in/eduardo-rufeil/" target="_blank" rel="noopener" class="link-linkedin">🔗 Eduardo Rufeil en LinkedIn</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    // Mapa de vistas con sus etiquetas para el breadcrumb
+    const VISTAS = {
+        export: { label: 'Tengo un PDF...',    navIdx: 0 },
+        create: { label: 'Quiero un PDF',      navIdx: 1 },
+        misc:   { label: 'Miscelaneos',        navIdx: 2 },
+        cache:  { label: 'Archivos en Cache',  navIdx: 3 },
+        about:  { label: 'Acerca de',          navIdx: 4 },
+        search: { label: 'Busqueda',           navIdx: -1 },
+    };
+
+    // Copia de todas las cards para busqueda
+    let todasLasCards = [];
+
+    function mostrarVista(id) {
+        // Limpiar busqueda si se cambia de vista
+        const inputBusqueda = document.getElementById('search-input');
+        if (id !== 'search') inputBusqueda.value = '';
+
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + id).classList.add('active');
+
+        const info = VISTAS[id] || { label: id, navIdx: -1 };
+        document.getElementById('breadcrumb-current').textContent = info.label;
+
+        document.querySelectorAll('.nav-item').forEach((item, i) => {
+            item.classList.remove('active');
+            if (i === info.navIdx) item.classList.add('active');
+        });
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('main').classList.toggle('expanded');
+    }
+
+    function filtrarCards(query) {
+        if (!query.trim()) {
+            // Sin busqueda: volver a la vista de export
+            mostrarVista('export');
+            return;
         }
 
-        // Eliminar un archivo
-        async function eliminarArchivo(id) {
-            if (!confirm('¿Eliminar este archivo?')) return;
-
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files/${id}`, {
-                    method: 'DELETE'
+        // Inicializar lista de cards si esta vacia
+        if (todasLasCards.length === 0) {
+            document.querySelectorAll('.card[href]').forEach(card => {
+                todasLasCards.push({
+                    href: card.getAttribute('href'),
+                    html: card.innerHTML,
+                    clase: card.className,
+                    texto: card.textContent.toLowerCase()
                 });
-
-                if (respuesta.ok) {
-                    cargarArchivos();
-                }
-            } catch (error) {
-                console.error('Error eliminando archivo:', error);
-            }
-        }
-
-        // Eliminar todos los archivos
-        async function eliminarTodosArchivos() {
-            if (!confirm('¿Eliminar TODOS los archivos cargados?')) return;
-
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files`, {
-                    method: 'DELETE'
-                });
-
-                if (respuesta.ok) {
-                    cargarArchivos();
-                    cargarDescargas();
-                }
-            } catch (error) {
-                console.error('Error eliminando archivos:', error);
-            }
-        }
-
-        // Formatear tipo de conversion para mostrar
-        function formatearTipoConversion(tipo) {
-            const tipos = {
-                'to-txt': 'PDF a TXT',
-                'to-docx': 'PDF a DOCX',
-                'to-png': 'PDF a PNG',
-                'to-jpg': 'PDF a JPG',
-                'compress': 'Comprimir PDF',
-                'extract-images': 'Extraer Imagenes',
-                'split': 'Cortar PDF',
-                'rotate': 'Rotar PDF',
-                'from-html': 'HTML a PDF',
-                'from_html': 'HTML a PDF',
-                'merge': 'Unir PDFs',
-                'ndm-to-tables-seq': 'Migrar SQL',
-                'to-csv': 'PDF a CSV',
-                'scrape-url': 'Scraper Web',
-                'img-to-1pdf': 'IMG a PDF',
-                'webp-to-png': 'WEBP a PNG',
-                'extract-pages': 'Extraer Paginas',
-                'reorder': 'Reordenar'
-            };
-            return tipos[tipo] || tipo;
-        }
-
-        // Formatear tamanio de archivo
-        function formatearTamano(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Formatear fecha ISO a formato legible
-        function formatearFecha(isoString) {
-            if (!isoString) return '';
-            const fecha = new Date(isoString);
-            return fecha.toLocaleString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
             });
         }
 
-        // Eliminar una descarga
-        async function eliminarDescarga(id) {
-            if (!confirm('¿Eliminar esta descarga?')) return;
+        const q = query.toLowerCase();
+        const coincidencias = todasLasCards.filter(c => c.texto.includes(q));
 
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (respuesta.ok) {
-                    cargarDescargas();
-                }
-            } catch (error) {
-                console.error('Error eliminando descarga:', error);
-            }
+        const contenedor = document.getElementById('search-results');
+        if (coincidencias.length === 0) {
+            contenedor.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Sin resultados para "' + query + '"</p>';
+        } else {
+            contenedor.innerHTML = coincidencias.map(c =>
+                `<a href="${c.href}" class="${c.clase}">${c.html}</a>`
+            ).join('');
         }
 
-        // Eliminar todas las descargas
-        async function eliminarTodasDescargas() {
-            if (!confirm('¿Eliminar TODAS las descargas disponibles?')) return;
+        document.getElementById('search-desc').textContent =
+            coincidencias.length + ' resultado' + (coincidencias.length !== 1 ? 's' : '') + ' para "' + query + '"';
 
-            try {
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
-                const datos = await respuesta.json();
+        mostrarVista('search');
+    }
 
-                if (datos.success) {
-                    // Eliminar cada descarga
-                    for (const descarga of datos.data) {
-                        await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${descarga.id}`, {
-                            method: 'DELETE'
-                        });
-                    }
-                    cargarDescargas();
-                }
-            } catch (error) {
-                console.error('Error eliminando descargas:', error);
-            }
+    // ─── FUNCIONES DE API ───
+
+    async function cargarTrabajos() {
+        try {
+            const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/jobs`);
+            const datos = await respuesta.json();
+            if (datos.success) mostrarTrabajos(datos.data);
+        } catch (error) {
+            console.error('Error cargando trabajos:', error);
         }
-    </script>
+    }
+
+    function mostrarTrabajos(trabajos) {
+        const contenedor = document.getElementById('lista-trabajos');
+        const badge = document.getElementById('badge-trabajos');
+
+        const activos = trabajos.filter(t =>
+            t.estado === 'pendiente' || t.estado === 'procesando'
+        );
+
+        // Actualizar badge del sidebar
+        if (activos.length > 0) {
+            badge.textContent = activos.length;
+            badge.classList.add('visible');
+        } else {
+            badge.classList.remove('visible');
+        }
+
+        if (activos.length === 0) {
+            contenedor.innerHTML = '<div class="status-empty">No hay trabajos activos</div>';
+            return;
+        }
+
+        contenedor.innerHTML = activos.map(trabajo => `
+            <div class="job-item ${trabajo.estado}">
+                <div class="job-info">
+                    <span class="job-name">${trabajo.nombre_archivo || 'Archivo'}</span>
+                    <span class="job-type">${formatearTipoConversion(trabajo.tipo_conversion)}</span>
+                </div>
+                <div class="job-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${trabajo.progreso}%"></div>
+                    </div>
+                    <span class="progress-text">${trabajo.progreso}%</span>
+                </div>
+                <div class="job-status ${trabajo.estado}">${trabajo.estado}</div>
+            </div>
+        `).join('');
+    }
+
+    async function cargarArchivos() {
+        try {
+            const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+            const datos = await respuesta.json();
+            if (datos.success) mostrarArchivos(datos.data);
+        } catch (error) {
+            console.error('Error cargando archivos:', error);
+        }
+    }
+
+    function mostrarArchivos(archivos) {
+        const contenedor = document.getElementById('lista-archivos');
+        const btnEliminar = document.getElementById('btn-eliminar-todos');
+
+        if (archivos.length === 0) {
+            contenedor.innerHTML = '<div class="status-empty">No hay archivos cargados</div>';
+            btnEliminar.disabled = true;
+            return;
+        }
+
+        btnEliminar.disabled = false;
+        contenedor.innerHTML = archivos.map(archivo => `
+            <div class="file-item" data-id="${archivo.id}">
+                <div class="file-info">
+                    <span class="file-name">${archivo.nombre_original}</span>
+                    <span class="file-meta">${formatearTamano(archivo.tamano_bytes)} · ${archivo.num_paginas} pag.</span>
+                    <span class="file-date">${formatearFecha(archivo.fecha_subida)}</span>
+                </div>
+                <button class="btn btn-danger btn-small" onclick="eliminarArchivo('${archivo.id}')">Eliminar</button>
+            </div>
+        `).join('');
+    }
+
+    async function cargarDescargas() {
+        try {
+            const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
+            const datos = await respuesta.json();
+            if (datos.success) mostrarDescargas(datos.data);
+        } catch (error) {
+            console.error('Error cargando descargas:', error);
+        }
+    }
+
+    function mostrarDescargas(descargas) {
+        const contenedor = document.getElementById('lista-descargas');
+        const btnEliminar = document.getElementById('btn-eliminar-descargas');
+
+        if (descargas.length === 0) {
+            contenedor.innerHTML = '<div class="status-empty">No hay descargas disponibles</div>';
+            btnEliminar.disabled = true;
+            return;
+        }
+
+        btnEliminar.disabled = false;
+        contenedor.innerHTML = descargas.map(descarga => `
+            <div class="download-item" data-id="${descarga.id}">
+                <div class="download-info">
+                    <span class="download-name">${descarga.nombre_archivo}</span>
+                    <span class="download-type">${formatearTipoConversion(descarga.tipo_conversion)}</span>
+                    <span class="download-size">${formatearTamano(descarga.tamano_resultado)}</span>
+                    <span class="download-date">${formatearFecha(descarga.fecha_fin)}</span>
+                </div>
+                <div class="download-actions">
+                    <a href="${window.AppConfig.API_BASE_URL}/download/${descarga.id}"
+                       class="btn btn-primary btn-small" download>Descargar</a>
+                    <button class="btn btn-danger btn-small" onclick="eliminarDescarga('${descarga.id}')">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function eliminarArchivo(id) {
+        if (!confirm('¿Eliminar este archivo?')) return;
+        try {
+            await fetch(`${window.AppConfig.API_BASE_URL}/files/${id}`, { method: 'DELETE' });
+            cargarArchivos();
+        } catch (error) {
+            console.error('Error eliminando archivo:', error);
+        }
+    }
+
+    async function eliminarTodosArchivos() {
+        if (!confirm('¿Eliminar TODOS los archivos cargados?')) return;
+        try {
+            await fetch(`${window.AppConfig.API_BASE_URL}/files`, { method: 'DELETE' });
+            cargarArchivos();
+            cargarDescargas();
+        } catch (error) {
+            console.error('Error eliminando archivos:', error);
+        }
+    }
+
+    async function eliminarDescarga(id) {
+        if (!confirm('¿Eliminar esta descarga?')) return;
+        try {
+            await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${id}`, { method: 'DELETE' });
+            cargarDescargas();
+        } catch (error) {
+            console.error('Error eliminando descarga:', error);
+        }
+    }
+
+    async function eliminarTodasDescargas() {
+        if (!confirm('¿Eliminar TODAS las descargas disponibles?')) return;
+        try {
+            const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/downloads`);
+            const datos = await respuesta.json();
+            if (datos.success) {
+                for (const descarga of datos.data) {
+                    await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${descarga.id}`, { method: 'DELETE' });
+                }
+                cargarDescargas();
+            }
+        } catch (error) {
+            console.error('Error eliminando descargas:', error);
+        }
+    }
+
+    // ─── HELPERS DE FORMATO ───
+
+    function formatearTipoConversion(tipo) {
+        const tipos = {
+            'to-txt': 'PDF a TXT',
+            'to-docx': 'PDF a DOCX',
+            'to-png': 'PDF a PNG',
+            'to-jpg': 'PDF a JPG',
+            'compress': 'Comprimir PDF',
+            'extract-images': 'Extraer Imagenes',
+            'split': 'Cortar PDF',
+            'rotate': 'Rotar PDF',
+            'from-html': 'HTML a PDF',
+            'from_html': 'HTML a PDF',
+            'merge': 'Unir PDFs',
+            'ndm-to-tables-seq': 'Migrar SQL',
+            'to-csv': 'PDF a CSV',
+            'scrape-url': 'Scraper Web',
+            'img-to-1pdf': 'IMG a PDF',
+            'webp-to-png': 'WEBP a PNG',
+            'extract-pages': 'Extraer Paginas',
+            'reorder': 'Reordenar'
+        };
+        return tipos[tipo] || tipo;
+    }
+
+    function formatearTamano(bytes) {
+        if (!bytes || bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function formatearFecha(isoString) {
+        if (!isoString) return '';
+        const fecha = new Date(isoString);
+        return fecha.toLocaleString('es-ES', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    // ─── INICIALIZACION ───
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarTrabajos();
+        cargarArchivos();
+        cargarDescargas();
+
+        // Polling periodico
+        setInterval(cargarTrabajos, 5000);
+        setInterval(cargarArchivos, 30000);
+        setInterval(cargarDescargas, 10000);
+
+        // Mostrar version desde config.js
+        if (window.AppConfig && window.AppConfig.version) {
+            document.getElementById('sidebar-version').textContent = 'v' + window.AppConfig.version;
+        }
+    });
+
+    // Tecla ESC limpia busqueda y vuelve a export
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.getElementById('search-input').value = '';
+            mostrarVista('export');
+        }
+    });
+</script>
 </body>
 </html>

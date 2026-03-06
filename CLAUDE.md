@@ -923,6 +923,16 @@ Cargar o enviar una cantidad de imagenes de cualquier tipo y crear (1) solo PDF 
 Convertir imagenes Webp a imagenes PNG.
 
 ---
+### Etapa 19. Mejora del front: HOME
+
+Utiliza el archivo ./doc/pdf-export-redesign.html para rediseñar el HOME del index.html para que quede igual
+
+---
+### Etapa 20. Mejora del front: PDF TO TXT
+
+Utiliza el archivo ./doc/pdf-to-txt-redesign.html para rediseñar el pdf-to-txt para que quede igual
+
+---
 
 ## Estructura de Carpetas Propuesta
 

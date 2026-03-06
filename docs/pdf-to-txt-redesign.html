@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF a TXT — PDF-Export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0D1117;
+    --sidebar:   #161B22;
+    --card:      #1C2128;
+    --card-hover:#21262D;
+    --border:    #30363D;
+    --red:       #E63946;
+    --orange:    #F4A261;
+    --blue:      #58A6FF;
+    --green:     #3FB950;
+    --purple:    #A371F7;
+    --text:      #E6EDF3;
+    --text-muted:#8B949E;
+    --sidebar-w: 240px;
+    --sidebar-w-collapsed: 60px;
+    --header-h:  54px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ─── SIDEBAR ─── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: width 0.25s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+  }
+  #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; text-decoration: none; color: var(--text);
+    min-height: var(--header-h); flex-shrink: 0;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+    color: white; flex-shrink: 0; letter-spacing: -1px;
+  }
+  .logo-text {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+    line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+  }
+  .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+  #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+  .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+  }
+  #sidebar.collapsed .nav-section-label { opacity: 0; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px; cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.15s; white-space: nowrap; position: relative;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); }
+  .nav-item.active { background: rgba(230,57,70,0.1); border-left-color: var(--red); }
+  .nav-item.active .nav-label { color: var(--text); }
+  .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+  .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+  .nav-item:hover .nav-label { color: var(--text); }
+  #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+  .nav-badge {
+    margin-left: auto; background: var(--red); color: white;
+    font-size: 10px; font-weight: 600; padding: 2px 6px;
+    border-radius: 10px; transition: opacity 0.2s;
+  }
+  #sidebar.collapsed .nav-badge { opacity: 0; }
+
+  #sidebar.collapsed .nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+    background: #2D333B; color: var(--text); padding: 5px 10px;
+    border-radius: 6px; font-size: 12px; white-space: nowrap;
+    border: 1px solid var(--border); pointer-events: none; z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+
+  .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+  .collapse-btn {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    color: var(--text-muted); font-size: 13px; padding: 6px 0; user-select: none;
+  }
+  .collapse-btn:hover { color: var(--text); }
+  .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+  #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+  .collapse-label { transition: opacity 0.2s; }
+  #sidebar.collapsed .collapse-label { opacity: 0; }
+
+  /* ─── MAIN ─── */
+  #main {
+    margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+    display: flex; flex-direction: column;
+    transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+  }
+  #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+  /* HEADER */
+  .header {
+    height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 14px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+  .breadcrumb a {
+    color: var(--text-muted); cursor: pointer; transition: color 0.15s;
+    text-decoration: none; display: flex; align-items: center;
+  }
+  .breadcrumb a:hover { color: var(--red); }
+  .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+  .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .stat-chip {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+  }
+  .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+  .home-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; font-size: 13px; color: var(--text-muted);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; font-family: inherit;
+  }
+  .home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
+
+  /* ─── CONTENT ─── */
+  .content { padding: 28px 32px; flex: 1; max-width: 1100px; width: 100%; }
+
+  /* Page title */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 28px; gap: 16px;
+  }
+  .page-title-group { display: flex; align-items: center; gap: 14px; }
+  .page-badge {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+    background: rgba(230,57,70,0.12); color: var(--red); border: 1px solid rgba(230,57,70,0.3);
+    border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+  }
+  .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ─── TWO COLUMN LAYOUT ─── */
+  .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+
+  /* DROP ZONE */
+  .dropzone {
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--red);
+    background: rgba(230,57,70,0.04);
+  }
+  .dropzone-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+  .dropzone-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .dropzone-sub { font-size: 12px; color: var(--text-muted); }
+  .dropzone-sub strong { color: var(--text-muted); }
+  .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  /* FILE LOADED STATE */
+  .file-info {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 14px;
+  }
+  .file-info.visible { display: block; }
+  .file-info-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .file-icon-box {
+    width: 40px; height: 40px; background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,.25);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 11px; color: var(--red);
+  }
+  .file-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .file-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .file-remove {
+    margin-left: auto; background: none; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-muted); font-size: 12px;
+    padding: 4px 10px; cursor: pointer; transition: all .15s; font-family: inherit;
+  }
+  .file-remove:hover { border-color: var(--red); color: var(--red); }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--orange));
+    border-radius: 2px; transition: width 0.3s ease;
+  }
+
+  /* PREVIEW AREA */
+  .preview-panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    margin-top: 14px; overflow: hidden;
+  }
+  .preview-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+  .preview-panel-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  .preview-lines-badge {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 8px; font-size: 11px; color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .preview-body {
+    padding: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    min-height: 120px;
+    max-height: 180px;
+    overflow-y: auto;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .preview-placeholder { font-style: italic; color: var(--border); text-align: center; padding: 28px 0; }
+
+  /* ─── RIGHT PANEL: OPTIONS ─── */
+  .options-panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .options-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .option-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .option-item:last-child { border-bottom: none; }
+  .option-item:hover { background: rgba(255,255,255,0.03); }
+
+  /* Custom toggle */
+  .toggle {
+    width: 34px; height: 18px; background: var(--border);
+    border-radius: 9px; position: relative; flex-shrink: 0;
+    cursor: pointer; transition: background 0.2s; margin-top: 2px;
+  }
+  .toggle::after {
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: white; border-radius: 50%; top: 3px; left: 3px;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .toggle.on { background: var(--red); }
+  .toggle.on::after { transform: translateX(16px); }
+
+  .option-text { flex: 1; }
+  .option-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .option-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+  /* ACTION BUTTONS */
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--red); color: white;
+  }
+  .btn-primary:hover { background: #c9303c; box-shadow: 0 4px 16px rgba(230,57,70,.35); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--card-hover); border-color: var(--text-muted); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+  /* Processing state */
+  .processing-bar {
+    display: none;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px;
+  }
+  .processing-bar.visible { display: block; }
+  .processing-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .processing-label span { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+
+  /* Download ready */
+  .download-ready {
+    display: none;
+    background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,.25);
+    border-radius: 10px; padding: 14px 16px; margin-top: 14px;
+    text-align: center;
+  }
+  .download-ready.visible { display: block; }
+  .download-ready .check { font-size: 24px; margin-bottom: 6px; }
+  .download-ready .dl-title { font-size: 14px; font-weight: 600; color: var(--green); margin-bottom: 4px; }
+  .download-ready .dl-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* INFO STRIP */
+  .info-strip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,.15);
+    border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text-muted);
+    margin-top: 20px;
+  }
+  .info-strip strong { color: var(--blue); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <a class="sidebar-logo" href="index.html">
+    <div class="logo-icon">PDF</div>
+    <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+  </a>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Operaciones</div>
+    <div class="nav-item active" data-tooltip="Tengo un PDF...">
+      <span class="nav-icon">📄</span>
+      <span class="nav-label">Tengo un PDF...</span>
+    </div>
+    <div class="nav-item" data-tooltip="Quiero un PDF">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Quiero un PDF</span>
+    </div>
+    <div class="nav-item" data-tooltip="Misceláneos">
+      <span class="nav-icon">🔧</span>
+      <span class="nav-label">Misceláneos</span>
+      <span class="nav-badge">3</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Sistema</div>
+    <div class="nav-item" data-tooltip="Archivos en Caché">
+      <span class="nav-icon">🗄️</span>
+      <span class="nav-label">Archivos en Caché</span>
+    </div>
+    <div class="nav-item" data-tooltip="Acerca de PDF-Export">
+      <span class="nav-icon">ℹ️</span>
+      <span class="nav-label">Acerca de PDF-Export</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="collapse-btn" onclick="toggleSidebar()">
+      <span class="collapse-icon">◀</span>
+      <span class="collapse-label">Colapsar</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <header class="header">
+    <div class="breadcrumb">
+      <a href="#" title="Inicio" onclick="alert('← Ir a Inicio')">🏠</a>
+      <span class="sep">/</span>
+      <a href="#">Tengo un PDF...</a>
+      <span class="sep">/</span>
+      <span class="current">PDF a TXT</span>
+    </div>
+    <div class="header-right">
+      <div class="stat-chip"><span class="dot"></span>Online</div>
+      <button class="home-btn" onclick="alert('← Ir a Inicio')">🏠 Inicio</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-title-group">
+        <div class="page-badge">TXT</div>
+        <div>
+          <div class="page-title">PDF a TXT</div>
+          <div class="page-subtitle">Extrae el texto contenido en un PDF como archivo de texto plano</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two column layout -->
+    <div class="two-col">
+
+      <!-- LEFT: Upload + Preview -->
+      <div>
+        <!-- Drop zone -->
+        <div class="dropzone" id="dropzone"
+          ondragover="handleDrag(event,true)"
+          ondragleave="handleDrag(event,false)"
+          ondrop="handleDrop(event)">
+          <input type="file" accept=".pdf" onchange="handleFile(this.files[0])">
+          <span class="dropzone-icon">📄</span>
+          <div class="dropzone-title">Arrastrá un archivo PDF aquí</div>
+          <div class="dropzone-sub">o hacé clic para seleccionar <strong>· máximo 1 GB</strong></div>
+        </div>
+
+        <!-- File info -->
+        <div class="file-info" id="fileInfo">
+          <div class="file-info-header">
+            <div class="file-icon-box">PDF</div>
+            <div>
+              <div class="file-name" id="fileName">documento.pdf</div>
+              <div class="file-meta" id="fileMeta">0 páginas · 0 MB</div>
+            </div>
+            <button class="file-remove" onclick="removeFile()">✕ Quitar</button>
+          </div>
+          <div class="progress-bar" id="uploadProgress" style="display:none">
+            <div class="progress-fill" id="uploadFill"></div>
+          </div>
+        </div>
+
+        <!-- Processing -->
+        <div class="processing-bar" id="processingBar">
+          <div class="processing-label">Procesando... <span id="procPct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="procFill"></div></div>
+        </div>
+
+        <!-- Download ready -->
+        <div class="download-ready" id="downloadReady">
+          <div class="check">✅</div>
+          <div class="dl-title">¡Archivo listo!</div>
+          <div class="dl-sub">Tu TXT fue generado correctamente</div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-panel" id="previewPanel" style="margin-top:14px;">
+          <div class="preview-panel-header">
+            <span class="preview-panel-title">Vista Previa</span>
+            <span class="preview-lines-badge" id="lineCount">0 líneas</span>
+          </div>
+          <div class="preview-body" id="previewBody">
+            <div class="preview-placeholder">Cargá un PDF para ver la vista previa del texto extraído...</div>
+          </div>
+        </div>
+
+        <div class="info-strip">
+          ⏱️ Los archivos se eliminan automáticamente después de <strong>4 horas</strong>
+        </div>
+      </div>
+
+      <!-- RIGHT: Options + Actions -->
+      <div>
+        <div class="options-panel">
+          <div class="options-header">Opciones de Extracción</div>
+
+          <div class="option-item" onclick="toggleOpt(this)">
+            <div class="toggle" id="opt1"></div>
+            <div class="option-text">
+              <div class="option-label">Remover números de página</div>
+              <div class="option-desc">Elimina los números que aparecen en márgenes</div>
+            </div>
+          </div>
+
+          <div class="option-item" onclick="toggleOpt(this)">
+            <div class="toggle" id="opt2"></div>
+            <div class="option-text">
+              <div class="option-label">Remover encabezados</div>
+              <div class="option-desc">Detecta y elimina texto repetido en la parte superior</div>
+            </div>
+          </div>
+
+          <div class="option-item" onclick="toggleOpt(this)">
+            <div class="toggle" id="opt3"></div>
+            <div class="option-text">
+              <div class="option-label">Remover pies de página</div>
+              <div class="option-desc">Detecta y elimina texto repetido en la parte inferior</div>
+            </div>
+          </div>
+
+          <div class="option-item" onclick="toggleOpt(this)">
+            <div class="toggle on" id="opt4"></div>
+            <div class="option-text">
+              <div class="option-label">Preservar párrafos</div>
+              <div class="option-desc">Mantiene líneas vacías entre párrafos</div>
+            </div>
+          </div>
+
+          <div class="option-item" onclick="toggleOpt(this)">
+            <div class="toggle" id="opt5"></div>
+            <div class="option-text">
+              <div class="option-label">Detectar columnas</div>
+              <div class="option-desc">Para PDFs con texto en múltiples columnas</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-secondary" id="btnPreview" onclick="runPreview()" disabled>
+            👁 Vista Previa
+          </button>
+          <button class="btn btn-primary" id="btnDownload" onclick="runDownload()" disabled>
+            ⬇ Descargar TXT
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo-icon" style="width:28px;height:28px;font-size:11px;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;color:white;letter-spacing:-1px;flex-shrink:0;">PDF</div>
+          <span><strong>PDF-Export & Import</strong> — Herramientas de conversión PDF para la Soberanía Digital Empresarial</span>
+        </div>
+        <a href="/" class="footer-home-btn">
+          🏠 Volver al inicio
+        </a>
+      </div>
+
+      <div class="footer-divider"></div>
+
+      <details class="footer-legal">
+        <summary>⚖️ Aviso de uso y alcance</summary>
+        <div class="footer-legal-body">
+          <p>Esta aplicación y su API están destinadas a uso privado. No se implementan claves de acceso a nivel de aplicación con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
+          <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ). En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticación, quedando dicha configuración bajo el criterio y responsabilidad del usuario.</p>
+          <p>Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberanía digital sobre los recursos informáticos utilizados para el procesamiento de documentos. El código y la aplicación se distribuyen bajo una licencia de uso público y amplio.</p>
+        </div>
+      </details>
+    </div>
+  </footer>
+
+</div>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--sidebar);
+    padding: 20px 32px 28px;
+    margin-top: 40px;
+  }
+  .footer-inner { max-width: 1100px; }
+  .footer-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .footer-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-muted); line-height: 1.4;
+  }
+  .footer-home-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; white-space: nowrap; flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .footer-home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
+  .footer-divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .footer-legal summary {
+    font-size: 12px; color: var(--text-muted); cursor: pointer;
+    user-select: none; list-style: none; display: flex; align-items: center; gap: 6px;
+    transition: color 0.15s;
+  }
+  .footer-legal summary:hover { color: var(--text); }
+  .footer-legal[open] summary { color: var(--text); margin-bottom: 12px; }
+  .footer-legal-body {
+    font-size: 12px; color: var(--text-muted); line-height: 1.7;
+    border-left: 2px solid var(--border); padding-left: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    max-width: 720px;
+  }
+</style>
+
+<script>
+  let fileLoaded = false;
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
+
+  function toggleOpt(item) {
+    const toggle = item.querySelector('.toggle');
+    toggle.classList.toggle('on');
+  }
+
+  function handleDrag(e, over) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.toggle('drag-over', over);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') handleFile(file);
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    fileLoaded = true;
+
+    // Show file info
+    document.getElementById('fileInfo').classList.add('visible');
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileMeta').textContent =
+      `Cargando... · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+    // Simulate upload progress
+    const bar = document.getElementById('uploadProgress');
+    const fill = document.getElementById('uploadFill');
+    bar.style.display = 'block';
+    let pct = 0;
+    const iv = setInterval(() => {
+      pct += Math.random() * 18;
+      if (pct >= 100) { pct = 100; clearInterval(iv); finishUpload(file); }
+      fill.style.width = pct + '%';
+    }, 80);
+  }
+
+  function finishUpload(file) {
+    document.getElementById('fileMeta').textContent =
+      `${Math.floor(Math.random()*40+2)} páginas · ${(file.size/1024/1024).toFixed(2)} MB`;
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('btnPreview').disabled = false;
+    document.getElementById('btnDownload').disabled = false;
+
+    // Show preview placeholder text
+    document.getElementById('previewBody').innerHTML = `<span style="color:var(--text-muted);font-style:italic;">Presioná "Vista Previa" para previsualizar el texto extraído...</span>`;
+    document.getElementById('lineCount').textContent = '— líneas';
+  }
+
+  function removeFile() {
+    fileLoaded = false;
+    document.getElementById('fileInfo').classList.remove('visible');
+    document.getElementById('btnPreview').disabled = true;
+    document.getElementById('btnDownload').disabled = true;
+    document.getElementById('previewBody').innerHTML = '<div class="preview-placeholder">Cargá un PDF para ver la vista previa del texto extraído...</div>';
+    document.getElementById('lineCount').textContent = '0 líneas';
+    document.getElementById('downloadReady').classList.remove('visible');
+  }
+
+  function runPreview() {
+    const bar = document.getElementById('processingBar');
+    const fill = document.getElementById('procFill');
+    const pctLabel = document.getElementById('procPct');
+    bar.classList.add('visible');
+    let pct = 0;
+    const iv = setInterval(() => {
+      pct += Math.random() * 22;
+      if (pct >= 100) {
+        pct = 100; clearInterval(iv); bar.classList.remove('visible');
+        showPreview();
+      }
+      fill.style.width = pct + '%';
+      pctLabel.textContent = Math.round(pct) + '%';
+    }, 90);
+  }
+
+  function showPreview() {
+    const sampleText = `Capítulo 1 — Introducción al Análisis Documental
+
+El presente informe tiene como objetivo establecer un marco metodológico
+para el tratamiento automatizado de documentos en formato PDF.
+
+La conversión a texto plano permite la indexación, búsqueda y procesamiento
+posterior mediante herramientas de inteligencia artificial o análisis estadístico.
+
+1.1 Alcance
+Este documento aplica a todos los procesos de transformación digital
+que involucren archivos de tipo PDF, independientemente de su origen.
+
+1.2 Definiciones
+— PDF: Portable Document Format, estándar ISO 32000.
+— TXT: Archivo de texto plano sin formato de presentación.
+— OCR: Reconocimiento óptico de caracteres.`;
+
+    const lines = sampleText.split('\n').length;
+    document.getElementById('previewBody').textContent = sampleText;
+    document.getElementById('lineCount').textContent = `${lines} líneas`;
+  }
+
+  function runDownload() {
+    runPreview();
+    setTimeout(() => {
+      document.getElementById('downloadReady').classList.add('visible');
+    }, 1400);
+  }
+</script>
+</body>
+</html>
