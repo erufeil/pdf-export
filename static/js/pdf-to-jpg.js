@@ -8,7 +8,8 @@ const estado = {
     archivoId: null,
     nombreArchivo: '',
     numPaginas: 0,
-    procesando: false
+    procesando: false,
+    jobId: null
 };
 
 // Elementos del DOM
@@ -301,12 +302,14 @@ async function ejecutarConversion() {
 
     estado.procesando = true;
     elementos.btnEjecutar.disabled = true;
+    ocultarMensaje();
 
-    // Mostrar progreso
+    // Mostrar barra de progreso
     elementos.progresoProceso.style.display = 'block';
-    elementos.barraProceso.style.width = '0%';
+    elementos.barraProceso.style.width      = '0%';
+    elementos.barraProceso.style.background = '';
     elementos.porcentajeProceso.textContent = '0%';
-    elementos.textoProceso.textContent = 'Iniciando...';
+    elementos.textoProceso.textContent      = 'Iniciando...';
 
     try {
         // Enviar peticion
@@ -327,50 +330,119 @@ async function ejecutarConversion() {
             throw new Error(datos.error?.message || 'Error al iniciar conversion');
         }
 
-        const trabajoId = datos.data.job_id;
-
-        // Monitorear progreso
-        window.PDFExport.monitorearProgreso(
-            trabajoId,
-            (progreso, mensaje) => {
-                elementos.barraProceso.style.width = progreso + '%';
-                elementos.porcentajeProceso.textContent = progreso + '%';
-                elementos.textoProceso.textContent = mensaje || 'Procesando...';
-            },
-            (jobId) => {
-                // Completado - descargar
-                elementos.progresoProceso.style.display = 'none';
-                estado.procesando = false;
-                elementos.btnEjecutar.disabled = false;
-                mostrarExito('Imagenes JPG generadas correctamente. Iniciando descarga...');
-
-                // Iniciar descarga
-                window.PDFExport.descargarResultado(jobId);
-            },
-            (error) => {
-                elementos.progresoProceso.style.display = 'none';
-                estado.procesando = false;
-                elementos.btnEjecutar.disabled = false;
-                mostrarError(error);
-            }
-        );
+        estado.jobId = datos.data.job_id;
+        monitorearProgreso(estado.jobId);
 
     } catch (error) {
-        elementos.progresoProceso.style.display = 'none';
-        estado.procesando = false;
-        elementos.btnEjecutar.disabled = false;
-        mostrarError(error.message);
+        finalizarConError(error.message);
     }
 }
+
+/**
+ * Monitorea el progreso via SSE con fallback a polling.
+ */
+function monitorearProgreso(jobId) {
+    const url = `${window.AppConfig.API_BASE_URL}/jobs/${jobId}/progress`;
+    const sse = new EventSource(url);
+
+    sse.onmessage = (e) => {
+        try {
+            const datos = JSON.parse(e.data);
+
+            // Actualizar barra
+            elementos.barraProceso.style.width      = datos.progreso + '%';
+            elementos.porcentajeProceso.textContent = datos.progreso + '%';
+            elementos.textoProceso.textContent      = datos.mensaje || `${datos.progreso}%`;
+
+            if (datos.estado === 'completado') {
+                sse.close();
+                finalizarExito(jobId);
+
+            } else if (datos.estado === 'error') {
+                sse.close();
+                finalizarConError(datos.mensaje || 'Error en la conversion');
+
+            } else if (datos.error) {
+                sse.close();
+                finalizarConError(datos.error);
+            }
+
+        } catch (_) { /* ignorar errores de parseo */ }
+    };
+
+    // Cuando el SSE se corta, verificar el estado real en vez de mostrar error
+    sse.onerror = () => {
+        sse.close();
+        elementos.textoProceso.textContent = 'Verificando estado...';
+        verificarEstadoFinal(jobId);
+    };
+}
+
+/**
+ * Verifica el estado del trabajo via GET cuando el SSE falla.
+ */
+async function verificarEstadoFinal(jobId) {
+    try {
+        const resp  = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}`);
+        const datos = await resp.json();
+
+        if (!datos.success) {
+            finalizarConError('No se pudo verificar el estado del trabajo');
+            return;
+        }
+
+        const trabajo = datos.data;
+
+        if (trabajo.estado === 'completado') {
+            elementos.barraProceso.style.width      = '100%';
+            elementos.porcentajeProceso.textContent = '100%';
+            finalizarExito(jobId);
+
+        } else if (trabajo.estado === 'error') {
+            finalizarConError(trabajo.mensaje || 'Error en la conversion');
+
+        } else if (trabajo.estado === 'procesando' || trabajo.estado === 'pendiente') {
+            // Aun procesando — reintentar en 2 segundos
+            setTimeout(() => verificarEstadoFinal(jobId), 2000);
+
+        } else {
+            finalizarConError('Estado desconocido: ' + trabajo.estado);
+        }
+
+    } catch (e) {
+        finalizarConError('Error de red al verificar estado');
+    }
+}
+
+// ────────────────────────────────────────────────────────────
+// FINALIZACION
+// ────────────────────────────────────────────────────────────
+
+function finalizarExito(jobId) {
+    elementos.progresoProceso.style.display = 'none';
+    estado.procesando = false;
+    elementos.btnEjecutar.disabled = false;
+    mostrarExito('Imagenes JPG generadas. Iniciando descarga...');
+    window.PDFExport.descargarResultado(jobId);
+}
+
+function finalizarConError(mensaje) {
+    elementos.progresoProceso.style.display = 'none';
+    elementos.barraProceso.style.background = 'var(--red)';
+    estado.procesando = false;
+    elementos.btnEjecutar.disabled = false;
+    mostrarError(mensaje);
+}
+
+// ────────────────────────────────────────────────────────────
+// MENSAJES
+// ────────────────────────────────────────────────────────────
 
 /**
  * Muestra mensaje de error.
  */
 function mostrarError(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'error');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 5000);
 }
 
 /**
@@ -378,9 +450,7 @@ function mostrarError(mensaje) {
  */
 function mostrarExito(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'success');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 5000);
+    setTimeout(() => window.PDFExport.ocultarMensaje(elementos.mensajeEstado), 5000);
 }
 
 /**
@@ -388,7 +458,9 @@ function mostrarExito(mensaje) {
  */
 function mostrarInfo(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'info');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 3000);
+    setTimeout(() => window.PDFExport.ocultarMensaje(elementos.mensajeEstado), 3000);
+}
+
+function ocultarMensaje() {
+    window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
 }

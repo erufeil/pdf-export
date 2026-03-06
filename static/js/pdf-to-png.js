@@ -1,6 +1,6 @@
 /**
- * JavaScript para la pagina PDF a PNG.
- * Maneja la carga del archivo, opciones y conversion a imagenes PNG.
+ * JavaScript para la pagina PDF a PNG (modo pagina completa).
+ * Maneja carga del archivo, opciones de DPI/paginas y conversion.
  */
 
 // Estado global
@@ -8,41 +8,36 @@ const estado = {
     archivoId: null,
     nombreArchivo: '',
     numPaginas: 0,
-    numImagenes: 0,
-    procesando: false
+    procesando: false,
+    jobId: null
 };
 
 // Elementos del DOM
 const elementos = {
-    zonaCarga: document.getElementById('zona-carga'),
-    progresoCarga: document.getElementById('progreso-carga'),
-    barraProgreso: document.getElementById('barra-progreso'),
-    textoProgreso: document.getElementById('texto-progreso'),
+    zonaCarga:          document.getElementById('zona-carga'),
+    progresoCarga:      document.getElementById('progreso-carga'),
+    barraProgreso:      document.getElementById('barra-progreso'),
+    textoProgreso:      document.getElementById('texto-progreso'),
     porcentajeProgreso: document.getElementById('porcentaje-progreso'),
-    infoArchivo: document.getElementById('info-archivo'),
-    nombreArchivo: document.getElementById('nombre-archivo'),
-    numPaginas: document.getElementById('num-paginas'),
-    panelOpciones: document.getElementById('panel-opciones'),
-    seccionPreview: document.getElementById('seccion-preview'),
-    previewContainer: document.getElementById('preview-container'),
-    seccionDpi: document.getElementById('seccion-dpi'),
-    seccionPaginas: document.getElementById('seccion-paginas'),
-    rangoInputs: document.getElementById('rango-inputs'),
-    especificasInput: document.getElementById('especificas-input'),
-    paginaDesde: document.getElementById('pagina-desde'),
-    paginaHasta: document.getElementById('pagina-hasta'),
-    paginasLista: document.getElementById('paginas-lista'),
-    sizeEstimate: document.getElementById('size-estimate'),
-    infoImagenes: document.getElementById('info-imagenes'),
-    estPaginas: document.getElementById('est-paginas'),
-    estTamano: document.getElementById('est-tamano'),
-    estNumImagenes: document.getElementById('est-num-imagenes'),
-    btnEjecutar: document.getElementById('btn-ejecutar'),
-    progresoProceso: document.getElementById('progreso-proceso'),
-    barraProceso: document.getElementById('barra-proceso'),
-    textoProceso: document.getElementById('texto-proceso'),
-    porcentajeProceso: document.getElementById('porcentaje-proceso'),
-    mensajeEstado: document.getElementById('mensaje-estado')
+    infoArchivo:        document.getElementById('info-archivo'),
+    nombreArchivo:      document.getElementById('nombre-archivo'),
+    numPaginas:         document.getElementById('num-paginas'),
+    panelOpciones:      document.getElementById('panel-opciones'),
+    seccionPreview:     document.getElementById('seccion-preview'),
+    previewContainer:   document.getElementById('preview-container'),
+    rangoInputs:        document.getElementById('rango-inputs'),
+    especificasInput:   document.getElementById('especificas-input'),
+    paginaDesde:        document.getElementById('pagina-desde'),
+    paginaHasta:        document.getElementById('pagina-hasta'),
+    paginasLista:       document.getElementById('paginas-lista'),
+    estPaginas:         document.getElementById('est-paginas'),
+    estTamano:          document.getElementById('est-tamano'),
+    btnEjecutar:        document.getElementById('btn-ejecutar'),
+    progresoProceso:    document.getElementById('progreso-proceso'),
+    barraProceso:       document.getElementById('barra-proceso'),
+    textoProceso:       document.getElementById('texto-proceso'),
+    porcentajeProceso:  document.getElementById('porcentaje-proceso'),
+    mensajeEstado:      document.getElementById('mensaje-estado')
 };
 
 // Inicializacion
@@ -55,84 +50,45 @@ document.addEventListener('DOMContentLoaded', function() {
  * Inicializa la zona de drag & drop.
  */
 function inicializarDropZone() {
-    const dropZone = new window.PDFExport.DropZone(elementos.zonaCarga, {
+    new window.PDFExport.DropZone(elementos.zonaCarga, {
         onFile: manejarArchivo,
         acceptedTypes: ['application/pdf', '.pdf']
     });
 }
 
 /**
- * Inicializa los event listeners.
+ * Inicializa los event listeners de opciones.
  */
 function inicializarEventos() {
     elementos.btnEjecutar.addEventListener('click', ejecutarConversion);
 
-    // Cambio de modo de conversion
-    document.querySelectorAll('input[name="modo"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            actualizarInterfazModo(this.value);
-        });
-    });
-
-    // Mostrar/ocultar inputs segun tipo de paginas seleccionado
+    // Mostrar/ocultar sub-inputs segun tipo de paginas
     document.querySelectorAll('input[name="paginas-tipo"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            elementos.rangoInputs.style.display = this.value === 'range' ? 'flex' : 'none';
+            elementos.rangoInputs.style.display   = this.value === 'range'    ? 'flex'  : 'none';
             elementos.especificasInput.style.display = this.value === 'specific' ? 'block' : 'none';
             actualizarEstimacion();
         });
     });
 
-    // Actualizar estimacion cuando cambian opciones
+    // Actualizar estimacion al cambiar DPI o rangos
     document.querySelectorAll('input[name="dpi"]').forEach(radio => {
         radio.addEventListener('change', actualizarEstimacion);
     });
-
     elementos.paginaDesde.addEventListener('change', actualizarEstimacion);
     elementos.paginaHasta.addEventListener('change', actualizarEstimacion);
     elementos.paginasLista.addEventListener('input', actualizarEstimacion);
 }
 
-/**
- * Actualiza la interfaz segun el modo seleccionado.
- */
-function actualizarInterfazModo(modo) {
-    if (modo === 'pagina') {
-        // Modo pagina completa
-        elementos.seccionDpi.style.display = 'block';
-        elementos.seccionPaginas.style.display = 'block';
-        elementos.sizeEstimate.style.display = 'block';
-        elementos.infoImagenes.style.display = 'none';
-        elementos.btnEjecutar.textContent = 'Convertir a PNG';
-    } else {
-        // Modo extraer imagenes
-        elementos.seccionDpi.style.display = 'none';
-        elementos.seccionPaginas.style.display = 'none';
-        elementos.sizeEstimate.style.display = 'none';
-        elementos.infoImagenes.style.display = 'block';
-        elementos.btnEjecutar.textContent = 'Extraer Imagenes';
-
-        // Obtener conteo de imagenes si hay archivo cargado
-        if (estado.archivoId) {
-            contarImagenes();
-        }
-    }
-}
+// ────────────────────────────────────────────────────────────
+// OPCIONES
+// ────────────────────────────────────────────────────────────
 
 /**
- * Obtiene el modo seleccionado.
- */
-function obtenerModo() {
-    const modoSeleccionado = document.querySelector('input[name="modo"]:checked');
-    return modoSeleccionado ? modoSeleccionado.value : 'pagina';
-}
-
-/**
- * Obtiene las opciones seleccionadas.
+ * Construye el objeto de opciones segun los controles actuales.
  */
 function obtenerOpciones() {
-    const modo = obtenerModo();
-    const dpiSeleccionado = document.querySelector('input[name="dpi"]:checked');
+    const dpiSeleccionado  = document.querySelector('input[name="dpi"]:checked');
     const tipoSeleccionado = document.querySelector('input[name="paginas-tipo"]:checked');
 
     let paginas = 'all';
@@ -142,51 +98,41 @@ function obtenerOpciones() {
         const hasta = parseInt(elementos.paginaHasta.value) || estado.numPaginas;
         paginas = `${desde}-${hasta}`;
     } else if (tipoSeleccionado && tipoSeleccionado.value === 'specific') {
-        paginas = elementos.paginasLista.value || 'all';
+        paginas = elementos.paginasLista.value.trim() || 'all';
     }
 
     return {
-        modo: modo,
-        dpi: parseInt(dpiSeleccionado?.value || 150),
-        paginas: paginas
+        dpi:    parseInt(dpiSeleccionado?.value || 150),
+        paginas
     };
 }
 
 /**
- * Calcula el numero de paginas seleccionadas.
+ * Calcula la cantidad de paginas seleccionadas para la estimacion.
  */
 function calcularPaginasSeleccionadas() {
-    const tipoSeleccionado = document.querySelector('input[name="paginas-tipo"]:checked');
+    const tipo = document.querySelector('input[name="paginas-tipo"]:checked');
 
-    if (!tipoSeleccionado || tipoSeleccionado.value === 'all') {
-        return estado.numPaginas;
-    }
+    if (!tipo || tipo.value === 'all') return estado.numPaginas;
 
-    if (tipoSeleccionado.value === 'range') {
+    if (tipo.value === 'range') {
         const desde = parseInt(elementos.paginaDesde.value) || 1;
         const hasta = parseInt(elementos.paginaHasta.value) || estado.numPaginas;
         return Math.max(0, hasta - desde + 1);
     }
 
-    if (tipoSeleccionado.value === 'specific') {
+    if (tipo.value === 'specific') {
         const lista = elementos.paginasLista.value;
-        if (!lista) return estado.numPaginas;
-
+        if (!lista.trim()) return estado.numPaginas;
         let count = 0;
-        const partes = lista.replace(/\s/g, '').split(',');
-
-        for (const parte of partes) {
+        for (const parte of lista.replace(/\s/g, '').split(',')) {
             if (parte.includes('-')) {
-                const [inicio, fin] = parte.split('-').map(Number);
-                if (!isNaN(inicio) && !isNaN(fin)) {
-                    count += Math.max(0, fin - inicio + 1);
-                }
+                const [a, b] = parte.split('-').map(Number);
+                if (!isNaN(a) && !isNaN(b)) count += Math.max(0, b - a + 1);
             } else {
-                const num = parseInt(parte);
-                if (!isNaN(num)) count++;
+                if (!isNaN(parseInt(parte))) count++;
             }
         }
-
         return count || estado.numPaginas;
     }
 
@@ -194,86 +140,44 @@ function calcularPaginasSeleccionadas() {
 }
 
 /**
- * Estima el tamano del resultado.
+ * Estima el tamano del resultado en texto legible.
  */
 function estimarTamano(numPaginas, dpi) {
-    // Estimacion: 1.5MB por pagina a 150 DPI, escala cuadratica con DPI
-    const baseMB = 1.5;
+    const baseMB    = 1.5;
     const factorDPI = Math.pow(dpi / 150, 2);
-    const tamanoMB = baseMB * factorDPI * numPaginas;
+    const tamanoMB  = baseMB * factorDPI * numPaginas;
 
-    if (tamanoMB < 1) {
-        return `${(tamanoMB * 1024).toFixed(0)} KB`;
-    } else if (tamanoMB < 1024) {
-        return `${tamanoMB.toFixed(1)} MB`;
-    } else {
-        return `${(tamanoMB / 1024).toFixed(2)} GB`;
-    }
+    if (tamanoMB < 1)    return `${(tamanoMB * 1024).toFixed(0)} KB`;
+    if (tamanoMB < 1024) return `${tamanoMB.toFixed(1)} MB`;
+    return `${(tamanoMB / 1024).toFixed(2)} GB`;
 }
 
 /**
- * Actualiza la estimacion de tamano.
+ * Actualiza la estimacion de tamano en la UI.
  */
 function actualizarEstimacion() {
     if (!estado.archivoId) return;
-
-    const paginasSeleccionadas = calcularPaginasSeleccionadas();
+    const n   = calcularPaginasSeleccionadas();
     const dpi = parseInt(document.querySelector('input[name="dpi"]:checked')?.value || 150);
-
-    elementos.estPaginas.textContent = paginasSeleccionadas;
-    elementos.estTamano.textContent = `~${estimarTamano(paginasSeleccionadas, dpi)}`;
+    elementos.estPaginas.textContent = n;
+    elementos.estTamano.textContent  = `~${estimarTamano(n, dpi)}`;
 }
 
-/**
- * Cuenta las imagenes en el PDF (para modo extraer).
- */
-async function contarImagenes() {
-    if (!estado.archivoId) return;
-
-    elementos.estNumImagenes.textContent = 'Analizando...';
-
-    try {
-        const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/convert/extract-images/count`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file_id: estado.archivoId
-            })
-        });
-
-        const datos = await respuesta.json();
-
-        if (datos.success && datos.data) {
-            estado.numImagenes = datos.data.num_imagenes || 0;
-            elementos.estNumImagenes.textContent = estado.numImagenes;
-
-            if (estado.numImagenes === 0) {
-                elementos.estNumImagenes.textContent = '0 (no hay imagenes)';
-            }
-        } else {
-            elementos.estNumImagenes.textContent = 'No disponible';
-        }
-    } catch (error) {
-        console.warn('No se pudo contar imagenes:', error);
-        elementos.estNumImagenes.textContent = 'No disponible';
-    }
-}
+// ────────────────────────────────────────────────────────────
+// CARGA DE ARCHIVO
+// ────────────────────────────────────────────────────────────
 
 /**
- * Maneja el archivo seleccionado/arrastrado.
+ * Maneja el archivo seleccionado: muestra progreso de carga y sube al servidor.
  */
 async function manejarArchivo(file) {
-    // Mostrar progreso
-    elementos.zonaCarga.style.display = 'none';
+    elementos.zonaCarga.style.display    = 'none';
     elementos.progresoCarga.style.display = 'block';
 
-    // Crear uploader
     const uploader = new window.PDFExport.FileUploader({
-        onProgress: (porcentaje) => {
-            elementos.barraProgreso.style.width = porcentaje + '%';
-            elementos.porcentajeProgreso.textContent = porcentaje + '%';
+        onProgress: (pct) => {
+            elementos.barraProgreso.style.width         = pct + '%';
+            elementos.porcentajeProgreso.textContent    = pct + '%';
         },
         onComplete: (data) => {
             elementos.progresoCarga.style.display = 'none';
@@ -281,7 +185,7 @@ async function manejarArchivo(file) {
         },
         onError: (error) => {
             elementos.progresoCarga.style.display = 'none';
-            elementos.zonaCarga.style.display = 'block';
+            elementos.zonaCarga.style.display     = 'block';
             mostrarError(error);
         }
     });
@@ -290,179 +194,207 @@ async function manejarArchivo(file) {
         await uploader.subirArchivo(file);
     } catch (error) {
         elementos.progresoCarga.style.display = 'none';
-        elementos.zonaCarga.style.display = 'block';
+        elementos.zonaCarga.style.display     = 'block';
         mostrarError(error.message);
     }
 }
 
 /**
- * Carga la informacion del archivo y muestra la interfaz.
+ * Muestra la informacion del archivo cargado y habilita opciones.
  */
 function cargarArchivo(data) {
-    estado.archivoId = data.id;
+    estado.archivoId    = data.id;
     estado.nombreArchivo = data.nombre_original;
-    estado.numPaginas = data.num_paginas;
+    estado.numPaginas   = data.num_paginas;
 
-    // Mostrar info del archivo
     elementos.nombreArchivo.textContent = data.nombre_original;
-    elementos.numPaginas.textContent = data.num_paginas;
+    elementos.numPaginas.textContent    = data.num_paginas;
     elementos.infoArchivo.style.display = 'flex';
 
-    // Configurar limites de paginas
-    elementos.paginaDesde.max = data.num_paginas;
-    elementos.paginaHasta.max = data.num_paginas;
+    // Configurar limites de rango
+    elementos.paginaDesde.max   = data.num_paginas;
+    elementos.paginaHasta.max   = data.num_paginas;
     elementos.paginaHasta.value = data.num_paginas;
 
-    // Mostrar panel de opciones y preview
-    elementos.panelOpciones.style.display = 'block';
+    elementos.panelOpciones.style.display  = 'block';
     elementos.seccionPreview.style.display = 'block';
+    elementos.btnEjecutar.disabled         = false;
 
-    // Habilitar boton
-    elementos.btnEjecutar.disabled = false;
+    if (data.ya_existia) mostrarInfo('Archivo ya estaba en el servidor, se reutilizo');
 
-    if (data.ya_existia) {
-        mostrarInfo('Archivo ya estaba en el servidor, se reutilizo');
-    }
-
-    // Cargar miniatura de preview
     cargarPreview();
-
-    // Actualizar estimacion
     actualizarEstimacion();
-
-    // Si esta en modo extraer, contar imagenes
-    if (obtenerModo() === 'extraer') {
-        contarImagenes();
-    }
 }
 
 /**
- * Carga la miniatura de la primera pagina.
+ * Carga la miniatura de la primera pagina en el panel de preview.
  */
 function cargarPreview() {
     if (!estado.archivoId) return;
-
-    const urlMiniatura = `${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/1`;
-
+    const url = `${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/1`;
     elementos.previewContainer.innerHTML = `
-        <img src="${urlMiniatura}" alt="Vista previa" class="preview-thumbnail"
+        <img src="${url}" alt="Vista previa" class="preview-thumbnail"
              onerror="this.parentElement.innerHTML='<p class=\\'preview-placeholder\\'>No se pudo cargar la vista previa</p>'">
     `;
 }
 
+// ────────────────────────────────────────────────────────────
+// CONVERSION
+// ────────────────────────────────────────────────────────────
+
 /**
- * Ejecuta la conversion a PNG.
+ * Inicia la conversion a PNG.
  */
 async function ejecutarConversion() {
     if (estado.procesando || !estado.archivoId) return;
 
-    const modo = obtenerModo();
-
-    // Validar modo extraer
-    if (modo === 'extraer' && estado.numImagenes === 0) {
-        mostrarError('No hay imagenes para extraer en este PDF');
-        return;
-    }
-
     estado.procesando = true;
     elementos.btnEjecutar.disabled = true;
+    ocultarMensaje();
 
-    // Mostrar progreso
-    elementos.progresoProceso.style.display = 'block';
-    elementos.barraProceso.style.width = '0%';
-    elementos.porcentajeProceso.textContent = '0%';
-    elementos.textoProceso.textContent = 'Iniciando...';
-
-    // Determinar endpoint segun modo
-    const endpoint = modo === 'extraer'
-        ? `${window.AppConfig.API_BASE_URL}/convert/extract-images`
-        : `${window.AppConfig.API_BASE_URL}/convert/to-png`;
+    // Mostrar barra de progreso
+    elementos.progresoProceso.style.display  = 'block';
+    elementos.barraProceso.style.width       = '0%';
+    elementos.barraProceso.style.background  = '';
+    elementos.porcentajeProceso.textContent  = '0%';
+    elementos.textoProceso.textContent       = 'Iniciando...';
 
     try {
-        // Enviar peticion
-        const respuesta = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file_id: estado.archivoId,
-                opciones: obtenerOpciones()
-            })
+        const resp = await fetch(`${window.AppConfig.API_BASE_URL}/convert/to-png`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ file_id: estado.archivoId, opciones: obtenerOpciones() })
         });
-
-        const datos = await respuesta.json();
+        const datos = await resp.json();
 
         if (!datos.success) {
             throw new Error(datos.error?.message || 'Error al iniciar conversion');
         }
 
-        const trabajoId = datos.data.job_id;
-
-        // Monitorear progreso
-        window.PDFExport.monitorearProgreso(
-            trabajoId,
-            (progreso, mensaje) => {
-                elementos.barraProceso.style.width = progreso + '%';
-                elementos.porcentajeProceso.textContent = progreso + '%';
-                elementos.textoProceso.textContent = mensaje || 'Procesando...';
-            },
-            (jobId) => {
-                // Completado - descargar
-                elementos.progresoProceso.style.display = 'none';
-                estado.procesando = false;
-                elementos.btnEjecutar.disabled = false;
-
-                const mensajeExito = modo === 'extraer'
-                    ? 'Imagenes extraidas correctamente. Iniciando descarga...'
-                    : 'Imagenes generadas correctamente. Iniciando descarga...';
-                mostrarExito(mensajeExito);
-
-                // Iniciar descarga
-                window.PDFExport.descargarResultado(jobId);
-            },
-            (error) => {
-                elementos.progresoProceso.style.display = 'none';
-                estado.procesando = false;
-                elementos.btnEjecutar.disabled = false;
-                mostrarError(error);
-            }
-        );
+        estado.jobId = datos.data.job_id;
+        monitorearProgreso(estado.jobId);
 
     } catch (error) {
-        elementos.progresoProceso.style.display = 'none';
-        estado.procesando = false;
-        elementos.btnEjecutar.disabled = false;
-        mostrarError(error.message);
+        finalizarConError(error.message);
     }
 }
 
 /**
- * Muestra mensaje de error.
+ * Monitorea el progreso via SSE con fallback a polling.
  */
+function monitorearProgreso(jobId) {
+    const url = `${window.AppConfig.API_BASE_URL}/jobs/${jobId}/progress`;
+    const sse = new EventSource(url);
+
+    sse.onmessage = (e) => {
+        try {
+            const datos = JSON.parse(e.data);
+
+            // Actualizar barra
+            elementos.barraProceso.style.width      = datos.progreso + '%';
+            elementos.porcentajeProceso.textContent = datos.progreso + '%';
+            elementos.textoProceso.textContent      = datos.mensaje || `${datos.progreso}%`;
+
+            if (datos.estado === 'completado') {
+                sse.close();
+                finalizarExito(jobId);
+
+            } else if (datos.estado === 'error') {
+                sse.close();
+                finalizarConError(datos.mensaje || 'Error en la conversion');
+
+            } else if (datos.error) {
+                sse.close();
+                finalizarConError(datos.error);
+            }
+
+        } catch (_) { /* ignorar errores de parseo */ }
+    };
+
+    // Cuando el SSE se corta (normal al cerrar servidor, o corte de red),
+    // verificar el estado real del trabajo en vez de mostrar error directamente
+    sse.onerror = () => {
+        sse.close();
+        elementos.textoProceso.textContent = 'Verificando estado...';
+        verificarEstadoFinal(jobId);
+    };
+}
+
+/**
+ * Verifica el estado del trabajo via GET cuando el SSE falla.
+ * Permite recuperarse de cortes de conexion durante la conversion.
+ */
+async function verificarEstadoFinal(jobId) {
+    try {
+        const resp = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}`);
+        const datos = await resp.json();
+
+        if (!datos.success) {
+            finalizarConError('No se pudo verificar el estado del trabajo');
+            return;
+        }
+
+        const trabajo = datos.data;
+
+        if (trabajo.estado === 'completado') {
+            elementos.barraProceso.style.width      = '100%';
+            elementos.porcentajeProceso.textContent = '100%';
+            finalizarExito(jobId);
+
+        } else if (trabajo.estado === 'error') {
+            finalizarConError(trabajo.mensaje || 'Error en la conversion');
+
+        } else if (trabajo.estado === 'procesando' || trabajo.estado === 'pendiente') {
+            // Aun procesando — reintentar en 2 segundos con polling simple
+            setTimeout(() => verificarEstadoFinal(jobId), 2000);
+
+        } else {
+            finalizarConError('Estado desconocido: ' + trabajo.estado);
+        }
+
+    } catch (e) {
+        finalizarConError('Error de red al verificar estado');
+    }
+}
+
+// ────────────────────────────────────────────────────────────
+// FINALIZACION
+// ────────────────────────────────────────────────────────────
+
+function finalizarExito(jobId) {
+    elementos.progresoProceso.style.display = 'none';
+    estado.procesando = false;
+    elementos.btnEjecutar.disabled = false;
+    mostrarExito('Imagenes generadas. Iniciando descarga...');
+    window.PDFExport.descargarResultado(jobId);
+}
+
+function finalizarConError(mensaje) {
+    elementos.progresoProceso.style.display = 'none';
+    elementos.barraProceso.style.background = 'var(--red)';
+    estado.procesando = false;
+    elementos.btnEjecutar.disabled = false;
+    mostrarError(mensaje);
+}
+
+// ────────────────────────────────────────────────────────────
+// MENSAJES
+// ────────────────────────────────────────────────────────────
+
 function mostrarError(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'error');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 5000);
 }
 
-/**
- * Muestra mensaje de exito.
- */
 function mostrarExito(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'success');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 5000);
+    setTimeout(() => window.PDFExport.ocultarMensaje(elementos.mensajeEstado), 5000);
 }
 
-/**
- * Muestra mensaje informativo.
- */
 function mostrarInfo(mensaje) {
     window.PDFExport.mostrarMensaje(elementos.mensajeEstado, mensaje, 'info');
-    setTimeout(() => {
-        window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
-    }, 3000);
+    setTimeout(() => window.PDFExport.ocultarMensaje(elementos.mensajeEstado), 3000);
+}
+
+function ocultarMensaje() {
+    window.PDFExport.ocultarMensaje(elementos.mensajeEstado);
 }

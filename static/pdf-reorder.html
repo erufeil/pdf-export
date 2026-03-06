@@ -1,953 +1,933 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reordenar Paginas - PDF-Export & Import</title>
-    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 260px;
-            gap: 30px;
-            align-items: start;
-        }
-        @media (max-width: 900px) {
-            .content-grid { grid-template-columns: 1fr; }
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reordenar Páginas — PDF Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --sidebar:  #161B22;
+      --card:     #1C2128;
+      --border:   #30363D;
+      --red:      #E63946;
+      --orange:   #F4A261;
+      --blue:     #58A6FF;
+      --green:    #3FB950;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--color-border);
-        }
-        .options-panel h4 {
-            margin: 0 0 14px 0;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .option-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
-        .option-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      transition: width 0.2s ease; overflow: hidden;
+    }
+    #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 14px;
+      border-bottom: 1px solid var(--border); min-height: 56px; white-space: nowrap;
+    }
+    .sidebar-logo {
+      width: 28px; height: 28px; background: var(--red); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
+      color: #fff; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    #sidebar.collapsed .sidebar-title { display: none; }
+    .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 10px 16px 4px; white-space: nowrap;
+    }
+    #sidebar.collapsed .nav-section-label { opacity: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      color: var(--muted); text-decoration: none; font-size: 12.5px;
+      transition: background 0.15s, color 0.15s; white-space: nowrap; cursor: pointer;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-badge {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--card);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    #sidebar.collapsed .nav-item span:last-child { display: none; }
+    .sidebar-toggle {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      color: var(--muted); font-size: 12px; transition: color 0.15s; white-space: nowrap;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+    .toggle-icon { font-size: 16px; flex-shrink: 0; }
+    #sidebar.collapsed .toggle-label { display: none; }
 
-        /* Info del archivo */
-        .file-info-card {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-            margin-bottom: 20px;
-        }
-        .file-info-card h3 { margin: 0 0 8px 0; font-size: 1rem; }
-        .file-info-meta { display: flex; gap: 20px; flex-wrap: wrap; }
-        .file-info-meta span { font-size: 0.85rem; color: var(--color-text-secondary); }
+    /* ── Main ── */
+    #main {
+      margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+      min-height: 100vh; transition: margin-left 0.2s ease;
+    }
+    #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        /* Grilla de miniaturas drag & drop */
-        .thumbnails-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; background: var(--sidebar); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+    .topbar-badge {
+      margin-left: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
 
-        .thumb-item {
-            background: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            padding: 8px;
-            cursor: grab;
-            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-            user-select: none;
-            position: relative;
-        }
-        .thumb-item:active { cursor: grabbing; }
-        .thumb-item.seleccionada {
-            border-color: var(--color-primary);
-            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-        }
-        .thumb-item.dragging {
-            opacity: 0.4;
-            transform: scale(0.95);
-        }
-        .thumb-item.drag-over {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 40%, transparent);
-            transform: scale(1.03);
-        }
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; max-width: 1200px; width: 100%; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: 13px; }
 
-        .thumb-img {
-            width: 100%;
-            aspect-ratio: 0.707; /* A4 */
-            object-fit: contain;
-            background: #fff;
-            border-radius: 4px;
-            display: block;
-        }
-        .thumb-img-placeholder {
-            width: 100%;
-            aspect-ratio: 0.707;
-            background: #f0f0f0;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 0.75rem;
-        }
+    /* ── Two-col layout ── */
+    .layout { display: grid; grid-template-columns: 1fr 250px; gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
-        .thumb-num {
-            text-align: center;
-            font-size: 0.8rem;
-            margin-top: 6px;
-            color: var(--color-text-secondary);
-            font-weight: 500;
-        }
-        .thumb-check {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 20px;
-            height: 20px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 0.7rem;
-        }
-        .thumb-item.seleccionada .thumb-check { display: flex; }
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 
-        /* Acciones rapidas */
-        .acciones-rapidas {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .acciones-rapidas button {
-            font-size: 0.8rem;
-            padding: 6px 12px;
-        }
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .dropzone-text strong { color: var(--blue); }
+    .hidden { display: none; }
 
-        /* Paginador */
-        .paginador {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 16px;
-            font-size: 0.875rem;
-        }
-        .paginador button {
-            padding: 6px 14px;
-            font-size: 0.8rem;
-        }
+    /* ── Upload progress ── */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
-        /* Vista de lista compacta para docs grandes */
-        .vista-lista {
-            display: none;
-        }
-        .vista-lista.activa {
-            display: block;
-        }
-        .list-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            margin-bottom: 6px;
-            cursor: grab;
-        }
-        .list-item:active { cursor: grabbing; }
-        .list-item.dragging { opacity: 0.4; }
-        .list-item.drag-over {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
-        }
-        .list-item.seleccionada {
-            border-color: var(--color-primary);
-            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-        }
-        .list-drag-handle {
-            color: var(--color-text-secondary);
-            font-size: 1.1rem;
-            cursor: grab;
-        }
-        .list-num {
-            font-weight: 600;
-            min-width: 30px;
-        }
-        .list-label { flex: 1; font-size: 0.875rem; }
-        .list-check {
-            width: 18px;
-            height: 18px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 0.65rem;
-        }
-        .list-item.seleccionada .list-check { display: flex; }
+    /* ── Server files ── */
+    .server-toggle {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .server-toggle:hover { border-color: var(--blue); color: var(--text); }
+    .server-files-list { display: none; margin-top: 8px; }
+    .server-files-list.open { display: block; }
+    .server-file-btn {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .server-file-btn:hover { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .server-file-btn .sf-name { font-weight: 500; }
+    .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
-        /* Mover a posicion */
-        .mover-pos {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-        .mover-pos input {
-            width: 70px;
-            text-align: center;
-        }
-        .mover-pos label { font-size: 0.85rem; }
+    /* ── File info card ── */
+    .file-info-card { display: none; }
+    .file-info-card.visible { display: block; }
+    .file-info-row { display: flex; align-items: center; gap: 12px; }
+    .file-icon {
+      width: 40px; height: 40px; background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--blue); flex-shrink: 0;
+    }
+    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .file-meta p { font-size: 11.5px; color: var(--muted); }
 
-        /* Toggle vista */
-        .toggle-vista {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .toggle-vista button {
-            font-size: 0.8rem;
-            padding: 5px 14px;
-        }
-        .toggle-vista button.activo {
-            background: var(--color-primary);
-            color: #fff;
-            border-color: var(--color-primary);
-        }
+    /* ── Quick actions ── */
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .quick-btn {
+      padding: 5px 10px; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 5px; cursor: pointer; font-size: 11.5px; transition: all 0.15s;
+    }
+    .quick-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-        /* Resumen */
-        .resumen-box {
-            background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-            border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 0.875rem;
-            margin-bottom: 16px;
-        }
-        .resumen-box span { font-weight: 600; color: var(--color-primary); }
+    /* ── View toggle ── */
+    .view-toggle { display: none; gap: 6px; margin-bottom: 12px; }
+    .view-toggle.visible { display: flex; }
+    .view-btn {
+      padding: 5px 12px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+    }
+    .view-btn.active { background: rgba(88,166,255,0.12); border-color: var(--blue); color: var(--blue); }
 
-        /* Zona de carga */
-        .upload-zone {
-            border: 2px dashed var(--color-border);
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
-            margin-bottom: 20px;
-        }
-        .upload-zone:hover, .upload-zone.drag-over {
-            border-color: var(--color-primary);
-            background: color-mix(in srgb, var(--color-primary) 5%, transparent);
-        }
-        .upload-zone p { margin: 8px 0 0 0; color: var(--color-text-secondary); font-size: 0.9rem; }
+    /* ── Thumbnails grid ── */
+    .thumbs-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;
+    }
+    .thumb-item {
+      background: var(--bg); border: 2px solid var(--border); border-radius: 8px;
+      padding: 7px; cursor: grab; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      -webkit-user-select: none; user-select: none; position: relative;
+    }
+    .thumb-item:active { cursor: grabbing; }
+    .thumb-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.06); }
+    .thumb-item.dragging { opacity: 0.35; transform: scale(0.95); }
+    .thumb-item.drag-over { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(244,162,97,0.3); transform: scale(1.03); }
+    .thumb-img {
+      width: 100%; aspect-ratio: 0.707; object-fit: contain;
+      background: #fff; border-radius: 3px; display: block;
+    }
+    .thumb-placeholder {
+      width: 100%; aspect-ratio: 0.707; background: var(--sidebar);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: var(--muted);
+    }
+    .thumb-num { text-align: center; font-size: 10.5px; margin-top: 5px; color: var(--muted); font-weight: 500; }
+    .thumb-item.selected .thumb-num { color: var(--blue); }
+    .thumb-check {
+      position: absolute; top: 5px; right: 5px; width: 16px; height: 16px;
+      background: var(--blue); border-radius: 50%; display: none;
+      align-items: center; justify-content: center; color: #fff; font-size: 9px;
+    }
+    .thumb-item.selected .thumb-check { display: flex; }
 
-        /* Archivos del servidor */
-        .server-files { margin-bottom: 20px; }
-        .server-file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .server-file-item:hover { border-color: var(--color-primary); }
-        .server-file-item.activo { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
-        .server-file-info { font-size: 0.85rem; }
-        .server-file-name { font-weight: 500; }
-        .server-file-meta { color: var(--color-text-secondary); font-size: 0.78rem; }
+    /* ── List view ── */
+    .list-view { display: none; }
+    .list-view.active { display: block; }
+    .list-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 7px; margin-bottom: 5px; cursor: grab;
+      -webkit-user-select: none; user-select: none; transition: border-color 0.15s;
+    }
+    .list-item:active { cursor: grabbing; }
+    .list-item.dragging { opacity: 0.35; }
+    .list-item.drag-over { border-color: var(--orange); }
+    .list-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .list-handle { color: var(--muted); font-size: 14px; cursor: grab; }
+    .list-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); min-width: 28px; }
+    .list-label { flex: 1; font-size: 12.5px; }
+    .list-check {
+      width: 16px; height: 16px; background: var(--blue); border-radius: 50%;
+      display: none; align-items: center; justify-content: center; color: #fff; font-size: 9px;
+    }
+    .list-item.selected .list-check { display: flex; }
 
-        /* Progreso */
-        .progress-section { margin-top: 20px; }
-        .progress-bar-wrap {
-            background: var(--color-border);
-            border-radius: 99px;
-            height: 8px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 99px;
-            transition: width 0.4s ease;
-            width: 0%;
-        }
-        .progress-msg { font-size: 0.85rem; color: var(--color-text-secondary); }
+    /* ── Move to position ── */
+    .move-pos-row {
+      display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;
+      padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .move-pos-row label { font-size: 12px; color: var(--muted); }
+    .move-pos-row input {
+      width: 60px; text-align: center; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 6px; padding: 5px 8px; font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .move-pos-row input:focus { outline: none; border-color: var(--blue); }
 
-        .section-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--color-text-secondary);
-            margin-bottom: 10px;
-        }
-    </style>
+    /* ── Pagination ── */
+    .pagination { display: none; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
+    .pagination.visible { display: flex; }
+    .pagination-btn {
+      padding: 5px 12px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+    }
+    .pagination-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pagination-info { font-size: 11.5px; color: var(--muted); }
+
+    /* ── Summary ── */
+    .summary-box {
+      background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.18);
+      border-radius: 7px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 12px;
+    }
+    .summary-count { color: var(--blue); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+    .summary-state { color: var(--orange); font-weight: 500; }
+
+    /* ── Processing panel ── */
+    .processing-panel { display: none; }
+    .processing-panel.visible { display: block; }
+    .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+    /* ── Right col options ── */
+    .options-col { display: none; position: sticky; top: 80px; }
+    .options-col.visible { display: block; }
+    .card.initially-hidden { display: none; }
+    .card.initially-hidden.visible { display: block; }
+
+    /* ── Action buttons ── */
+    .btn-action {
+      width: 100%; padding: 12px; background: var(--green); color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; margin-bottom: 8px;
+    }
+    .btn-action:hover:not(:disabled) { opacity: 0.85; }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      width: 100%; padding: 9px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; font-size: 12px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+    .action-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+    /* ── Status message ── */
+    .status-message { display: none; padding: 10px 14px; border-radius: 7px; font-size: 12.5px; margin-top: 12px; }
+    .status-message.visible { display: block; }
+    .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+
+    /* ── Info strip ── */
+    .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(88,166,255,0.05); border: 1px solid rgba(88,166,255,0.15); border-radius: 7px; }
+    .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Footer ── */
+    footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  </style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="header-content">
-            <a href="/" class="site-logo">
-                <span class="logo-icon">PDF</span>
-                <span class="logo-text">Export &amp; Import</span>
-            </a>
-            <nav class="header-nav">
-                <a href="/" class="nav-link">← Inicio</a>
-            </nav>
-        </div>
-    </header>
 
-    <main class="main-content">
-        <div class="page-header">
-            <h1>Reordenar Paginas</h1>
-            <p class="page-desc">Arrastra las miniaturas para cambiar el orden de las paginas del PDF.</p>
-        </div>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF</div>
+    <span class="sidebar-title">PDF Export</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Tengo un PDF…</div>
+    <a class="nav-item" href="/static/pdf-to-txt.html"><span class="nav-badge">TXT</span><span>PDF a Texto</span></a>
+    <a class="nav-item" href="/static/pdf-to-docx.html"><span class="nav-badge">DOC</span><span>PDF a DOCX</span></a>
+    <a class="nav-item" href="/static/pdf-to-png.html"><span class="nav-badge">PNG</span><span>PDF a PNG</span></a>
+    <a class="nav-item" href="/static/pdf-to-jpg.html"><span class="nav-badge">JPG</span><span>PDF a JPG</span></a>
+    <a class="nav-item" href="/static/pdf-compress.html"><span class="nav-badge">ZIP</span><span>Comprimir PDF</span></a>
+    <a class="nav-item" href="/static/pdf-extract-images.html"><span class="nav-badge">IMG</span><span>Extraer Imágenes</span></a>
+    <a class="nav-item" href="/static/pdf-split.html"><span class="nav-badge">CUT</span><span>Cortar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-rotate.html"><span class="nav-badge">ROT</span><span>Rotar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-merge.html"><span class="nav-badge">MRG</span><span>Unir PDFs</span></a>
+    <a class="nav-item" href="/static/pdf-extract-pages.html"><span class="nav-badge">EXT</span><span>Extraer Páginas</span></a>
+    <a class="nav-item active" href="/static/pdf-reorder.html"><span class="nav-badge">ORD</span><span>Reordenar</span></a>
+    <a class="nav-item" href="/static/pdf-to-csv.html"><span class="nav-badge">CSV</span><span>PDF a CSV</span></a>
+    <div class="nav-section-label">Quiero un PDF…</div>
+    <a class="nav-item" href="/static/html-to-pdf.html"><span class="nav-badge">HTM</span><span>HTML a PDF</span></a>
+    <a class="nav-item" href="/static/img-to-1pdf.html"><span class="nav-badge">IMG</span><span>IMG a PDF</span></a>
+    <div class="nav-section-label">Utilidades</div>
+    <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
+    <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
+    <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+  </div>
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <span class="toggle-icon">⇤</span>
+    <span class="toggle-label">Contraer</span>
+  </div>
+</nav>
 
-        <!-- Zona de carga -->
-        <div id="upload-section">
-            <div class="upload-zone" id="drop-zone">
-                <div style="font-size:2.5rem">📄</div>
-                <strong>Arrastra un PDF aqui o haz click para seleccionar</strong>
-                <p>Maximo 1 GB</p>
-                <input type="file" id="file-input" accept=".pdf" style="display:none">
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span>Tengo un PDF…</span>
+      <span class="sep">›</span>
+      <span class="current">Reordenar Páginas</span>
+    </div>
+    <span class="topbar-badge">ORD</span>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>Reordenar Páginas</h1>
+      <p>Arrastra las miniaturas para cambiar el orden de las páginas del PDF.</p>
+    </div>
+
+    <div class="layout">
+      <!-- ── Columna izquierda ── -->
+      <div>
+        <!-- Upload card -->
+        <div class="card" id="card-upload">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">📄</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un PDF aquí<br>
+              <small>Máximo 1 GB</small>
             </div>
+            <input type="file" id="file-input" accept=".pdf" class="hidden">
+          </div>
 
-            <!-- Archivos disponibles en el servidor -->
-            <div id="server-files-section" class="server-files" style="display:none">
-                <div class="section-label">Archivos disponibles en el servidor</div>
-                <div id="server-files-list"></div>
-            </div>
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
 
-            <!-- Barra de progreso de subida -->
-            <div id="upload-progress" style="display:none" class="progress-section">
-                <div class="progress-msg" id="upload-msg">Subiendo...</div>
-                <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill" id="upload-bar"></div>
-                </div>
-            </div>
+          <button type="button" class="server-toggle" onclick="toggleServerFiles()">
+            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
+          </button>
+          <div class="server-files-list" id="server-files">
+            <div id="server-files-contenido"></div>
+          </div>
         </div>
 
-        <!-- Seccion principal (oculta hasta cargar PDF) -->
-        <div id="main-section" style="display:none">
-            <div class="content-grid">
-                <!-- Columna izquierda: miniaturas -->
-                <div>
-                    <div class="file-info-card">
-                        <h3 id="nombre-archivo">—</h3>
-                        <div class="file-info-meta">
-                            <span id="info-paginas">—</span>
-                            <span id="info-tamano">—</span>
-                        </div>
-                    </div>
-
-                    <!-- Acciones rapidas -->
-                    <div class="acciones-rapidas">
-                        <button class="btn btn-secondary" onclick="seleccionarTodas()">Seleccionar todas</button>
-                        <button class="btn btn-secondary" onclick="deseleccionarTodas()">Deseleccionar</button>
-                        <button class="btn btn-secondary" onclick="invertirOrden()">Invertir orden</button>
-                        <button class="btn btn-secondary" onclick="restaurarOrden()">Restaurar original</button>
-                        <button class="btn btn-secondary" onclick="moverSelAlInicio()">↑ Sel. al inicio</button>
-                        <button class="btn btn-secondary" onclick="moverSelAlFinal()">↓ Sel. al final</button>
-                    </div>
-
-                    <!-- Toggle grilla/lista (visible solo para docs grandes) -->
-                    <div class="toggle-vista" id="toggle-vista" style="display:none">
-                        <button class="activo" id="btn-grilla" onclick="cambiarVista('grilla')">Grilla</button>
-                        <button id="btn-lista" onclick="cambiarVista('lista')">Lista compacta</button>
-                    </div>
-
-                    <!-- Grilla de miniaturas -->
-                    <div id="thumbnails-grid" class="thumbnails-grid"></div>
-
-                    <!-- Vista de lista compacta (docs grandes) -->
-                    <div id="vista-lista" class="vista-lista">
-                        <div id="list-items"></div>
-                        <!-- Mover a posicion -->
-                        <div class="mover-pos">
-                            <label>Mover pagina</label>
-                            <input type="number" id="mover-desde" min="1" placeholder="N°">
-                            <label>a posicion</label>
-                            <input type="number" id="mover-hasta" min="1" placeholder="N°">
-                            <button class="btn btn-secondary" onclick="moverAPosicion()">Aplicar</button>
-                        </div>
-                    </div>
-
-                    <!-- Paginador (grilla) -->
-                    <div class="paginador" id="paginador" style="display:none">
-                        <button class="btn btn-secondary" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
-                        <span id="paginador-info">Paginas 1-20 de 45</span>
-                        <button class="btn btn-secondary" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
-                    </div>
-                </div>
-
-                <!-- Columna derecha: opciones y acciones -->
-                <div>
-                    <div class="options-panel">
-                        <div class="option-section">
-                            <h4>Resumen</h4>
-                            <div class="resumen-box" id="resumen-box">
-                                <span id="resumen-sel">0</span> paginas seleccionadas<br>
-                                Orden actual: <span id="resumen-cambios">sin cambios</span>
-                            </div>
-                        </div>
-
-                        <div class="option-section">
-                            <button class="btn btn-primary" style="width:100%" onclick="aplicarNuevoOrden()" id="btn-aplicar" disabled>
-                                Aplicar Nuevo Orden
-                            </button>
-                            <p style="font-size:0.78rem; color:var(--color-text-secondary); margin:8px 0 0 0; text-align:center">
-                                Descarga automatica al terminar
-                            </p>
-                        </div>
-
-                        <!-- Progreso del trabajo -->
-                        <div id="job-progress" style="display:none" class="option-section">
-                            <h4>Progreso</h4>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" id="job-bar"></div>
-                            </div>
-                            <div class="progress-msg" id="job-msg">Procesando...</div>
-                        </div>
-
-                        <div class="option-section">
-                            <button class="btn btn-secondary" style="width:100%; font-size:0.8rem"
-                                    onclick="cambiarArchivo()">Cambiar archivo</button>
-                        </div>
-                    </div>
-                </div>
+        <!-- File info -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-info-row">
+            <div class="file-icon">PDF</div>
+            <div class="file-meta">
+              <h3 id="nombre-archivo">—</h3>
+              <p id="info-archivo">—</p>
             </div>
+          </div>
         </div>
-    </main>
 
-    <script src="/static/js/common.js"></script>
-    <script>
-    // ==================== ESTADO ====================
-    let archivoId = null;
-    let numPaginasTotal = 0;
-    let nombreArchivo = '';
-    // ordenActual: array de objetos {paginaOriginal, label}
-    // paginaOriginal: numero 1-indexed de la pagina en el PDF original
-    let ordenActual = [];
-    let seleccionadas = new Set(); // indices en ordenActual
+        <!-- Actions + view toggle -->
+        <div class="card initially-hidden" id="actions-card">
+          <div class="card-title">Acciones rápidas</div>
+          <div class="quick-actions">
+            <button type="button" class="quick-btn" onclick="seleccionarTodas()">Seleccionar todas</button>
+            <button type="button" class="quick-btn" onclick="deseleccionarTodas()">Deseleccionar</button>
+            <button type="button" class="quick-btn" onclick="invertirOrden()">Invertir orden</button>
+            <button type="button" class="quick-btn" onclick="restaurarOrden()">Restaurar original</button>
+            <button type="button" class="quick-btn" onclick="moverSelAlInicio()">↑ Sel. al inicio</button>
+            <button type="button" class="quick-btn" onclick="moverSelAlFinal()">↓ Sel. al final</button>
+          </div>
+          <div class="view-toggle" id="view-toggle">
+            <button type="button" class="view-btn active" id="btn-grilla" onclick="cambiarVista('grilla')">Grilla</button>
+            <button type="button" class="view-btn" id="btn-lista" onclick="cambiarVista('lista')">Lista compacta</button>
+          </div>
+        </div>
 
-    // Paginacion de grilla
-    const THUMB_POR_PAGINA = 20;
-    let paginaGrilla = 0; // 0-indexed
+        <!-- Thumbnails grid -->
+        <div class="card initially-hidden" id="thumbs-card">
+          <div class="card-title">Páginas del documento</div>
+          <div class="thumbs-grid" id="thumbs-grid"></div>
+          <div class="pagination" id="paginador">
+            <button type="button" class="pagination-btn" id="btn-prev" onclick="cambiarPagina(-1)">← Anterior</button>
+            <span class="pagination-info" id="paginador-info"></span>
+            <button type="button" class="pagination-btn" id="btn-next" onclick="cambiarPagina(1)">Siguiente →</button>
+          </div>
+        </div>
 
-    // Vista actual
-    let vistaActual = 'grilla'; // 'grilla' | 'lista'
+        <!-- List view -->
+        <div class="card list-view" id="list-card">
+          <div class="card-title">Orden de páginas</div>
+          <div id="list-items"></div>
+          <div class="move-pos-row">
+            <label>Mover pág.</label>
+            <input type="number" id="mover-desde" min="1" placeholder="N°">
+            <label>a pos.</label>
+            <input type="number" id="mover-hasta" min="1" placeholder="N°">
+            <button type="button" class="quick-btn" onclick="moverAPosicion()">Aplicar</button>
+          </div>
+        </div>
 
-    // Drag & drop state
-    let dragSrcIdx = null; // indice en ordenActual del elemento que se arrastra
+        <!-- Processing -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Procesando</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
 
-    // API base
-    const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+        <!-- Status -->
+        <div class="status-message" id="mensaje-estado"></div>
 
-    // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', () => {
-        configurarDropZone();
-        cargarArchivosServidor();
+        <div class="info-strip">
+          <p>Arrastra las páginas para reorganizarlas. Haz clic para seleccionar/deseleccionar.</p>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — opciones ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Estado</div>
+          <div class="summary-box">
+            <span class="sel-count" id="resumen-sel">0</span> páginas seleccionadas<br>
+            Orden: <span class="summary-state" id="resumen-cambios">sin cambios</span>
+          </div>
+          <button type="button" class="btn-action" id="btn-aplicar" disabled onclick="aplicarNuevoOrden()">
+            Aplicar Nuevo Orden
+          </button>
+          <div class="action-note">Descarga automática al terminar</div>
+        </div>
+
+        <div class="card">
+          <button type="button" class="btn-secondary" onclick="cambiarArchivo()">Cambiar archivo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>PDF Export — Reordenar Páginas</footer>
+</div>
+
+<script src="/static/js/common.js"></script>
+<script>
+  // ── Estado ──
+  let archivoId = null;
+  let numPaginasTotal = 0;
+  let nombreArchivo = '';
+  let ordenActual = [];       // [{paginaOriginal, label}]
+  let seleccionadas = new Set();
+  const THUMB_POR_PAG = 20;
+  let paginaGrilla = 0;
+  let vistaActual = 'grilla';
+  let dragSrcIdx = null;
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
+  // ── Sidebar ──
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
+
+  // ── Drop zone ──
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') procesarArchivo(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) procesarArchivo(fileInput.files[0]); });
+
+  // ── Server files ──
+  let serverOpen = false;
+  function toggleServerFiles() {
+    serverOpen = !serverOpen;
+    document.getElementById('server-files').classList.toggle('open', serverOpen);
+    document.getElementById('server-arrow').textContent = serverOpen ? '▾' : '▸';
+  }
+
+  async function cargarArchivosServidor() {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (!d.success || !d.data.length) return;
+      const cont = document.getElementById('server-files-contenido');
+      d.data.forEach(a => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'server-file-btn';
+        btn.innerHTML = `<span class="sf-name">${escHtml(a.nombre_original)}</span><span class="sf-meta">${a.num_paginas} pág · ${formatBytes(a.tamano_bytes)}</span>`;
+        btn.onclick = () => inicializarConArchivo(a);
+        cont.appendChild(btn);
+      });
+    } catch(e) { console.warn('Error archivos servidor:', e); }
+  }
+  cargarArchivosServidor();
+
+  // ── Upload ──
+  async function procesarArchivo(file) {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (d.success) {
+        const dup = d.data.find(f => f.nombre_original === file.name && f.tamano_bytes === file.size);
+        if (dup) { inicializarConArchivo(dup); return; }
+      }
+    } catch(e) {}
+
+    const progDiv = document.getElementById('progreso-carga');
+    const barra   = document.getElementById('barra-carga');
+    const texto   = document.getElementById('texto-carga');
+    progDiv.style.display = 'block';
+
+    const fd = new FormData();
+    fd.append('archivo', file);
+    fd.append('nombre', file.name);
+    fd.append('tamano', file.size);
+    fd.append('fecha_modificacion', new Date(file.lastModified).toISOString());
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        barra.style.width = pct + '%';
+        texto.textContent = `Subiendo... ${pct}%`;
+      }
+    };
+    xhr.onload = () => {
+      progDiv.style.display = 'none';
+      try {
+        const d = JSON.parse(xhr.responseText);
+        if (d.success) inicializarConArchivo(d.data);
+        else mostrarMensaje('error', 'Error al subir: ' + (d.error?.message || 'Error'));
+      } catch(e) { mostrarMensaje('error', 'Error al procesar respuesta'); }
+    };
+    xhr.onerror = () => { progDiv.style.display = 'none'; mostrarMensaje('error', 'Error de conexión'); };
+    xhr.send(fd);
+  }
+
+  function inicializarConArchivo(arch) {
+    archivoId       = arch.id;
+    numPaginasTotal = arch.num_paginas;
+    nombreArchivo   = arch.nombre_original;
+
+    document.getElementById('nombre-archivo').textContent = arch.nombre_original;
+    document.getElementById('info-archivo').textContent   = `${arch.num_paginas} páginas · ${formatBytes(arch.tamano_bytes)}`;
+    document.getElementById('file-info-card').classList.add('visible');
+    document.getElementById('actions-card').classList.add('visible');
+    document.getElementById('thumbs-card').classList.add('visible');
+    document.getElementById('options-col').classList.add('visible');
+    ocultarMensaje();
+
+    ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({ paginaOriginal: i + 1 }));
+    seleccionadas.clear();
+    paginaGrilla = 0;
+
+    if (numPaginasTotal > 20) document.getElementById('view-toggle').classList.add('visible');
+
+    document.getElementById('btn-aplicar').disabled = false;
+    renderizarVista();
+    actualizarResumen();
+  }
+
+  // ── Render ──
+  function renderizarVista() {
+    if (vistaActual === 'grilla') renderizarGrilla();
+    else renderizarLista();
+  }
+
+  function renderizarGrilla() {
+    const grid    = document.getElementById('thumbs-grid');
+    const pag     = document.getElementById('paginador');
+    const inicio  = paginaGrilla * THUMB_POR_PAG;
+    const fin     = Math.min(inicio + THUMB_POR_PAG, ordenActual.length);
+    const totalP  = Math.ceil(ordenActual.length / THUMB_POR_PAG);
+
+    grid.innerHTML = '';
+
+    // Paginador
+    if (totalP > 1) {
+      pag.classList.add('visible');
+      document.getElementById('paginador-info').textContent = `Págs. ${inicio+1}–${fin} de ${ordenActual.length}`;
+      document.getElementById('btn-prev').disabled = paginaGrilla === 0;
+      document.getElementById('btn-next').disabled = paginaGrilla >= totalP - 1;
+    } else {
+      pag.classList.remove('visible');
+    }
+
+    for (let i = inicio; i < fin; i++) {
+      const item = ordenActual[i];
+      const div  = document.createElement('div');
+      div.className = 'thumb-item' + (seleccionadas.has(i) ? ' selected' : '');
+      div.draggable = true;
+      div.dataset.idx = i;
+
+      div.innerHTML = `
+        <div class="thumb-placeholder" id="ph-${i}">Pág ${item.paginaOriginal}</div>
+        <div class="thumb-num">Pos ${i+1} · Orig ${item.paginaOriginal}</div>
+        <div class="thumb-check">✓</div>
+      `;
+
+      div.addEventListener('click', () => toggleSeleccion(i));
+      div.addEventListener('dragstart', e => onDragStart(e, i));
+      div.addEventListener('dragover',  e => onDragOver(e, i, div));
+      div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+      div.addEventListener('drop',      e => onDrop(e, i));
+      div.addEventListener('dragend',   () => limpiarDragClases());
+
+      grid.appendChild(div);
+      cargarMiniatura(item.paginaOriginal, `ph-${i}`);
+    }
+  }
+
+  function renderizarLista() {
+    const cont = document.getElementById('list-items');
+    cont.innerHTML = '';
+    ordenActual.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'list-item' + (seleccionadas.has(i) ? ' selected' : '');
+      div.draggable = true;
+      div.dataset.idx = i;
+      div.innerHTML = `
+        <span class="list-handle">⠿</span>
+        <span class="list-pos">${i+1}</span>
+        <span class="list-label">Página ${item.paginaOriginal}</span>
+        <span class="list-check">✓</span>
+      `;
+      div.addEventListener('click', () => toggleSeleccion(i));
+      div.addEventListener('dragstart', e => onDragStart(e, i));
+      div.addEventListener('dragover',  e => onDragOver(e, i, div));
+      div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+      div.addEventListener('drop',      e => onDrop(e, i));
+      div.addEventListener('dragend',   () => limpiarDragClases());
+      cont.appendChild(div);
     });
+    document.getElementById('mover-desde').max = ordenActual.length;
+    document.getElementById('mover-hasta').max = ordenActual.length;
+  }
 
-    // ==================== UPLOAD ====================
-    function configurarDropZone() {
-        const zone = document.getElementById('drop-zone');
-        const input = document.getElementById('file-input');
+  async function cargarMiniatura(numPag, phId) {
+    const ph = document.getElementById(phId);
+    if (!ph) return;
+    try {
+      const r = await fetch(`${API}/files/${archivoId}/thumbnail/${numPag}`);
+      if (!r.ok) return;
+      const blob = await r.blob();
+      const img = document.createElement('img');
+      img.className = 'thumb-img';
+      img.src = URL.createObjectURL(blob);
+      img.alt = `Página ${numPag}`;
+      ph.replaceWith(img);
+    } catch(e) {}
+  }
 
-        zone.addEventListener('click', () => input.click());
-        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-        zone.addEventListener('drop', e => {
-            e.preventDefault();
-            zone.classList.remove('drag-over');
-            const f = e.dataTransfer.files[0];
-            if (f && f.type === 'application/pdf') procesarArchivo(f);
-        });
-        input.addEventListener('change', () => {
-            if (input.files[0]) procesarArchivo(input.files[0]);
-        });
+  // ── Drag & drop ──
+  function onDragStart(e, idx) {
+    dragSrcIdx = idx;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      const el = document.querySelector(`[data-idx="${idx}"]`);
+      if (el) el.classList.add('dragging');
+    }, 0);
+  }
+
+  function onDragOver(e, idx, el) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (idx !== dragSrcIdx) { limpiarDragClases(); el.classList.add('drag-over'); }
+  }
+
+  function onDrop(e, targetIdx) {
+    e.preventDefault();
+    if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+    moverElemento(dragSrcIdx, targetIdx);
+    dragSrcIdx = null;
+  }
+
+  function limpiarDragClases() {
+    document.querySelectorAll('.dragging, .drag-over').forEach(el => el.classList.remove('dragging', 'drag-over'));
+  }
+
+  function moverElemento(srcIdx, dstIdx) {
+    const item = ordenActual.splice(srcIdx, 1)[0];
+    ordenActual.splice(dstIdx, 0, item);
+    // Actualizar índices seleccionados
+    const nuevasSel = new Set();
+    seleccionadas.forEach(s => {
+      if (s === srcIdx) nuevasSel.add(dstIdx);
+      else if (srcIdx < dstIdx) { if (s > srcIdx && s <= dstIdx) nuevasSel.add(s-1); else nuevasSel.add(s); }
+      else { if (s >= dstIdx && s < srcIdx) nuevasSel.add(s+1); else nuevasSel.add(s); }
+    });
+    seleccionadas = nuevasSel;
+    renderizarVista();
+    actualizarResumen();
+  }
+
+  // ── Selección ──
+  function toggleSeleccion(idx) {
+    if (seleccionadas.has(idx)) seleccionadas.delete(idx); else seleccionadas.add(idx);
+    const el = document.querySelector(`[data-idx="${idx}"]`);
+    if (el) el.classList.toggle('selected', seleccionadas.has(idx));
+    actualizarResumen();
+  }
+
+  function seleccionarTodas()   { ordenActual.forEach((_, i) => seleccionadas.add(i)); renderizarVista(); actualizarResumen(); }
+  function deseleccionarTodas() { seleccionadas.clear(); renderizarVista(); actualizarResumen(); }
+
+  // ── Acciones ──
+  function invertirOrden() {
+    ordenActual.reverse();
+    const n = ordenActual.length;
+    seleccionadas = new Set([...seleccionadas].map(i => n - 1 - i));
+    paginaGrilla = 0; renderizarVista(); actualizarResumen();
+  }
+
+  function restaurarOrden() {
+    ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({ paginaOriginal: i + 1 }));
+    seleccionadas.clear(); paginaGrilla = 0; renderizarVista(); actualizarResumen();
+  }
+
+  function moverSelAlInicio() {
+    if (!seleccionadas.size) return;
+    const sel   = ordenActual.filter((_, i) =>  seleccionadas.has(i));
+    const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
+    ordenActual = [...sel, ...resto];
+    seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => i));
+    paginaGrilla = 0; renderizarVista(); actualizarResumen();
+  }
+
+  function moverSelAlFinal() {
+    if (!seleccionadas.size) return;
+    const sel   = ordenActual.filter((_, i) =>  seleccionadas.has(i));
+    const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
+    ordenActual = [...resto, ...sel];
+    const n = ordenActual.length;
+    seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => n - sel.length + i));
+    paginaGrilla = Math.floor((n-1) / THUMB_POR_PAG);
+    renderizarVista(); actualizarResumen();
+  }
+
+  function moverAPosicion() {
+    const desde = parseInt(document.getElementById('mover-desde').value);
+    const hasta = parseInt(document.getElementById('mover-hasta').value);
+    if (isNaN(desde) || isNaN(hasta)) return;
+    if (desde < 1 || desde > ordenActual.length || hasta < 1 || hasta > ordenActual.length) return;
+    moverElemento(desde - 1, hasta - 1);
+  }
+
+  function cambiarVista(v) {
+    vistaActual = v;
+    document.getElementById('thumbs-card').classList.toggle('visible', v === 'grilla');
+    document.getElementById('list-card').classList.toggle('active', v === 'lista');
+    document.getElementById('btn-grilla').classList.toggle('active', v === 'grilla');
+    document.getElementById('btn-lista').classList.toggle('active', v === 'lista');
+    renderizarVista();
+  }
+
+  function cambiarPagina(delta) {
+    const total = Math.ceil(ordenActual.length / THUMB_POR_PAG);
+    paginaGrilla = Math.max(0, Math.min(paginaGrilla + delta, total - 1));
+    renderizarGrilla();
+  }
+
+  // ── Resumen ──
+  function actualizarResumen() {
+    document.getElementById('resumen-sel').textContent = seleccionadas.size;
+    const esOriginal = ordenActual.every((item, i) => item.paginaOriginal === i + 1);
+    document.getElementById('resumen-cambios').textContent = esOriginal ? 'sin cambios' : 'modificado';
+  }
+
+  // ── Ejecutar ──
+  async function aplicarNuevoOrden() {
+    if (!archivoId) return;
+    const nuevoOrden = ordenActual.map(item => item.paginaOriginal);
+
+    document.getElementById('btn-aplicar').disabled = true;
+    ocultarMensaje();
+    mostrarProcesando(0, 'Enviando trabajo...');
+
+    try {
+      const r = await fetch(`${API}/convert/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: archivoId, nuevo_orden: nuevoOrden })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error?.message || 'Error al encolar');
+      monitorearProgreso(d.data.job_id);
+    } catch(e) {
+      mostrarMensaje('error', 'Error: ' + e.message);
+      ocultarProcesando();
+      document.getElementById('btn-aplicar').disabled = false;
     }
+  }
 
-    async function cargarArchivosServidor() {
-        try {
-            const r = await fetch(`${API}/files`);
-            const data = await r.json();
-            const archivos = data.data?.archivos || [];
-            if (!archivos.length) return;
+  // ── SSE + fallback polling ──
+  function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+    sse.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        mostrarProcesando(d.progreso || 0, d.mensaje || '...');
+        if (d.estado === 'completado') { sse.close(); finalizarExito(jobId); }
+        else if (d.estado === 'error') { sse.close(); finalizarConError(d.mensaje || 'Error'); }
+      } catch(_) {}
+    };
+    sse.onerror = () => { sse.close(); verificarEstadoFinal(jobId); };
+  }
 
-            const sec = document.getElementById('server-files-section');
-            const lista = document.getElementById('server-files-list');
-            sec.style.display = 'block';
+  async function verificarEstadoFinal(jobId) {
+    try {
+      const r = await fetch(`${API}/jobs/${jobId}`);
+      const d = await r.json();
+      if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+      const job = d.data;
+      mostrarProcesando(job.progreso || 0, job.mensaje || '...');
+      if (job.estado === 'completado') finalizarExito(jobId);
+      else if (job.estado === 'error') finalizarConError(job.mensaje || 'Error');
+      else setTimeout(() => verificarEstadoFinal(jobId), 2000);
+    } catch(e) { setTimeout(() => verificarEstadoFinal(jobId), 2000); }
+  }
 
-            archivos.forEach(a => {
-                const div = document.createElement('div');
-                div.className = 'server-file-item';
-                div.dataset.id = a.id;
-                div.innerHTML = `
-                    <div class="server-file-info">
-                        <div class="server-file-name">${a.nombre_original}</div>
-                        <div class="server-file-meta">${a.num_paginas} pags · ${formatearTamano(a.tamano_bytes)}</div>
-                    </div>
-                    <button class="btn btn-secondary" style="font-size:0.78rem;padding:4px 10px">Usar</button>`;
-                div.querySelector('button').addEventListener('click', () => seleccionarArchivoServidor(a));
-                lista.appendChild(div);
-            });
-        } catch (e) {
-            console.warn('No se pudieron cargar archivos del servidor:', e);
-        }
-    }
+  function finalizarExito(jobId) {
+    mostrarProcesando(100, '¡Listo! Descargando...');
+    setTimeout(() => {
+      window.PDFExport.descargarResultado(jobId);
+      ocultarProcesando();
+      document.getElementById('btn-aplicar').disabled = false;
+      mostrarMensaje('success', 'Reordenamiento completado. Descarga iniciada.');
+    }, 600);
+  }
 
-    function seleccionarArchivoServidor(archivo) {
-        archivoId = archivo.id;
-        numPaginasTotal = archivo.num_paginas;
-        nombreArchivo = archivo.nombre_original;
-        iniciarVistaReorder(archivo.tamano_bytes);
-    }
+  function finalizarConError(msg) {
+    ocultarProcesando();
+    document.getElementById('btn-aplicar').disabled = false;
+    mostrarMensaje('error', 'Error: ' + msg);
+  }
 
-    async function procesarArchivo(file) {
-        // Verificar duplicado en servidor
-        const archivosR = await fetch(`${API}/files`).then(r => r.json()).catch(() => ({ data: { archivos: [] } }));
-        const existente = (archivosR.data?.archivos || []).find(
-            a => a.nombre_original === file.name && a.tamano_bytes === file.size
-        );
-        if (existente) {
-            archivoId = existente.id;
-            numPaginasTotal = existente.num_paginas;
-            nombreArchivo = existente.nombre_original;
-            iniciarVistaReorder(existente.tamano_bytes);
-            return;
-        }
+  function cambiarArchivo() {
+    document.getElementById('file-info-card').classList.remove('visible');
+    document.getElementById('actions-card').classList.remove('visible');
+    document.getElementById('thumbs-card').classList.remove('visible');
+    document.getElementById('list-card').classList.remove('active');
+    document.getElementById('options-col').classList.remove('visible');
+    document.getElementById('view-toggle').classList.remove('visible');
+    ocultarMensaje();
+    archivoId = null; ordenActual = []; seleccionadas.clear();
+  }
 
-        // Subir
-        document.getElementById('upload-progress').style.display = 'block';
-        const upMsg = document.getElementById('upload-msg');
-        const upBar = document.getElementById('upload-bar');
+  // ── Helpers UI ──
+  function mostrarProcesando(pct, msg) {
+    document.getElementById('processing-panel').classList.add('visible');
+    document.getElementById('barra-proceso').style.width = pct + '%';
+    document.getElementById('texto-proceso').textContent = msg;
+    document.getElementById('porcentaje-proceso').textContent = pct + '%';
+  }
+  function ocultarProcesando() { document.getElementById('processing-panel').classList.remove('visible'); }
 
-        const formData = new FormData();
-        formData.append('archivo', file);
+  function mostrarMensaje(tipo, msg) {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message visible ' + tipo;
+    el.textContent = msg;
+  }
+  function ocultarMensaje() {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message'; el.textContent = '';
+  }
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${API}/upload`);
-        xhr.upload.onprogress = e => {
-            if (e.lengthComputable) {
-                const pct = Math.round(e.loaded / e.total * 100);
-                upBar.style.width = pct + '%';
-                upMsg.textContent = `Subiendo... ${pct}%`;
-            }
-        };
-        xhr.onload = () => {
-            document.getElementById('upload-progress').style.display = 'none';
-            const resp = JSON.parse(xhr.responseText);
-            if (resp.success) {
-                const a = resp.data;
-                archivoId = a.id;
-                numPaginasTotal = a.num_paginas;
-                nombreArchivo = a.nombre_original;
-                iniciarVistaReorder(a.tamano_bytes);
-            } else {
-                mostrarError('Error al subir: ' + (resp.error?.message || 'Error desconocido'));
-            }
-        };
-        xhr.onerror = () => {
-            document.getElementById('upload-progress').style.display = 'none';
-            mostrarError('Error de conexion al subir el archivo');
-        };
-        xhr.send(formData);
-    }
-
-    // ==================== INIT VISTA ====================
-    function iniciarVistaReorder(tamanoBytes) {
-        document.getElementById('upload-section').style.display = 'none';
-        document.getElementById('main-section').style.display = 'block';
-
-        document.getElementById('nombre-archivo').textContent = nombreArchivo;
-        document.getElementById('info-paginas').textContent = `${numPaginasTotal} paginas`;
-        document.getElementById('info-tamano').textContent = formatearTamano(tamanoBytes);
-
-        // Construir orden inicial (1, 2, 3, ... N)
-        ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({
-            paginaOriginal: i + 1,
-            label: `Pagina ${i + 1}`
-        }));
-        seleccionadas.clear();
-        paginaGrilla = 0;
-
-        // Mostrar toggle de vista para docs grandes
-        if (numPaginasTotal > 20) {
-            document.getElementById('toggle-vista').style.display = 'flex';
-        }
-
-        document.getElementById('btn-aplicar').disabled = false;
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    // ==================== RENDER ====================
-    function renderizarVista() {
-        if (vistaActual === 'grilla') {
-            renderizarGrilla();
-        } else {
-            renderizarLista();
-        }
-    }
-
-    function renderizarGrilla() {
-        const grid = document.getElementById('thumbnails-grid');
-        const paginador = document.getElementById('paginador');
-        grid.innerHTML = '';
-
-        const inicio = paginaGrilla * THUMB_POR_PAGINA;
-        const fin = Math.min(inicio + THUMB_POR_PAGINA, ordenActual.length);
-        const totalPaginas = Math.ceil(ordenActual.length / THUMB_POR_PAGINA);
-
-        // Paginador
-        if (totalPaginas > 1) {
-            paginador.style.display = 'flex';
-            document.getElementById('paginador-info').textContent =
-                `Paginas ${inicio + 1}-${fin} de ${ordenActual.length}`;
-            document.getElementById('btn-prev').disabled = paginaGrilla === 0;
-            document.getElementById('btn-next').disabled = paginaGrilla >= totalPaginas - 1;
-        } else {
-            paginador.style.display = 'none';
-        }
-
-        // Crear items
-        for (let i = inicio; i < fin; i++) {
-            const item = ordenActual[i];
-            const div = document.createElement('div');
-            div.className = 'thumb-item' + (seleccionadas.has(i) ? ' seleccionada' : '');
-            div.draggable = true;
-            div.dataset.idx = i;
-
-            div.innerHTML = `
-                <div class="thumb-img-placeholder" id="ph-${i}">Pag ${item.paginaOriginal}</div>
-                <div class="thumb-num">Pos ${i + 1} · Orig ${item.paginaOriginal}</div>
-                <div class="thumb-check">✓</div>`;
-
-            // Click para seleccionar/deseleccionar
-            div.addEventListener('click', () => toggleSeleccion(i));
-
-            // Drag & drop
-            div.addEventListener('dragstart', e => onDragStart(e, i));
-            div.addEventListener('dragover', e => onDragOver(e, i, div));
-            div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
-            div.addEventListener('drop', e => onDrop(e, i));
-            div.addEventListener('dragend', () => limpiarDragClases());
-
-            grid.appendChild(div);
-
-            // Cargar miniatura
-            cargarMiniatura(item.paginaOriginal, `ph-${i}`, i);
-        }
-    }
-
-    function renderizarLista() {
-        const container = document.getElementById('list-items');
-        container.innerHTML = '';
-
-        ordenActual.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = 'list-item' + (seleccionadas.has(i) ? ' seleccionada' : '');
-            div.draggable = true;
-            div.dataset.idx = i;
-            div.innerHTML = `
-                <span class="list-drag-handle">⠿</span>
-                <span class="list-num">${i + 1}</span>
-                <span class="list-label">Pagina ${item.paginaOriginal}</span>
-                <span class="list-check">✓</span>`;
-
-            div.addEventListener('click', () => toggleSeleccion(i));
-            div.addEventListener('dragstart', e => onDragStart(e, i));
-            div.addEventListener('dragover', e => onDragOver(e, i, div));
-            div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
-            div.addEventListener('drop', e => onDrop(e, i));
-            div.addEventListener('dragend', () => limpiarDragClases());
-
-            container.appendChild(div);
-        });
-
-        // Inputs de mover a posicion
-        document.getElementById('mover-desde').max = ordenActual.length;
-        document.getElementById('mover-hasta').max = ordenActual.length;
-    }
-
-    // Carga miniatura del servidor
-    async function cargarMiniatura(numPag, placeholderId, idx) {
-        const ph = document.getElementById(placeholderId);
-        if (!ph) return;
-        try {
-            const r = await fetch(`${API}/files/${archivoId}/thumbnail/${numPag}`);
-            if (!r.ok) return;
-            const blob = await r.blob();
-            const url = URL.createObjectURL(blob);
-            const img = document.createElement('img');
-            img.className = 'thumb-img';
-            img.src = url;
-            img.alt = `Pagina ${numPag}`;
-            ph.replaceWith(img);
-        } catch (e) {
-            // Dejar placeholder si falla
-        }
-    }
-
-    // ==================== DRAG & DROP ====================
-    function onDragStart(e, idx) {
-        dragSrcIdx = idx;
-        e.dataTransfer.effectAllowed = 'move';
-        // Marcar el elemento como dragging despues de un tick (evita que afecte la imagen del drag)
-        setTimeout(() => {
-            const el = document.querySelector(`[data-idx="${idx}"]`);
-            if (el) el.classList.add('dragging');
-        }, 0);
-    }
-
-    function onDragOver(e, idx, el) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        if (idx !== dragSrcIdx) {
-            limpiarDragClases();
-            el.classList.add('drag-over');
-        }
-    }
-
-    function onDrop(e, targetIdx) {
-        e.preventDefault();
-        if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
-
-        moverElemento(dragSrcIdx, targetIdx);
-        dragSrcIdx = null;
-    }
-
-    function limpiarDragClases() {
-        document.querySelectorAll('.dragging, .drag-over').forEach(el => {
-            el.classList.remove('dragging', 'drag-over');
-        });
-    }
-
-    // Mueve el elemento del indice src al indice dst en ordenActual
-    function moverElemento(srcIdx, dstIdx) {
-        const item = ordenActual.splice(srcIdx, 1)[0];
-        ordenActual.splice(dstIdx, 0, item);
-
-        // Actualizar seleccionadas
-        const nuevasSeleccionadas = new Set();
-        seleccionadas.forEach(s => {
-            if (s === srcIdx) {
-                nuevasSeleccionadas.add(dstIdx);
-            } else if (srcIdx < dstIdx) {
-                if (s > srcIdx && s <= dstIdx) nuevasSeleccionadas.add(s - 1);
-                else nuevasSeleccionadas.add(s);
-            } else {
-                if (s >= dstIdx && s < srcIdx) nuevasSeleccionadas.add(s + 1);
-                else nuevasSeleccionadas.add(s);
-            }
-        });
-        seleccionadas = nuevasSeleccionadas;
-
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    // ==================== SELECCION ====================
-    function toggleSeleccion(idx) {
-        if (seleccionadas.has(idx)) seleccionadas.delete(idx);
-        else seleccionadas.add(idx);
-        actualizarResumen();
-        // Re-render solo el item afectado para no recargar miniaturas
-        const el = document.querySelector(`[data-idx="${idx}"]`);
-        if (el) el.classList.toggle('seleccionada', seleccionadas.has(idx));
-    }
-
-    function seleccionarTodas() {
-        ordenActual.forEach((_, i) => seleccionadas.add(i));
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    function deseleccionarTodas() {
-        seleccionadas.clear();
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    // ==================== ACCIONES ====================
-    function invertirOrden() {
-        ordenActual.reverse();
-        // Las seleccionadas se invierten tambien
-        const n = ordenActual.length;
-        seleccionadas = new Set([...seleccionadas].map(i => n - 1 - i));
-        paginaGrilla = 0;
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    function restaurarOrden() {
-        ordenActual = Array.from({ length: numPaginasTotal }, (_, i) => ({
-            paginaOriginal: i + 1,
-            label: `Pagina ${i + 1}`
-        }));
-        seleccionadas.clear();
-        paginaGrilla = 0;
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    function moverSelAlInicio() {
-        if (!seleccionadas.size) return;
-        const sel = ordenActual.filter((_, i) => seleccionadas.has(i));
-        const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
-        ordenActual = [...sel, ...resto];
-        seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => i));
-        paginaGrilla = 0;
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    function moverSelAlFinal() {
-        if (!seleccionadas.size) return;
-        const sel = ordenActual.filter((_, i) => seleccionadas.has(i));
-        const resto = ordenActual.filter((_, i) => !seleccionadas.has(i));
-        ordenActual = [...resto, ...sel];
-        const n = ordenActual.length;
-        seleccionadas = new Set(Array.from({ length: sel.length }, (_, i) => n - sel.length + i));
-        paginaGrilla = Math.floor((n - 1) / THUMB_POR_PAGINA);
-        renderizarVista();
-        actualizarResumen();
-    }
-
-    function moverAPosicion() {
-        const desde = parseInt(document.getElementById('mover-desde').value);
-        const hasta = parseInt(document.getElementById('mover-hasta').value);
-        if (isNaN(desde) || isNaN(hasta)) return;
-        if (desde < 1 || desde > ordenActual.length) return;
-        if (hasta < 1 || hasta > ordenActual.length) return;
-        moverElemento(desde - 1, hasta - 1);
-    }
-
-    function cambiarVista(v) {
-        vistaActual = v;
-        document.getElementById('thumbnails-grid').style.display = v === 'grilla' ? 'grid' : 'none';
-        document.getElementById('vista-lista').classList.toggle('activa', v === 'lista');
-        document.getElementById('paginador').style.display = (v === 'grilla') ? '' : 'none';
-        document.getElementById('btn-grilla').classList.toggle('activo', v === 'grilla');
-        document.getElementById('btn-lista').classList.toggle('activo', v === 'lista');
-        renderizarVista();
-    }
-
-    function cambiarPagina(delta) {
-        const total = Math.ceil(ordenActual.length / THUMB_POR_PAGINA);
-        paginaGrilla = Math.max(0, Math.min(paginaGrilla + delta, total - 1));
-        renderizarGrilla();
-    }
-
-    // ==================== RESUMEN ====================
-    function actualizarResumen() {
-        document.getElementById('resumen-sel').textContent = seleccionadas.size;
-        const esOriginal = ordenActual.every((item, i) => item.paginaOriginal === i + 1);
-        document.getElementById('resumen-cambios').textContent = esOriginal ? 'sin cambios' : 'modificado';
-    }
-
-    // ==================== EJECUTAR ====================
-    async function aplicarNuevoOrden() {
-        if (!archivoId) return;
-
-        const nuevoOrden = ordenActual.map(item => item.paginaOriginal);
-
-        document.getElementById('btn-aplicar').disabled = true;
-        document.getElementById('job-progress').style.display = 'block';
-        document.getElementById('job-bar').style.width = '0%';
-        document.getElementById('job-msg').textContent = 'Enviando trabajo...';
-
-        try {
-            const resp = await fetch(`${API}/convert/reorder`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_id: archivoId, nuevo_orden: nuevoOrden })
-            });
-            const data = await resp.json();
-            if (!data.success) throw new Error(data.error?.message || 'Error al encolar');
-
-            const jobId = data.data.job_id;
-            esperarTrabajo(jobId);
-        } catch (e) {
-            mostrarError('Error: ' + e.message);
-            document.getElementById('btn-aplicar').disabled = false;
-            document.getElementById('job-progress').style.display = 'none';
-        }
-    }
-
-    function esperarTrabajo(jobId) {
-        const intervalo = setInterval(async () => {
-            try {
-                const r = await fetch(`${API}/jobs/${jobId}`);
-                const data = await r.json();
-                const job = data.data;
-
-                document.getElementById('job-bar').style.width = (job.progreso || 0) + '%';
-                document.getElementById('job-msg').textContent = job.mensaje || 'Procesando...';
-
-                if (job.estado === 'completado') {
-                    clearInterval(intervalo);
-                    document.getElementById('job-msg').textContent = '¡Listo! Descargando...';
-                    window.location.href = `${API}/download/${jobId}`;
-                    setTimeout(() => {
-                        document.getElementById('btn-aplicar').disabled = false;
-                    }, 2000);
-                } else if (job.estado === 'error') {
-                    clearInterval(intervalo);
-                    mostrarError('Error en el proceso: ' + (job.mensaje || 'Error desconocido'));
-                    document.getElementById('btn-aplicar').disabled = false;
-                }
-            } catch (e) {
-                clearInterval(intervalo);
-                mostrarError('Error de conexion al consultar el trabajo');
-                document.getElementById('btn-aplicar').disabled = false;
-            }
-        }, 1500);
-    }
-
-    // ==================== UTILS ====================
-    function formatearTamano(bytes) {
-        if (!bytes) return '';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    function mostrarError(msg) {
-        alert(msg);
-    }
-
-    function cambiarArchivo() {
-        document.getElementById('main-section').style.display = 'none';
-        document.getElementById('upload-section').style.display = 'block';
-        archivoId = null;
-        ordenActual = [];
-        seleccionadas.clear();
-    }
-    </script>
+  function formatBytes(b) {
+    if (!b) return '';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 </body>
 </html>

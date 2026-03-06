@@ -244,9 +244,6 @@ quiero que cargue el pdf a separar en partes, y que mientras se carga me muestre
 
 **Interfaz de usuario:**
 1. Zona de carga de archivo
-2. Modo de conversion
-- [ ] Pagina completa (Convierte cada pagina a una imagen PNG)
-- [ ] Extraer imagenes (Extrae solo las imagenes)
 3. Configuración de calidad:
    - DPI: [72 | 150 | 300 | 600] (slider o selector)
    - Mostrar tamaño estimado del resultado según DPI seleccionado
@@ -925,13 +922,20 @@ Convertir imagenes Webp a imagenes PNG.
 ---
 ### Etapa 19. Mejora del front: HOME
 
-Utiliza el archivo ./doc/pdf-export-redesign.html para rediseñar el HOME del index.html para que quede igual
+Utiliza el archivo ./doc/pdf-export-redesign.html para rediseñar el HOME del index.html para que quede igual.
+- Que todos los "Home" tengan como enlace "Tengo un PDF..."
 
 ---
 ### Etapa 20. Mejora del front: PDF TO TXT
 
 Utiliza el archivo ./doc/pdf-to-txt-redesign.html para rediseñar el pdf-to-txt para que quede igual
+- Que todos los "Home" tengan como enlace "Tengo un PDF..."
+---
+---
+### Etapa 21. Mejora del front: Todos los microservicios
 
+Utiliza el el front de "DF TO TXT" modificar todos los servicios y que dueden con la misma estetica.
+- Que todos los "Home" tengan como enlace "Tengo un PDF..."
 ---
 
 ## Estructura de Carpetas Propuesta

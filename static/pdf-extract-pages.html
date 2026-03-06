@@ -1,941 +1,826 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extraer Paginas - PDF-Export & Import</title>
-    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 30px;
-            align-items: start;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extraer Paginas — PDF Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --sidebar:  #161B22;
+      --card:     #1C2128;
+      --border:   #30363D;
+      --red:      #E63946;
+      --orange:   #F4A261;
+      --blue:     #58A6FF;
+      --green:    #3FB950;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
 
-        @media (max-width: 900px) {
-            .content-grid { grid-template-columns: 1fr; }
-        }
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      transition: width 0.2s ease; overflow: hidden;
+    }
+    #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 14px;
+      border-bottom: 1px solid var(--border); min-height: 56px; white-space: nowrap;
+    }
+    .sidebar-logo {
+      width: 28px; height: 28px; background: var(--red); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
+      color: #fff; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    #sidebar.collapsed .sidebar-title { display: none; }
+    .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 10px 16px 4px; white-space: nowrap;
+    }
+    #sidebar.collapsed .nav-section-label { opacity: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      color: var(--muted); text-decoration: none; font-size: 12.5px;
+      transition: background 0.15s, color 0.15s; white-space: nowrap; cursor: pointer;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-badge {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--card);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    #sidebar.collapsed .nav-item span:last-child { display: none; }
+    .sidebar-toggle {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      color: var(--muted); font-size: 12px; transition: color 0.15s; white-space: nowrap;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+    .toggle-icon { font-size: 16px; flex-shrink: 0; }
+    #sidebar.collapsed .toggle-label { display: none; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--color-border);
-        }
+    /* ── Main ── */
+    #main {
+      margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+      min-height: 100vh; transition: margin-left 0.2s ease;
+    }
+    #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .option-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; background: var(--sidebar); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px; position: sticky; top: 0; z-index: 50;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+    .topbar-badge {
+      margin-left: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
 
-        .option-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; max-width: 1200px; width: 100%; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: 13px; }
 
-        .option-section h4 {
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
+    /* ── Two-col layout ── */
+    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
-        /* Info del archivo */
-        .file-info-card {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-            margin-bottom: 20px;
-        }
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 
-        .file-info-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .dropzone-text strong { color: var(--blue); }
 
-        .file-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--color-primary), #1d4ed8);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+    /* ── Upload progress ── */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
-        .file-details h3 { margin: 0 0 4px 0; font-size: 1rem; }
-        .file-details p  { margin: 0; color: var(--color-text-light); font-size: 0.85rem; }
+    /* ── File info card ── */
+    .file-info-card { display: none; }
+    .file-info-card.visible { display: block; }
+    .file-info-row { display: flex; align-items: center; gap: 12px; }
+    .file-icon {
+      width: 40px; height: 40px; background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--blue); flex-shrink: 0;
+    }
+    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .file-meta p { font-size: 11.5px; color: var(--muted); }
 
-        /* Campo de texto de paginas */
-        .paginas-input-wrapper {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+    /* ── Server files ── */
+    .server-toggle {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .server-toggle:hover { border-color: var(--blue); color: var(--text); }
+    .server-files-list { display: none; margin-top: 8px; }
+    .server-files-list.open { display: block; }
+    .server-file-btn {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .server-file-btn:hover { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .server-file-btn .sf-name { font-weight: 500; }
+    .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
-        .paginas-input-wrapper input {
-            flex: 1;
-            min-width: 160px;
-            padding: 8px 12px;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
+    /* ── Selector de páginas por texto ── */
+    .paginas-input-row { display: flex; gap: 8px; align-items: center; }
+    .paginas-input-row input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: 7px; padding: 8px 12px; font-size: 12.5px; font-family: 'IBM Plex Mono', monospace;
+      transition: border-color 0.15s;
+    }
+    .paginas-input-row input:focus { outline: none; border-color: var(--blue); }
+    .paginas-input-row input::placeholder { color: var(--muted); }
+    .btn-aplicar {
+      padding: 8px 14px; background: var(--blue); color: #fff; border: none; border-radius: 7px;
+      cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; transition: opacity 0.15s;
+    }
+    .btn-aplicar:hover { opacity: 0.85; }
 
-        .paginas-input-wrapper input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
+    /* ── Quick selection ── */
+    .quick-sel { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .quick-btn {
+      padding: 4px 10px; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 5px; cursor: pointer; font-size: 11.5px; transition: all 0.15s;
+    }
+    .quick-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-        .btn-aplicar-texto {
-            padding: 8px 14px;
-            background: var(--color-primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            white-space: nowrap;
-        }
+    /* ── Selection summary ── */
+    .sel-summary {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.18);
+      border-radius: 7px; padding: 8px 12px; margin-top: 10px; font-size: 12.5px;
+    }
+    .sel-count { color: var(--blue); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
 
-        .btn-aplicar-texto:hover { background: #1d4ed8; }
+    /* ── Thumbnails panel ── */
+    .thumbnails-panel { display: none; }
+    .thumbnails-panel.visible { display: block; }
+    .thumbnails-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;
+      margin-top: 4px;
+    }
+    .thumb-item {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      cursor: pointer; padding: 6px; border-radius: 7px; border: 2px solid transparent;
+      transition: all 0.15s; -webkit-user-select: none; user-select: none;
+    }
+    .thumb-item:hover { background: rgba(88,166,255,0.05); border-color: rgba(88,166,255,0.2); }
+    .thumb-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.08); }
+    .thumb-img-wrap {
+      position: relative; width: 80px; height: 113px;
+      background: var(--bg); border-radius: 4px; overflow: hidden;
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    }
+    .thumb-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
+    .thumb-placeholder { font-size: 10px; color: var(--muted); text-align: center; }
+    .thumb-check {
+      position: absolute; top: 3px; right: 3px; width: 18px; height: 18px;
+      background: var(--blue); border-radius: 50%; display: none;
+      align-items: center; justify-content: center; color: #fff; font-size: 10px;
+    }
+    .thumb-item.selected .thumb-check { display: flex; }
+    .thumb-num { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .thumb-item.selected .thumb-num { color: var(--blue); }
 
-        /* Botones de seleccion rapida */
-        .sel-rapida {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
+    /* ── Pagination ── */
+    .hidden { display: none; }
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
+    .pagination-btn {
+      padding: 5px 12px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+    }
+    .pagination-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pagination-info { font-size: 11.5px; color: var(--muted); }
 
-        .sel-rapida button {
-            padding: 5px 10px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            background: var(--color-background);
-            cursor: pointer;
-            font-size: 0.78rem;
-            transition: all 0.15s;
-        }
+    /* ── Progress (upload job) ── */
+    .processing-panel { display: none; }
+    .processing-panel.visible { display: block; }
+    .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
-        .sel-rapida button:hover {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-        }
+    /* ── Right col — options ── */
+    .options-col { position: sticky; top: 80px; }
+    .format-card { margin-bottom: 14px; }
+    .format-option {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+      border: 1px solid var(--border); border-radius: 8px; cursor: pointer; margin-bottom: 7px;
+      transition: all 0.15s;
+    }
+    .format-option:last-child { margin-bottom: 0; }
+    .format-option:hover { border-color: var(--blue); }
+    .format-option.selected { border-color: var(--blue); background: rgba(88,166,255,0.06); }
+    .format-option input[type="radio"] { margin-top: 2px; accent-color: var(--blue); cursor: pointer; }
+    .format-option label { cursor: pointer; font-size: 12.5px; line-height: 1.4; }
+    .format-option label small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
 
-        /* Resumen de seleccion */
-        .resumen-seleccion {
-            padding: 10px 14px;
-            background: rgba(37, 99, 235, 0.08);
-            border: 1px solid rgba(37, 99, 235, 0.2);
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-top: 8px;
-        }
+    /* ── Action button ── */
+    .btn-action {
+      width: 100%; padding: 12px; background: var(--green); color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; margin-top: 4px;
+    }
+    .btn-action:hover:not(:disabled) { opacity: 0.85; }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
 
-        .resumen-seleccion strong { color: var(--color-primary); }
+    /* ── Status message ── */
+    .status-message { display: none; padding: 10px 14px; border-radius: 7px; font-size: 12.5px; margin-top: 12px; }
+    .status-message.visible { display: block; }
+    .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+    .status-message.info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); color: var(--blue); }
 
-        /* Grid de miniaturas */
-        .miniaturas-seccion {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-        }
+    /* ── Info strip ── */
+    .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(88,166,255,0.05); border: 1px solid rgba(88,166,255,0.15); border-radius: 7px; }
+    .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+    .info-strip p + p { margin-top: 4px; }
 
-        .miniaturas-seccion h3 {
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-
-        .miniaturas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 12px;
-        }
-
-        /* Miniatura individual */
-        .miniatura-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .miniatura-item:hover { background: rgba(37, 99, 235, 0.05); }
-
-        .miniatura-item.seleccionada {
-            border-color: var(--color-primary);
-            background: rgba(37, 99, 235, 0.08);
-        }
-
-        .miniatura-img-wrapper {
-            position: relative;
-            width: 90px;
-            height: 127px; /* aprox A4 ratio */
-            background: #f0f0f0;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .miniatura-img-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .miniatura-img-wrapper .cargando {
-            font-size: 0.7rem;
-            color: var(--color-text-light);
-            text-align: center;
-        }
-
-        /* Checkmark de seleccion */
-        .miniatura-check {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 20px;
-            height: 20px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.7rem;
-        }
-
-        .miniatura-item.seleccionada .miniatura-check {
-            display: flex;
-        }
-
-        .miniatura-num {
-            font-size: 0.78rem;
-            color: var(--color-text-light);
-            font-weight: 500;
-        }
-
-        .miniatura-item.seleccionada .miniatura-num {
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-
-        /* Paginador de miniaturas */
-        .paginador {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .paginador button {
-            padding: 6px 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            background: var(--color-surface);
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-
-        .paginador button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .paginador button:hover:not(:disabled) {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-        }
-
-        .paginador span {
-            font-size: 0.82rem;
-            color: var(--color-text-light);
-        }
-
-        /* Radio formato salida */
-        .radio-option {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-        }
-
-        .radio-option:last-child { margin-bottom: 0; }
-
-        .radio-option:hover { border-color: var(--color-primary); }
-
-        .radio-option input { margin-top: 2px; cursor: pointer; }
-
-        .radio-option.seleccionado {
-            border-color: var(--color-primary);
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        .radio-option label {
-            cursor: pointer;
-            font-size: 0.88rem;
-            line-height: 1.4;
-        }
-
-        .radio-option label small {
-            display: block;
-            color: var(--color-text-light);
-            font-size: 0.77rem;
-            margin-top: 2px;
-        }
-
-        /* Boton ejecutar */
-        .btn-ejecutar {
-            width: 100%;
-            padding: 14px;
-            background: var(--color-success, #16a34a);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn-ejecutar:hover:not(:disabled) { background: #15803d; }
-
-        .btn-ejecutar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Progreso */
-        .progreso-seccion {
-            margin-top: 20px;
-            display: none;
-        }
-
-        .barra-container {
-            height: 8px;
-            background: var(--color-border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .barra {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 4px;
-            transition: width 0.4s;
-            width: 0%;
-        }
-
-        .progreso-texto {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.82rem;
-            color: var(--color-text-light);
-        }
-
-        /* Lista de archivos disponibles */
-        .archivos-disponibles {
-            margin-top: 20px;
-        }
-
-        .archivo-btn {
-            width: 100%;
-            text-align: left;
-            padding: 10px 14px;
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            background: var(--color-surface);
-            cursor: pointer;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-            transition: all 0.15s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .archivo-btn:hover {
-            border-color: var(--color-primary);
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        .archivo-btn .archivo-nombre { font-weight: 500; }
-        .archivo-btn .archivo-info   { color: var(--color-text-light); font-size: 0.78rem; }
-    </style>
+    /* ── Footer ── */
+    footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Extraer Paginas Especificas</h1>
-            <p>Selecciona las paginas que deseas extraer del PDF y descargalas como un unico archivo o por separado</p>
-        </header>
 
-        <!-- Zona de carga -->
-        <div id="zona-carga">
-            <div class="upload-area" id="drop-zone">
-                <div class="upload-icon">📄</div>
-                <p>Arrastra un PDF aqui o haz clic para seleccionar</p>
-                <p class="upload-hint">Maximo 1 GB</p>
-                <input type="file" id="file-input" accept=".pdf" style="display:none">
-            </div>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF</div>
+    <span class="sidebar-title">PDF Export</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Tengo un PDF…</div>
+    <a class="nav-item" href="/static/pdf-to-txt.html"><span class="nav-badge">TXT</span><span>PDF a Texto</span></a>
+    <a class="nav-item" href="/static/pdf-to-docx.html"><span class="nav-badge">DOC</span><span>PDF a DOCX</span></a>
+    <a class="nav-item" href="/static/pdf-to-png.html"><span class="nav-badge">PNG</span><span>PDF a PNG</span></a>
+    <a class="nav-item" href="/static/pdf-to-jpg.html"><span class="nav-badge">JPG</span><span>PDF a JPG</span></a>
+    <a class="nav-item" href="/static/pdf-compress.html"><span class="nav-badge">ZIP</span><span>Comprimir PDF</span></a>
+    <a class="nav-item" href="/static/pdf-extract-images.html"><span class="nav-badge">IMG</span><span>Extraer Imágenes</span></a>
+    <a class="nav-item" href="/static/pdf-split.html"><span class="nav-badge">CUT</span><span>Cortar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-rotate.html"><span class="nav-badge">ROT</span><span>Rotar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-merge.html"><span class="nav-badge">MRG</span><span>Unir PDFs</span></a>
+    <a class="nav-item active" href="/static/pdf-extract-pages.html"><span class="nav-badge">EXT</span><span>Extraer Páginas</span></a>
+    <a class="nav-item" href="/static/pdf-reorder.html"><span class="nav-badge">ORD</span><span>Reordenar</span></a>
+    <a class="nav-item" href="/static/pdf-to-csv.html"><span class="nav-badge">CSV</span><span>PDF a CSV</span></a>
+    <div class="nav-section-label">Quiero un PDF…</div>
+    <a class="nav-item" href="/static/html-to-pdf.html"><span class="nav-badge">HTM</span><span>HTML a PDF</span></a>
+    <a class="nav-item" href="/static/img-to-1pdf.html"><span class="nav-badge">IMG</span><span>IMG a PDF</span></a>
+    <div class="nav-section-label">Utilidades</div>
+    <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
+    <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
+    <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+  </div>
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <span class="toggle-icon">⇤</span>
+    <span class="toggle-label">Contraer</span>
+  </div>
+</nav>
 
-            <!-- Archivos ya cargados -->
-            <div class="archivos-disponibles" id="archivos-disponibles" style="display:none">
-                <h3 style="margin-bottom: 10px; font-size: 0.95rem;">Archivos disponibles en servidor:</h3>
-                <div id="lista-archivos"></div>
-            </div>
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span>Tengo un PDF…</span>
+      <span class="sep">›</span>
+      <span class="current">Extraer Páginas</span>
+    </div>
+    <span class="topbar-badge">EXT</span>
+  </div>
 
-            <div id="upload-progreso" class="upload-progress" style="display:none">
-                <div class="upload-progress-bar" id="upload-barra"></div>
-                <span id="upload-texto">Subiendo...</span>
-            </div>
-        </div>
-
-        <!-- Panel principal (oculto hasta cargar archivo) -->
-        <div id="panel-principal" style="display:none">
-            <!-- Info del archivo -->
-            <div class="file-info-card">
-                <div class="file-info-header">
-                    <div class="file-icon">PDF</div>
-                    <div class="file-details">
-                        <h3 id="archivo-nombre">-</h3>
-                        <p id="archivo-info">-</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-grid">
-                <!-- Seccion principal: miniaturas -->
-                <section>
-                    <!-- Selector de paginas por texto -->
-                    <div class="file-info-card" style="margin-bottom: 15px;">
-                        <h3 style="margin-bottom: 12px; font-size: 0.95rem;">Seleccion de paginas</h3>
-                        <div class="paginas-input-wrapper">
-                            <input type="text" id="paginas-texto" placeholder="Ej: 1, 3, 5-10, 15">
-                            <button class="btn-aplicar-texto" onclick="aplicarTextoPaginas()">Aplicar</button>
-                        </div>
-                        <div class="sel-rapida">
-                            <button onclick="seleccionarTodas()">Todas</button>
-                            <button onclick="deseleccionarTodas()">Ninguna</button>
-                            <button onclick="invertirSeleccion()">Invertir</button>
-                            <button onclick="seleccionarPares()">Pares</button>
-                            <button onclick="seleccionarImpares()">Impares</button>
-                        </div>
-                        <div class="resumen-seleccion" id="resumen-seleccion">
-                            <strong id="num-seleccionadas">0</strong> paginas seleccionadas
-                        </div>
-                    </div>
-
-                    <!-- Grid de miniaturas -->
-                    <div class="miniaturas-seccion">
-                        <h3>Paginas del documento</h3>
-                        <div class="miniaturas-grid" id="miniaturas-grid"></div>
-                        <div class="paginador" id="paginador" style="display:none">
-                            <button id="btn-anterior" onclick="cambiarPagina(-1)">&#8592; Anterior</button>
-                            <span id="paginador-info"></span>
-                            <button id="btn-siguiente" onclick="cambiarPagina(1)">Siguiente &#8594;</button>
-                        </div>
-                    </div>
-
-                    <!-- Progreso del trabajo -->
-                    <div id="progreso-seccion" class="progreso-seccion">
-                        <div class="barra-container">
-                            <div class="barra" id="barra-progreso"></div>
-                        </div>
-                        <div class="progreso-texto">
-                            <span id="progreso-mensaje">Procesando...</span>
-                            <span id="progreso-porcentaje">0%</span>
-                        </div>
-                    </div>
-
-                    <!-- Mensajes de estado -->
-                    <div id="mensaje-estado" class="status-message" style="display:none; margin-top: 15px;"></div>
-                </section>
-
-                <!-- Panel de opciones -->
-                <aside class="options-panel">
-                    <h3 style="margin-bottom: 20px;">Opciones</h3>
-
-                    <div class="option-section">
-                        <h4>Formato de salida</h4>
-                        <div class="radio-option seleccionado" id="radio-unico-wrap" onclick="seleccionarFormato('unico')">
-                            <input type="radio" name="formato" id="fmt-unico" value="unico" checked>
-                            <label for="fmt-unico">
-                                Un unico PDF
-                                <small>Todas las paginas seleccionadas en un solo archivo</small>
-                            </label>
-                        </div>
-                        <div class="radio-option" id="radio-sep-wrap" onclick="seleccionarFormato('separados')">
-                            <input type="radio" name="formato" id="fmt-sep" value="separados">
-                            <label for="fmt-sep">
-                                Archivos separados
-                                <small>Un PDF por cada pagina seleccionada</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button id="btn-ejecutar" class="btn-ejecutar" disabled onclick="ejecutar()">
-                        Extraer Paginas
-                    </button>
-
-                    <p style="font-size: 0.78rem; color: var(--color-text-light); margin-top: 12px; text-align: center;">
-                        El resultado se descarga como ZIP
-                    </p>
-                </aside>
-            </div>
-        </div>
+  <div class="content">
+    <div class="page-header">
+      <h1>Extraer Páginas Específicas</h1>
+      <p>Selecciona las páginas que deseas extraer y descárgalas como un único PDF o archivos separados.</p>
     </div>
 
-    <script src="/static/js/common.js"></script>
-    <script>
-        // === ESTADO ===
-        const estado = {
-            archivoId: null,
-            numPaginas: 0,
-            nombreArchivo: '',
-            seleccionadas: new Set(),      // numeros de pagina seleccionados (1-based)
-            paginaActual: 0,               // pagina del paginador (0-based)
-            paginasTamanio: 20,            // miniaturas por pagina de grid
-            trabajoId: null,
-            intervalo: null,
-        };
+    <div class="layout">
+      <!-- ── Columna izquierda ── -->
+      <div>
+        <!-- Drop zone -->
+        <div class="card" id="card-upload">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">📄</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un PDF aquí<br>
+              <small>Máximo 1 GB</small>
+            </div>
+            <input type="file" id="file-input" accept=".pdf" class="hidden">
+          </div>
 
-        // === CARGA DE ARCHIVO ===
-        const dropZone  = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
+          <!-- Progreso de upload -->
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const archivo = e.dataTransfer.files[0];
-            if (archivo && archivo.type === 'application/pdf') subirArchivo(archivo);
-        });
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files[0]) subirArchivo(fileInput.files[0]);
-        });
+          <!-- Archivos en servidor -->
+          <button type="button" class="server-toggle" id="btn-server" onclick="toggleServerFiles()">
+            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
+          </button>
+          <div class="server-files-list" id="server-files">
+            <div id="server-files-contenido"></div>
+          </div>
+        </div>
 
-        // Cargar lista de archivos disponibles al iniciar
-        cargarArchivosDisponibles();
+        <!-- Info archivo -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-info-row">
+            <div class="file-icon">PDF</div>
+            <div class="file-meta">
+              <h3 id="nombre-archivo">—</h3>
+              <p id="info-archivo">—</p>
+            </div>
+          </div>
+        </div>
 
-        async function cargarArchivosDisponibles() {
-            try {
-                const resp = await fetch('/api/v1/files');
-                const datos = await resp.json();
-                if (!datos.success || !datos.data.length) return;
+        <!-- Selector de páginas por texto -->
+        <div class="card thumbnails-panel" id="selector-panel">
+          <div class="card-title">Selección de páginas</div>
+          <div class="paginas-input-row">
+            <input type="text" id="paginas-texto" placeholder="Ej: 1, 3, 5-10, 15">
+            <button type="button" class="btn-aplicar" onclick="aplicarTextoPaginas()">Aplicar</button>
+          </div>
+          <div class="quick-sel">
+            <button type="button" class="quick-btn" onclick="seleccionarTodas()">Todas</button>
+            <button type="button" class="quick-btn" onclick="deseleccionarTodas()">Ninguna</button>
+            <button type="button" class="quick-btn" onclick="invertirSeleccion()">Invertir</button>
+            <button type="button" class="quick-btn" onclick="seleccionarPares()">Pares</button>
+            <button type="button" class="quick-btn" onclick="seleccionarImpares()">Impares</button>
+          </div>
+          <div class="sel-summary">
+            <span><span class="sel-count" id="num-seleccionadas">0</span> páginas seleccionadas</span>
+          </div>
+        </div>
 
-                const div = document.getElementById('archivos-disponibles');
-                const lista = document.getElementById('lista-archivos');
-                lista.innerHTML = '';
+        <!-- Grid de miniaturas -->
+        <div class="card thumbnails-panel" id="thumbnails-panel">
+          <div class="card-title">Páginas del documento</div>
+          <div class="thumbnails-grid" id="miniaturas-grid"></div>
+          <div class="pagination hidden" id="paginador">
+            <button type="button" class="pagination-btn" id="btn-anterior" onclick="cambiarPagina(-1)">← Anterior</button>
+            <span class="pagination-info" id="paginador-info"></span>
+            <button type="button" class="pagination-btn" id="btn-siguiente" onclick="cambiarPagina(1)">Siguiente →</button>
+          </div>
+        </div>
 
-                datos.data.forEach(arch => {
-                    const btn = document.createElement('button');
-                    btn.className = 'archivo-btn';
-                    btn.innerHTML = `
-                        <span class="archivo-nombre">${escHtml(arch.nombre_original)}</span>
-                        <span class="archivo-info">${arch.num_paginas} pag. · ${formatBytes(arch.tamano)}</span>
-                    `;
-                    btn.onclick = () => inicializarConArchivo(arch);
-                    lista.appendChild(btn);
-                });
+        <!-- Progreso del trabajo -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Procesando</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
 
-                div.style.display = 'block';
-            } catch (e) {
-                console.error('Error cargando archivos:', e);
-            }
+        <!-- Mensaje estado -->
+        <div class="status-message" id="mensaje-estado"></div>
+
+        <!-- Info strip -->
+        <div class="info-strip">
+          <p>Haz clic en las miniaturas o escribe los números de página para seleccionar.</p>
+          <p>El resultado se descargará como un archivo ZIP.</p>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — opciones ── -->
+      <div class="options-col hidden" id="panel-opciones">
+        <div class="card format-card">
+          <div class="card-title">Formato de salida</div>
+          <div class="format-option selected" id="opt-unico-wrap" onclick="seleccionarFormato('unico')">
+            <input type="radio" name="formato" id="fmt-unico" value="unico" checked>
+            <label for="fmt-unico">
+              Un único PDF
+              <small>Todas las páginas seleccionadas en un solo archivo</small>
+            </label>
+          </div>
+          <div class="format-option" id="opt-sep-wrap" onclick="seleccionarFormato('separados')">
+            <input type="radio" name="formato" id="fmt-sep" value="separados">
+            <label for="fmt-sep">
+              Archivos separados
+              <small>Un PDF por cada página seleccionada</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Extraer Páginas
+          </button>
+          <div class="action-note">Resultado en ZIP · máxima compresión</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>PDF Export — Extraer Páginas Específicas</footer>
+</div>
+
+<script src="/static/js/common.js"></script>
+<script>
+  // ── Estado global ──
+  const estado = {
+    archivoId:    null,
+    numPaginas:   0,
+    nombreArchivo: '',
+    seleccionadas: new Set(),   // números 1-based
+    paginaActual:  0,           // página del paginador (0-based)
+    porPagina:     20,          // miniaturas por vista
+    trabajoId:     null,
+    intervalo:     null,
+  };
+
+  // ── Sidebar toggle ──
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const main    = document.getElementById('main');
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('expanded');
+  }
+
+  // ── Drop zone ──
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') subirArchivo(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) subirArchivo(fileInput.files[0]); });
+
+  // ── Server files ──
+  let serverOpen = false;
+  function toggleServerFiles() {
+    serverOpen = !serverOpen;
+    document.getElementById('server-files').classList.toggle('open', serverOpen);
+    document.getElementById('server-arrow').textContent = serverOpen ? '▾' : '▸';
+  }
+
+  async function cargarArchivosServidor() {
+    try {
+      const r = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+      const d = await r.json();
+      if (!d.success || !d.data.length) return;
+      const cont = document.getElementById('server-files-contenido');
+      cont.innerHTML = '';
+      d.data.forEach(a => {
+        const btn = document.createElement('button');
+        btn.className = 'server-file-btn';
+        btn.innerHTML = `<span class="sf-name">${escHtml(a.nombre_original)}</span><span class="sf-meta">${a.num_paginas} pág · ${formatBytes(a.tamano_bytes)}</span>`;
+        btn.onclick = () => inicializarConArchivo(a);
+        cont.appendChild(btn);
+      });
+    } catch(e) { console.error('Error archivos servidor:', e); }
+  }
+
+  cargarArchivosServidor();
+
+  // ── Subir archivo ──
+  async function subirArchivo(archivo) {
+    // Buscar duplicado
+    try {
+      const r = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+      const d = await r.json();
+      if (d.success) {
+        const dup = d.data.find(f => f.nombre_original === archivo.name && f.tamano_bytes === archivo.size);
+        if (dup) { inicializarConArchivo(dup); return; }
+      }
+    } catch(e) { /* ignorar, continuar upload */ }
+
+    const progDiv = document.getElementById('progreso-carga');
+    const barra   = document.getElementById('barra-carga');
+    const texto   = document.getElementById('texto-carga');
+    progDiv.style.display = 'block';
+
+    const fd = new FormData();
+    fd.append('archivo', archivo);
+    fd.append('nombre', archivo.name);
+    fd.append('tamano', archivo.size);
+    fd.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${window.AppConfig.API_BASE_URL}/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        barra.style.width = pct + '%';
+        texto.textContent = `Subiendo... ${pct}%`;
+      }
+    };
+    xhr.onload = () => {
+      progDiv.style.display = 'none';
+      try {
+        const d = JSON.parse(xhr.responseText);
+        if (d.success) inicializarConArchivo(d.data);
+        else mostrarMensaje('error', 'Error al subir: ' + (d.error?.message || 'Error desconocido'));
+      } catch(e) { mostrarMensaje('error', 'Error al procesar respuesta'); }
+    };
+    xhr.onerror = () => { progDiv.style.display = 'none'; mostrarMensaje('error', 'Error de conexión'); };
+    xhr.send(fd);
+  }
+
+  function inicializarConArchivo(arch) {
+    estado.archivoId     = arch.id;
+    estado.numPaginas    = arch.num_paginas;
+    estado.nombreArchivo = arch.nombre_original;
+    estado.seleccionadas = new Set();
+    estado.paginaActual  = 0;
+
+    document.getElementById('nombre-archivo').textContent = arch.nombre_original;
+    document.getElementById('info-archivo').textContent   = `${arch.num_paginas} páginas · ${formatBytes(arch.tamano_bytes)}`;
+
+    document.getElementById('file-info-card').classList.add('visible');
+    document.getElementById('panel-opciones').classList.remove('hidden');
+    document.querySelectorAll('.thumbnails-panel').forEach(el => el.classList.add('visible'));
+    ocultarMensaje();
+    actualizarResumen();
+    renderizarMiniaturas();
+  }
+
+  // ── Miniaturas ──
+  function renderizarMiniaturas() {
+    const grid    = document.getElementById('miniaturas-grid');
+    const pagMin  = estado.paginaActual * estado.porPagina + 1;
+    const pagMax  = Math.min(pagMin + estado.porPagina - 1, estado.numPaginas);
+    const total   = Math.ceil(estado.numPaginas / estado.porPagina);
+
+    grid.innerHTML = '';
+
+    for (let num = pagMin; num <= pagMax; num++) {
+      const item = document.createElement('div');
+      item.className = 'thumb-item' + (estado.seleccionadas.has(num) ? ' selected' : '');
+      item.dataset.pagina = num;
+      item.onclick = () => togglePagina(num);
+      item.innerHTML = `
+        <div class="thumb-img-wrap">
+          <img src="${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/${num}"
+               alt="Pág ${num}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="thumb-placeholder" style="display:none">Pág ${num}</div>
+          <div class="thumb-check">✓</div>
+        </div>
+        <span class="thumb-num">Pág. ${num}</span>
+      `;
+      grid.appendChild(item);
+    }
+
+    // Paginador
+    const paginador = document.getElementById('paginador');
+    if (total > 1) {
+      paginador.classList.remove('hidden');
+      document.getElementById('paginador-info').textContent = `Págs. ${pagMin}–${pagMax} de ${estado.numPaginas}`;
+      document.getElementById('btn-anterior').disabled = estado.paginaActual === 0;
+      document.getElementById('btn-siguiente').disabled = estado.paginaActual >= total - 1;
+    } else {
+      paginador.classList.add('hidden');
+    }
+  }
+
+  function cambiarPagina(delta) {
+    const total = Math.ceil(estado.numPaginas / estado.porPagina);
+    estado.paginaActual = Math.max(0, Math.min(total - 1, estado.paginaActual + delta));
+    renderizarMiniaturas();
+  }
+
+  function togglePagina(num) {
+    if (estado.seleccionadas.has(num)) estado.seleccionadas.delete(num);
+    else estado.seleccionadas.add(num);
+    const item = document.querySelector(`.thumb-item[data-pagina="${num}"]`);
+    if (item) item.classList.toggle('selected', estado.seleccionadas.has(num));
+    actualizarResumen();
+  }
+
+  // ── Selección rápida ──
+  function seleccionarTodas()   { for (let i = 1; i <= estado.numPaginas; i++) estado.seleccionadas.add(i); actualizarMiniaturas(); }
+  function deseleccionarTodas() { estado.seleccionadas.clear(); actualizarMiniaturas(); }
+  function invertirSeleccion()  {
+    for (let i = 1; i <= estado.numPaginas; i++) {
+      if (estado.seleccionadas.has(i)) estado.seleccionadas.delete(i); else estado.seleccionadas.add(i);
+    }
+    actualizarMiniaturas();
+  }
+  function seleccionarPares() {
+    for (let i = 1; i <= estado.numPaginas; i++) { if (i % 2 === 0) estado.seleccionadas.add(i); else estado.seleccionadas.delete(i); }
+    actualizarMiniaturas();
+  }
+  function seleccionarImpares() {
+    for (let i = 1; i <= estado.numPaginas; i++) { if (i % 2 !== 0) estado.seleccionadas.add(i); else estado.seleccionadas.delete(i); }
+    actualizarMiniaturas();
+  }
+
+  function actualizarMiniaturas() {
+    document.querySelectorAll('.thumb-item').forEach(item => {
+      const num = parseInt(item.dataset.pagina);
+      item.classList.toggle('selected', estado.seleccionadas.has(num));
+    });
+    actualizarResumen();
+  }
+
+  // ── Selección por texto ──
+  function aplicarTextoPaginas() {
+    const texto = document.getElementById('paginas-texto').value.trim();
+    if (!texto) return;
+    estado.seleccionadas.clear();
+    texto.replace(/\s/g, '').split(',').forEach(parte => {
+      if (parte.includes('-')) {
+        const [ini, fin] = parte.split('-').map(Number);
+        for (let p = ini; p <= fin; p++) if (p >= 1 && p <= estado.numPaginas) estado.seleccionadas.add(p);
+      } else {
+        const p = parseInt(parte);
+        if (p >= 1 && p <= estado.numPaginas) estado.seleccionadas.add(p);
+      }
+    });
+    actualizarMiniaturas();
+  }
+
+  document.getElementById('paginas-texto').addEventListener('keydown', e => { if (e.key === 'Enter') aplicarTextoPaginas(); });
+
+  // ── Resumen ──
+  function actualizarResumen() {
+    const n = estado.seleccionadas.size;
+    document.getElementById('num-seleccionadas').textContent = n;
+    document.getElementById('btn-ejecutar').disabled = n === 0;
+  }
+
+  // ── Formato de salida ──
+  function seleccionarFormato(valor) {
+    document.getElementById('fmt-unico').checked = valor === 'unico';
+    document.getElementById('fmt-sep').checked   = valor === 'separados';
+    document.getElementById('opt-unico-wrap').classList.toggle('selected', valor === 'unico');
+    document.getElementById('opt-sep-wrap').classList.toggle('selected', valor === 'separados');
+  }
+  document.querySelectorAll('input[name="formato"]').forEach(r => {
+    r.addEventListener('change', () => seleccionarFormato(r.value));
+  });
+
+  // ── Ejecutar ──
+  async function ejecutar() {
+    if (estado.seleccionadas.size === 0) return;
+
+    const paginas = Array.from(estado.seleccionadas).sort((a, b) => a - b);
+    const formato = document.querySelector('input[name="formato"]:checked').value;
+
+    document.getElementById('btn-ejecutar').disabled = true;
+    document.getElementById('btn-ejecutar').textContent = 'Procesando...';
+    ocultarMensaje();
+    mostrarProcesando(0, 'Enviando solicitud...');
+
+    try {
+      const r = await fetch(`${window.AppConfig.API_BASE_URL}/convert/extract-pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: estado.archivoId, paginas, formato_salida: formato })
+      });
+      const d = await r.json();
+
+      if (!d.success) {
+        mostrarMensaje('error', d.error?.message || 'Error al iniciar la extracción');
+        ocultarProcesando(); resetBoton(); return;
+      }
+
+      estado.trabajoId = d.data.job_id;
+      monitorearProgreso(estado.trabajoId);
+
+    } catch(e) {
+      mostrarMensaje('error', 'Error de conexión: ' + e.message);
+      ocultarProcesando(); resetBoton();
+    }
+  }
+
+  // ── SSE + fallback polling ──
+  function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}/progress`);
+    sse.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        mostrarProcesando(d.progreso || 0, d.mensaje || '...');
+        if (d.estado === 'completado') {
+          sse.close();
+          finalizarExito(jobId);
+        } else if (d.estado === 'error') {
+          sse.close();
+          finalizarConError(d.mensaje || 'Error desconocido');
         }
+      } catch(_) {}
+    };
+    sse.onerror = () => { sse.close(); verificarEstadoFinal(jobId); };
+  }
 
-        async function subirArchivo(archivo) {
-            // Verificar si ya existe en servidor (por nombre + tamaño + fecha)
-            try {
-                const resp = await fetch('/api/v1/files');
-                const datos = await resp.json();
-                if (datos.success) {
-                    const existente = datos.data.find(f =>
-                        f.nombre_original === archivo.name &&
-                        f.tamano === archivo.size
-                    );
-                    if (existente) {
-                        inicializarConArchivo(existente);
-                        return;
-                    }
-                }
-            } catch (e) { /* continuar con la subida */ }
+  async function verificarEstadoFinal(jobId) {
+    try {
+      const r = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}`);
+      const d = await r.json();
+      if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+      const job = d.data;
+      mostrarProcesando(job.progreso || 0, job.mensaje || '...');
+      if (job.estado === 'completado') finalizarExito(jobId);
+      else if (job.estado === 'error') finalizarConError(job.mensaje || 'Error');
+      else setTimeout(() => verificarEstadoFinal(jobId), 2000);
+    } catch(e) { setTimeout(() => verificarEstadoFinal(jobId), 2000); }
+  }
 
-            // Subir archivo
-            const progDiv  = document.getElementById('upload-progreso');
-            const barraSub = document.getElementById('upload-barra');
-            const textoSub = document.getElementById('upload-texto');
-            progDiv.style.display = 'block';
+  function finalizarExito(jobId) {
+    mostrarProcesando(100, 'Completado');
+    setTimeout(() => {
+      window.PDFExport.descargarResultado(jobId);
+      ocultarProcesando();
+      resetBoton();
+      mostrarMensaje('success', 'Extracción completada. Descarga iniciada.');
+    }, 600);
+  }
 
-            const formData = new FormData();
-            formData.append('archivo', archivo);
+  function finalizarConError(msg) {
+    ocultarProcesando();
+    resetBoton();
+    mostrarMensaje('error', 'Error: ' + msg);
+  }
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/v1/upload');
+  // ── Helpers UI ──
+  function mostrarProcesando(pct, msg) {
+    document.getElementById('processing-panel').classList.add('visible');
+    document.getElementById('barra-proceso').style.width = pct + '%';
+    document.getElementById('texto-proceso').textContent = msg;
+    document.getElementById('porcentaje-proceso').textContent = pct + '%';
+  }
+  function ocultarProcesando() { document.getElementById('processing-panel').classList.remove('visible'); }
 
-            xhr.upload.onprogress = e => {
-                if (e.lengthComputable) {
-                    const pct = Math.round(e.loaded / e.total * 100);
-                    barraSub.style.width = pct + '%';
-                    textoSub.textContent = `Subiendo... ${pct}%`;
-                }
-            };
+  function mostrarMensaje(tipo, msg) {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message visible ' + tipo;
+    el.textContent = msg;
+  }
+  function ocultarMensaje() {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message';
+    el.textContent = '';
+  }
 
-            xhr.onload = () => {
-                progDiv.style.display = 'none';
-                try {
-                    const datos = JSON.parse(xhr.responseText);
-                    if (datos.success) {
-                        inicializarConArchivo(datos.data);
-                    } else {
-                        alert('Error al subir el archivo: ' + (datos.error?.message || 'Error desconocido'));
-                    }
-                } catch (e) {
-                    alert('Error al procesar la respuesta del servidor');
-                }
-            };
+  function resetBoton() {
+    document.getElementById('btn-ejecutar').disabled = estado.seleccionadas.size === 0;
+    document.getElementById('btn-ejecutar').textContent = 'Extraer Páginas';
+  }
 
-            xhr.onerror = () => {
-                progDiv.style.display = 'none';
-                alert('Error de conexion al subir el archivo');
-            };
-
-            xhr.send(formData);
-        }
-
-        function inicializarConArchivo(arch) {
-            estado.archivoId  = arch.id || arch.file_id;
-            estado.numPaginas = arch.num_paginas;
-            estado.nombreArchivo = arch.nombre_original;
-            estado.seleccionadas = new Set();
-            estado.paginaActual  = 0;
-
-            // Info del archivo
-            document.getElementById('archivo-nombre').textContent = arch.nombre_original;
-            document.getElementById('archivo-info').textContent =
-                `${arch.num_paginas} paginas · ${formatBytes(arch.tamano)}`;
-
-            // Mostrar panel principal
-            document.getElementById('zona-carga').style.display = 'none';
-            document.getElementById('panel-principal').style.display = 'block';
-
-            actualizarResumen();
-            renderizarMiniaturas();
-        }
-
-        // === MINIATURAS ===
-        function renderizarMiniaturas() {
-            const grid   = document.getElementById('miniaturas-grid');
-            const pagMin = estado.paginaActual * estado.paginasTamanio + 1;
-            const pagMax = Math.min(pagMin + estado.paginasTamanio - 1, estado.numPaginas);
-            const totalPags = Math.ceil(estado.numPaginas / estado.paginasTamanio);
-
-            grid.innerHTML = '';
-
-            for (let num = pagMin; num <= pagMax; num++) {
-                const item = document.createElement('div');
-                item.className = 'miniatura-item' + (estado.seleccionadas.has(num) ? ' seleccionada' : '');
-                item.dataset.pagina = num;
-                item.onclick = () => togglePagina(num);
-
-                item.innerHTML = `
-                    <div class="miniatura-img-wrapper">
-                        <img data-src="/api/v1/files/${estado.archivoId}/thumbnail/${num}"
-                             alt="Pagina ${num}" loading="lazy"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="cargando" style="display:none">Pag ${num}</div>
-                        <div class="miniatura-check">✓</div>
-                    </div>
-                    <span class="miniatura-num">Pag. ${num}</span>
-                `;
-
-                grid.appendChild(item);
-
-                // Lazy load real
-                const img = item.querySelector('img');
-                img.src = img.dataset.src;
-            }
-
-            // Paginador
-            const paginador = document.getElementById('paginador');
-            if (totalPags > 1) {
-                paginador.style.display = 'flex';
-                document.getElementById('paginador-info').textContent =
-                    `Pags. ${pagMin}-${pagMax} de ${estado.numPaginas}`;
-                document.getElementById('btn-anterior').disabled = estado.paginaActual === 0;
-                document.getElementById('btn-siguiente').disabled = estado.paginaActual >= totalPags - 1;
-            } else {
-                paginador.style.display = 'none';
-            }
-        }
-
-        function cambiarPagina(delta) {
-            const totalPags = Math.ceil(estado.numPaginas / estado.paginasTamanio);
-            estado.paginaActual = Math.max(0, Math.min(totalPags - 1, estado.paginaActual + delta));
-            renderizarMiniaturas();
-        }
-
-        function togglePagina(num) {
-            if (estado.seleccionadas.has(num)) {
-                estado.seleccionadas.delete(num);
-            } else {
-                estado.seleccionadas.add(num);
-            }
-            // Actualizar visual solo de esa miniatura
-            const item = document.querySelector(`.miniatura-item[data-pagina="${num}"]`);
-            if (item) item.classList.toggle('seleccionada', estado.seleccionadas.has(num));
-            actualizarResumen();
-        }
-
-        // === SELECCION RAPIDA ===
-        function seleccionarTodas() {
-            for (let i = 1; i <= estado.numPaginas; i++) estado.seleccionadas.add(i);
-            actualizarMiniaturas();
-        }
-
-        function deseleccionarTodas() {
-            estado.seleccionadas.clear();
-            actualizarMiniaturas();
-        }
-
-        function invertirSeleccion() {
-            for (let i = 1; i <= estado.numPaginas; i++) {
-                if (estado.seleccionadas.has(i)) estado.seleccionadas.delete(i);
-                else estado.seleccionadas.add(i);
-            }
-            actualizarMiniaturas();
-        }
-
-        function seleccionarPares() {
-            for (let i = 1; i <= estado.numPaginas; i++) {
-                if (i % 2 === 0) estado.seleccionadas.add(i);
-                else estado.seleccionadas.delete(i);
-            }
-            actualizarMiniaturas();
-        }
-
-        function seleccionarImpares() {
-            for (let i = 1; i <= estado.numPaginas; i++) {
-                if (i % 2 !== 0) estado.seleccionadas.add(i);
-                else estado.seleccionadas.delete(i);
-            }
-            actualizarMiniaturas();
-        }
-
-        function actualizarMiniaturas() {
-            // Actualizar estado visual de las miniaturas visibles
-            document.querySelectorAll('.miniatura-item').forEach(item => {
-                const num = parseInt(item.dataset.pagina);
-                item.classList.toggle('seleccionada', estado.seleccionadas.has(num));
-            });
-            actualizarResumen();
-        }
-
-        // === SELECCION POR TEXTO ===
-        function aplicarTextoPaginas() {
-            const texto = document.getElementById('paginas-texto').value.trim();
-            if (!texto) return;
-
-            estado.seleccionadas.clear();
-
-            // Parsear el texto: "1, 3, 5-10, 15"
-            texto.replace(/\s/g, '').split(',').forEach(parte => {
-                if (parte.includes('-')) {
-                    const [ini, fin] = parte.split('-').map(Number);
-                    for (let p = ini; p <= fin; p++) {
-                        if (p >= 1 && p <= estado.numPaginas) estado.seleccionadas.add(p);
-                    }
-                } else {
-                    const p = parseInt(parte);
-                    if (p >= 1 && p <= estado.numPaginas) estado.seleccionadas.add(p);
-                }
-            });
-
-            actualizarMiniaturas();
-        }
-
-        // Aplicar al presionar Enter en el campo de texto
-        document.getElementById('paginas-texto').addEventListener('keydown', e => {
-            if (e.key === 'Enter') aplicarTextoPaginas();
-        });
-
-        // === RESUMEN ===
-        function actualizarResumen() {
-            const n = estado.seleccionadas.size;
-            document.getElementById('num-seleccionadas').textContent = n;
-            document.getElementById('btn-ejecutar').disabled = n === 0;
-        }
-
-        // === FORMATO DE SALIDA ===
-        function seleccionarFormato(valor) {
-            document.getElementById('fmt-unico').checked = valor === 'unico';
-            document.getElementById('fmt-sep').checked   = valor === 'separados';
-            document.getElementById('radio-unico-wrap').classList.toggle('seleccionado', valor === 'unico');
-            document.getElementById('radio-sep-wrap').classList.toggle('seleccionado', valor === 'separados');
-        }
-
-        // Sync clicks directos en los radio buttons
-        document.querySelectorAll('input[name="formato"]').forEach(radio => {
-            radio.addEventListener('change', () => seleccionarFormato(radio.value));
-        });
-
-        // === EJECUTAR ===
-        async function ejecutar() {
-            if (estado.seleccionadas.size === 0) return;
-
-            const paginas = Array.from(estado.seleccionadas).sort((a, b) => a - b);
-            const formato = document.querySelector('input[name="formato"]:checked').value;
-
-            document.getElementById('btn-ejecutar').disabled = true;
-            document.getElementById('btn-ejecutar').textContent = 'Procesando...';
-            ocultarMensaje();
-            mostrarProgreso(0, 'Enviando solicitud...');
-
-            try {
-                const resp = await fetch('/api/v1/convert/extract-pages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        file_id: estado.archivoId,
-                        paginas: paginas,
-                        formato_salida: formato,
-                    })
-                });
-
-                const datos = await resp.json();
-
-                if (!datos.success) {
-                    mostrarError(datos.error?.message || 'Error al iniciar la extraccion');
-                    ocultarProgreso();
-                    resetBoton();
-                    return;
-                }
-
-                estado.trabajoId = datos.data.job_id;
-                seguirProgreso(estado.trabajoId);
-
-            } catch (e) {
-                mostrarError('Error de conexion: ' + e.message);
-                ocultarProgreso();
-                resetBoton();
-            }
-        }
-
-        // === SEGUIMIENTO DE PROGRESO ===
-        function seguirProgreso(jobId) {
-            if (estado.intervalo) clearInterval(estado.intervalo);
-
-            estado.intervalo = setInterval(async () => {
-                try {
-                    const resp  = await fetch(`/api/v1/jobs/${jobId}`);
-                    const datos = await resp.json();
-                    if (!datos.success) return;
-
-                    const trabajo = datos.data;
-                    mostrarProgreso(trabajo.progreso || 0, trabajo.mensaje || '...');
-
-                    if (trabajo.estado === 'completado') {
-                        clearInterval(estado.intervalo);
-                        mostrarProgreso(100, 'Completado');
-                        setTimeout(() => {
-                            window.location.href = `/api/v1/download/${jobId}`;
-                            ocultarProgreso();
-                            resetBoton();
-                            mostrarExito('Extraccion completada. Descarga iniciada.');
-                        }, 600);
-
-                    } else if (trabajo.estado === 'error') {
-                        clearInterval(estado.intervalo);
-                        ocultarProgreso();
-                        resetBoton();
-                        mostrarError('Error: ' + (trabajo.mensaje || 'Error desconocido'));
-                    }
-                } catch (e) {
-                    console.error('Error verificando progreso:', e);
-                }
-            }, 1500);
-        }
-
-        // === HELPERS ===
-        function mostrarProgreso(pct, msg) {
-            document.getElementById('progreso-seccion').style.display = 'block';
-            document.getElementById('barra-progreso').style.width = pct + '%';
-            document.getElementById('progreso-mensaje').textContent = msg;
-            document.getElementById('progreso-porcentaje').textContent = pct + '%';
-        }
-
-        function ocultarProgreso() {
-            document.getElementById('progreso-seccion').style.display = 'none';
-        }
-
-        function mostrarError(msg) {
-            const el = document.getElementById('mensaje-estado');
-            el.className = 'status-message error';
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-
-        function mostrarExito(msg) {
-            const el = document.getElementById('mensaje-estado');
-            el.className = 'status-message success';
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-
-        function ocultarMensaje() {
-            document.getElementById('mensaje-estado').style.display = 'none';
-        }
-
-        function resetBoton() {
-            document.getElementById('btn-ejecutar').disabled = estado.seleccionadas.size === 0;
-            document.getElementById('btn-ejecutar').textContent = 'Extraer Paginas';
-        }
-
-        function formatBytes(bytes) {
-            if (bytes < 1024)        return bytes + ' B';
-            if (bytes < 1048576)     return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / 1048576).toFixed(1) + ' MB';
-        }
-
-        function escHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-    </script>
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 </body>
 </html>

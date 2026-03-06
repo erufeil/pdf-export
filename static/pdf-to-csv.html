@@ -1,803 +1,745 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF a CSV - PDF-Export &amp; Import</title>
-    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 30px;
-            align-items: start;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF a CSV — PDF Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --sidebar:  #161B22;
+      --card:     #1C2128;
+      --border:   #30363D;
+      --red:      #E63946;
+      --orange:   #F4A261;
+      --blue:     #58A6FF;
+      --green:    #3FB950;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
 
-        @media (max-width: 900px) {
-            .content-grid { grid-template-columns: 1fr; }
-        }
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      transition: width 0.2s ease; overflow: hidden;
+    }
+    #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 14px;
+      border-bottom: 1px solid var(--border); min-height: 56px; white-space: nowrap;
+    }
+    .sidebar-logo {
+      width: 28px; height: 28px; background: var(--red); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
+      color: #fff; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    #sidebar.collapsed .sidebar-title { display: none; }
+    .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 10px 16px 4px; white-space: nowrap;
+    }
+    #sidebar.collapsed .nav-section-label { opacity: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      color: var(--muted); text-decoration: none; font-size: 12.5px;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-badge {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--card);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    #sidebar.collapsed .nav-item span:last-child { display: none; }
+    .sidebar-toggle {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      color: var(--muted); font-size: 12px; transition: color 0.15s; white-space: nowrap;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+    .toggle-icon { font-size: 16px; flex-shrink: 0; }
+    #sidebar.collapsed .toggle-label { display: none; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--color-border);
-        }
+    /* ── Main ── */
+    #main {
+      margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+      min-height: 100vh; transition: margin-left 0.2s ease;
+    }
+    #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .option-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; background: var(--sidebar); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+    .topbar-badge {
+      margin-left: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
 
-        .option-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; max-width: 1200px; width: 100%; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: 13px; }
 
-        .option-section h4 {
-            margin-bottom: 12px;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
+    /* ── Two-col layout ── */
+    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
-        /* Info del archivo */
-        .file-info-card {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-            margin-bottom: 20px;
-        }
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 
-        .file-info-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .dropzone-text strong { color: var(--blue); }
+    .hidden { display: none; }
 
-        .file-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--color-primary), #1d4ed8);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
+    /* ── Upload progress ── */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
-        .file-details h3 { margin: 0 0 4px 0; font-size: 1rem; }
-        .file-details p  { margin: 0; color: var(--color-text-light); font-size: 0.85rem; }
+    /* ── Server files ── */
+    .server-toggle {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .server-toggle:hover { border-color: var(--blue); color: var(--text); }
+    .server-files-list { display: none; margin-top: 8px; }
+    .server-files-list.open { display: block; }
+    .server-file-btn {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .server-file-btn:hover { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .server-file-btn .sf-name { font-weight: 500; }
+    .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
-        /* Panel de analisis */
-        .analisis-panel {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-        }
+    /* ── File info ── */
+    .file-info-card { display: none; }
+    .file-info-card.visible { display: flex; align-items: center; gap: 12px; }
+    .file-icon {
+      width: 40px; height: 40px; background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--blue); flex-shrink: 0;
+    }
+    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .file-meta p { font-size: 11.5px; color: var(--muted); }
 
-        .analisis-panel h3 {
-            margin-bottom: 16px;
-            font-size: 1rem;
-        }
+    /* ── Analysis results ── */
+    .analysis-panel { display: none; }
+    .analysis-panel.visible { display: block; }
+    .analyzing-row {
+      display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); padding: 8px 0;
+    }
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--blue);
+      border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        .analisis-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.88rem;
-        }
+    .analysis-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+      border-radius: 7px; margin-bottom: 7px; font-size: 12.5px;
+    }
+    .analysis-item.ok      { background: rgba(63,185,80,0.08);  border: 1px solid rgba(63,185,80,0.25);  color: var(--green); }
+    .analysis-item.warn    { background: rgba(244,162,97,0.08); border: 1px solid rgba(244,162,97,0.25); color: var(--orange); }
+    .analysis-item.info    { background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.2);  color: var(--blue); }
+    .analysis-item.error-item { background: rgba(230,57,70,0.08);  border: 1px solid rgba(230,57,70,0.25);  color: var(--red); }
+    .analysis-icon { flex-shrink: 0; }
 
-        .analisis-item.ok {
-            background: rgba(22, 163, 74, 0.08);
-            border: 1px solid rgba(22, 163, 74, 0.2);
-            color: #15803d;
-        }
+    /* ── Processing panel ── */
+    .processing-panel { display: none; }
+    .processing-panel.visible { display: block; }
+    .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
-        .analisis-item.warn {
-            background: rgba(234, 179, 8, 0.1);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            color: #854d0e;
-        }
+    /* ── Status message ── */
+    .status-message { display: none; padding: 10px 14px; border-radius: 7px; font-size: 12.5px; margin-top: 12px; }
+    .status-message.visible { display: block; }
+    .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
 
-        .analisis-item.error {
-            background: rgba(220, 38, 38, 0.08);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            color: #b91c1c;
-        }
+    /* ── Right col ── */
+    .options-col { display: none; position: sticky; top: 80px; }
+    .options-col.visible { display: block; }
 
-        .analisis-item.info {
-            background: rgba(37, 99, 235, 0.06);
-            border: 1px solid rgba(37, 99, 235, 0.15);
-            color: var(--color-primary);
-        }
+    /* ── Pill buttons ── */
+    .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill-btn {
+      padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px;
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace; font-weight: 500; transition: all 0.15s;
+    }
+    .pill-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .pill-btn.active { background: rgba(88,166,255,0.12); border-color: var(--blue); color: var(--blue); }
 
-        .analisis-icono { font-size: 1rem; flex-shrink: 0; }
+    /* ── Checkbox option ── */
+    .check-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+    .check-row input[type="checkbox"] { width: 15px; height: 15px; margin-top: 1px; cursor: pointer; accent-color: var(--blue); flex-shrink: 0; }
+    .check-row label { font-size: 12.5px; cursor: pointer; line-height: 1.4; }
+    .check-row label small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
 
-        /* Spinner de analisis */
-        .analizando {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--color-text-light);
-            font-size: 0.88rem;
-            padding: 10px 0;
-        }
+    /* ── Encoding badge ── */
+    .encoding-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+      background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.2);
+      border-radius: 6px; font-size: 11.5px; font-family: 'IBM Plex Mono', monospace; color: var(--blue);
+    }
 
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--color-border);
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            flex-shrink: 0;
-        }
+    /* ── Action button ── */
+    .btn-action {
+      width: 100%; padding: 12px; background: var(--green); color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; margin-top: 4px;
+    }
+    .btn-action:hover:not(:disabled) { opacity: 0.85; }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
+    .opt-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+    /* ── Info strip ── */
+    .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(88,166,255,0.05); border: 1px solid rgba(88,166,255,0.15); border-radius: 7px; }
+    .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 
-        /* Toggle checkbox */
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-        .toggle-row input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: var(--color-primary);
-        }
-
-        .toggle-row label {
-            font-size: 0.88rem;
-            cursor: pointer;
-            line-height: 1.4;
-        }
-
-        .toggle-row label small {
-            display: block;
-            color: var(--color-text-light);
-            font-size: 0.77rem;
-            margin-top: 2px;
-        }
-
-        /* Botones de opcion tipo radio pill */
-        .pill-group {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .pill-btn {
-            padding: 6px 14px;
-            border: 2px solid var(--color-border);
-            border-radius: 20px;
-            background: var(--color-background);
-            cursor: pointer;
-            font-size: 0.82rem;
-            transition: all 0.15s;
-            font-family: monospace;
-            font-weight: 600;
-        }
-
-        .pill-btn:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-        }
-
-        .pill-btn.activo {
-            background: var(--color-primary);
-            border-color: var(--color-primary);
-            color: white;
-        }
-
-        /* Info encoding */
-        .encoding-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(37, 99, 235, 0.06);
-            border-radius: 8px;
-            font-size: 0.82rem;
-            color: var(--color-text-light);
-        }
-
-        /* Boton ejecutar */
-        .btn-ejecutar {
-            width: 100%;
-            padding: 14px;
-            background: var(--color-success, #16a34a);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn-ejecutar:hover:not(:disabled) { background: #15803d; }
-
-        .btn-ejecutar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Progreso */
-        .progreso-seccion {
-            margin-top: 20px;
-            display: none;
-        }
-
-        .barra-container {
-            height: 8px;
-            background: var(--color-border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .barra {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 4px;
-            transition: width 0.4s;
-            width: 0%;
-        }
-
-        .progreso-texto {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.82rem;
-            color: var(--color-text-light);
-        }
-
-        /* Lista de archivos disponibles */
-        .archivos-disponibles { margin-top: 20px; }
-
-        .archivo-btn {
-            width: 100%;
-            text-align: left;
-            padding: 10px 14px;
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            background: var(--color-surface);
-            cursor: pointer;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-            transition: all 0.15s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .archivo-btn:hover {
-            border-color: var(--color-primary);
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        .archivo-btn .archivo-nombre { font-weight: 500; }
-        .archivo-btn .archivo-info   { color: var(--color-text-light); font-size: 0.78rem; }
-    </style>
+    /* ── Footer ── */
+    footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>PDF a CSV</h1>
-            <p>Detecta y extrae todas las tablas de un PDF generando un archivo CSV por cada tabla encontrada</p>
-        </header>
 
-        <!-- Zona de carga -->
-        <div id="zona-carga">
-            <div class="upload-area" id="drop-zone">
-                <div class="upload-icon">📊</div>
-                <p>Arrastra un PDF aqui o haz clic para seleccionar</p>
-                <p class="upload-hint">Maximo 1 GB</p>
-                <input type="file" id="file-input" accept=".pdf" style="display:none">
-            </div>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF</div>
+    <span class="sidebar-title">PDF Export</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Tengo un PDF…</div>
+    <a class="nav-item" href="/static/pdf-to-txt.html"><span class="nav-badge">TXT</span><span>PDF a Texto</span></a>
+    <a class="nav-item" href="/static/pdf-to-docx.html"><span class="nav-badge">DOC</span><span>PDF a DOCX</span></a>
+    <a class="nav-item" href="/static/pdf-to-png.html"><span class="nav-badge">PNG</span><span>PDF a PNG</span></a>
+    <a class="nav-item" href="/static/pdf-to-jpg.html"><span class="nav-badge">JPG</span><span>PDF a JPG</span></a>
+    <a class="nav-item" href="/static/pdf-compress.html"><span class="nav-badge">ZIP</span><span>Comprimir PDF</span></a>
+    <a class="nav-item" href="/static/pdf-extract-images.html"><span class="nav-badge">IMG</span><span>Extraer Imágenes</span></a>
+    <a class="nav-item" href="/static/pdf-split.html"><span class="nav-badge">CUT</span><span>Cortar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-rotate.html"><span class="nav-badge">ROT</span><span>Rotar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-merge.html"><span class="nav-badge">MRG</span><span>Unir PDFs</span></a>
+    <a class="nav-item" href="/static/pdf-extract-pages.html"><span class="nav-badge">EXT</span><span>Extraer Páginas</span></a>
+    <a class="nav-item" href="/static/pdf-reorder.html"><span class="nav-badge">ORD</span><span>Reordenar</span></a>
+    <a class="nav-item active" href="/static/pdf-to-csv.html"><span class="nav-badge">CSV</span><span>PDF a CSV</span></a>
+    <div class="nav-section-label">Quiero un PDF…</div>
+    <a class="nav-item" href="/static/html-to-pdf.html"><span class="nav-badge">HTM</span><span>HTML a PDF</span></a>
+    <a class="nav-item" href="/static/img-to-1pdf.html"><span class="nav-badge">IMG</span><span>IMG a PDF</span></a>
+    <div class="nav-section-label">Utilidades</div>
+    <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
+    <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
+    <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+  </div>
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <span class="toggle-icon">⇤</span>
+    <span class="toggle-label">Contraer</span>
+  </div>
+</nav>
 
-            <!-- Archivos ya cargados en servidor -->
-            <div class="archivos-disponibles" id="archivos-disponibles" style="display:none">
-                <h3 style="margin-bottom: 10px; font-size: 0.95rem;">Archivos disponibles en servidor:</h3>
-                <div id="lista-archivos"></div>
-            </div>
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span>Tengo un PDF…</span>
+      <span class="sep">›</span>
+      <span class="current">PDF a CSV</span>
+    </div>
+    <span class="topbar-badge">CSV</span>
+  </div>
 
-            <div id="upload-progreso" class="upload-progress" style="display:none">
-                <div class="upload-progress-bar" id="upload-barra"></div>
-                <span id="upload-texto">Subiendo...</span>
-            </div>
-        </div>
-
-        <!-- Panel principal (oculto hasta cargar archivo) -->
-        <div id="panel-principal" style="display:none">
-            <!-- Info del archivo -->
-            <div class="file-info-card">
-                <div class="file-info-header">
-                    <div class="file-icon">PDF</div>
-                    <div class="file-details">
-                        <h3 id="archivo-nombre">-</h3>
-                        <p id="archivo-info">-</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-grid">
-                <!-- Seccion principal: resultado del analisis -->
-                <section>
-                    <!-- Panel de analisis -->
-                    <div class="analisis-panel">
-                        <h3>Analisis del documento</h3>
-
-                        <!-- Spinner mientras analiza -->
-                        <div id="analisis-cargando" class="analizando">
-                            <div class="spinner"></div>
-                            <span>Analizando tablas en el documento...</span>
-                        </div>
-
-                        <!-- Resultados del analisis -->
-                        <div id="analisis-resultados" style="display:none">
-                            <div id="resultado-tablas" class="analisis-item ok">
-                                <span class="analisis-icono">✓</span>
-                                <span id="texto-tablas">Se encontraron X tablas</span>
-                            </div>
-                            <div id="resultado-iguales" class="analisis-item info" style="display:none">
-                                <span class="analisis-icono">ℹ</span>
-                                <span>Algunas tablas parecen ser la misma en varias paginas (mismas columnas)</span>
-                            </div>
-                            <div id="resultado-encoding" class="analisis-item info">
-                                <span class="analisis-icono">📄</span>
-                                <span>Encoding: <strong>utf-8-bom</strong> (compatible con Excel)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Progreso del trabajo -->
-                    <div id="progreso-seccion" class="progreso-seccion">
-                        <div class="barra-container">
-                            <div class="barra" id="barra-progreso"></div>
-                        </div>
-                        <div class="progreso-texto">
-                            <span id="progreso-mensaje">Procesando...</span>
-                            <span id="progreso-porcentaje">0%</span>
-                        </div>
-                    </div>
-
-                    <!-- Mensajes de estado -->
-                    <div id="mensaje-estado" class="status-message" style="display:none; margin-top: 15px;"></div>
-                </section>
-
-                <!-- Panel de opciones -->
-                <aside class="options-panel">
-                    <h3 style="margin-bottom: 20px;">Opciones</h3>
-
-                    <!-- Unificar tablas iguales -->
-                    <div class="option-section">
-                        <div class="toggle-row" id="toggle-unificar-row">
-                            <input type="checkbox" id="opt-unificar">
-                            <label for="opt-unificar">
-                                Unificar tablas iguales
-                                <small>Si varias tablas tienen las mismas columnas, unirlas en un solo CSV</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Separador -->
-                    <div class="option-section">
-                        <h4>Separador de valores</h4>
-                        <div class="pill-group">
-                            <button class="pill-btn activo" data-sep=";" onclick="setSeparador(this, ';')">
-                                ; &nbsp;(decimales con coma)
-                            </button>
-                            <button class="pill-btn" data-sep="," onclick="setSeparador(this, ',')">
-                                , &nbsp;(decimales con punto)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Saltos de linea -->
-                    <div class="option-section">
-                        <h4>Saltos de linea</h4>
-                        <div class="pill-group">
-                            <button class="pill-btn activo" data-sl="CRLF" onclick="setSaltos(this, 'CRLF')">
-                                CRLF &nbsp;(Windows)
-                            </button>
-                            <button class="pill-btn" data-sl="LF" onclick="setSaltos(this, 'LF')">
-                                LF &nbsp;(Unix)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Encoding (informativo, no configurable) -->
-                    <div class="option-section">
-                        <h4>Encoding</h4>
-                        <div class="encoding-info">
-                            🔤 utf-8-bom
-                        </div>
-                        <p style="font-size: 0.77rem; color: var(--color-text-light); margin-top: 6px;">
-                            Compatible con Excel (doble clic para abrir)
-                        </p>
-                    </div>
-
-                    <button id="btn-ejecutar" class="btn-ejecutar" disabled onclick="ejecutar()">
-                        Extraer Tablas a CSV
-                    </button>
-
-                    <p style="font-size: 0.78rem; color: var(--color-text-light); margin-top: 12px; text-align: center;">
-                        El resultado se descarga como ZIP
-                    </p>
-                </aside>
-            </div>
-        </div>
+  <div class="content">
+    <div class="page-header">
+      <h1>PDF a CSV</h1>
+      <p>Detecta y extrae todas las tablas del PDF generando un archivo CSV por cada tabla encontrada.</p>
     </div>
 
-    <script src="/static/js/common.js"></script>
-    <script>
-        // === ESTADO ===
-        const estado = {
-            archivoId: null,
-            nombreArchivo: '',
-            numTablas: 0,
-            separador: ';',
-            saltosLinea: 'CRLF',
-            trabajoId: null,
-            intervalo: null,
-        };
+    <div class="layout">
+      <!-- ── Columna izquierda ── -->
+      <div>
+        <!-- Drop zone -->
+        <div class="card">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">📊</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un PDF aquí<br>
+              <small>Máximo 1 GB</small>
+            </div>
+            <input type="file" id="file-input" accept=".pdf" class="hidden">
+          </div>
 
-        // === CARGA DE ARCHIVO ===
-        const dropZone  = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const archivo = e.dataTransfer.files[0];
-            if (archivo && archivo.type === 'application/pdf') subirArchivo(archivo);
-        });
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files[0]) subirArchivo(fileInput.files[0]);
-        });
+          <button type="button" class="server-toggle" onclick="toggleServerFiles()">
+            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
+          </button>
+          <div class="server-files-list" id="server-files">
+            <div id="server-files-contenido"></div>
+          </div>
+        </div>
 
-        // Cargar lista de archivos disponibles al iniciar
-        cargarArchivosDisponibles();
+        <!-- File info -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-icon">PDF</div>
+          <div class="file-meta">
+            <h3 id="nombre-archivo">—</h3>
+            <p id="info-archivo">—</p>
+          </div>
+        </div>
 
-        async function cargarArchivosDisponibles() {
-            try {
-                const resp = await fetch('/api/v1/files');
-                const datos = await resp.json();
-                if (!datos.success || !datos.data.length) return;
+        <!-- Analysis panel -->
+        <div class="card analysis-panel" id="analysis-panel">
+          <div class="card-title">Análisis del documento</div>
 
-                const div   = document.getElementById('archivos-disponibles');
-                const lista = document.getElementById('lista-archivos');
-                lista.innerHTML = '';
+          <div class="analyzing-row" id="analisis-cargando">
+            <div class="spinner"></div>
+            <span>Analizando tablas en el documento...</span>
+          </div>
 
-                datos.data.forEach(arch => {
-                    const btn = document.createElement('button');
-                    btn.className = 'archivo-btn';
-                    btn.innerHTML = `
-                        <span class="archivo-nombre">${escHtml(arch.nombre_original)}</span>
-                        <span class="archivo-info">${arch.num_paginas} pag. · ${formatBytes(arch.tamano_bytes || arch.tamano || 0)}</span>
-                    `;
-                    btn.onclick = () => inicializarConArchivo(arch);
-                    lista.appendChild(btn);
-                });
+          <div id="analisis-resultados" class="hidden">
+            <div class="analysis-item ok" id="resultado-tablas">
+              <span class="analysis-icon" id="icono-tablas">✓</span>
+              <span id="texto-tablas">Se encontraron X tablas</span>
+            </div>
+            <div class="analysis-item info hidden" id="resultado-iguales">
+              <span class="analysis-icon">ℹ</span>
+              <span>Algunas tablas parecen ser la misma en varias páginas (mismas columnas)</span>
+            </div>
+            <div class="analysis-item info" id="resultado-encoding">
+              <span class="analysis-icon">📄</span>
+              <span>Encoding: <strong>utf-8-bom</strong> (compatible con Excel)</span>
+            </div>
+          </div>
+        </div>
 
-                div.style.display = 'block';
-            } catch (e) {
-                console.error('Error cargando archivos:', e);
-            }
-        }
+        <!-- Processing -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Procesando</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
 
-        async function subirArchivo(archivo) {
-            // Verificar duplicado antes de subir
-            try {
-                const resp = await fetch('/api/v1/files');
-                const datos = await resp.json();
-                if (datos.success) {
-                    const existente = datos.data.find(f =>
-                        f.nombre_original === archivo.name &&
-                        (f.tamano_bytes || f.tamano) === archivo.size
-                    );
-                    if (existente) {
-                        inicializarConArchivo(existente);
-                        return;
-                    }
-                }
-            } catch (e) { /* continuar con la subida */ }
+        <!-- Status -->
+        <div class="status-message" id="mensaje-estado"></div>
 
-            const progDiv  = document.getElementById('upload-progreso');
-            const barraSub = document.getElementById('upload-barra');
-            const textoSub = document.getElementById('upload-texto');
-            progDiv.style.display = 'block';
+        <div class="info-strip">
+          <p>Los CSV generados usan <strong>utf-8-bom</strong>, compatible con Excel (doble clic para abrir directamente).</p>
+          <p>El resultado se descarga como ZIP.</p>
+        </div>
+      </div>
 
-            const formData = new FormData();
-            formData.append('archivo', archivo);
+      <!-- ── Columna derecha ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Opciones</div>
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/v1/upload');
+          <!-- Unificar -->
+          <div class="check-row" style="margin-bottom:14px">
+            <input type="checkbox" id="opt-unificar">
+            <label for="opt-unificar">
+              Unificar tablas iguales
+              <small>Si varias tablas tienen las mismas columnas, unirlas en un solo CSV</small>
+            </label>
+          </div>
 
-            xhr.upload.onprogress = e => {
-                if (e.lengthComputable) {
-                    const pct = Math.round(e.loaded / e.total * 100);
-                    barraSub.style.width = pct + '%';
-                    textoSub.textContent = `Subiendo... ${pct}%`;
-                }
-            };
+          <hr class="opt-divider">
 
-            xhr.onload = () => {
-                progDiv.style.display = 'none';
-                try {
-                    const datos = JSON.parse(xhr.responseText);
-                    if (datos.success) {
-                        inicializarConArchivo(datos.data);
-                    } else {
-                        alert('Error al subir el archivo: ' + (datos.error?.message || 'Error desconocido'));
-                    }
-                } catch (e) {
-                    alert('Error al procesar la respuesta del servidor');
-                }
-            };
+          <!-- Separador -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Separador</div>
+            <div class="pill-group">
+              <button type="button" class="pill-btn active" data-sep=";" onclick="setSeparador(this, ';')">; (coma)</button>
+              <button type="button" class="pill-btn" data-sep="," onclick="setSeparador(this, ',')">, (punto)</button>
+            </div>
+          </div>
 
-            xhr.onerror = () => {
-                progDiv.style.display = 'none';
-                alert('Error de conexion al subir el archivo');
-            };
+          <hr class="opt-divider">
 
-            xhr.send(formData);
-        }
+          <!-- Saltos de línea -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Saltos de línea</div>
+            <div class="pill-group">
+              <button type="button" class="pill-btn active" data-sl="CRLF" onclick="setSaltos(this, 'CRLF')">CRLF (Win)</button>
+              <button type="button" class="pill-btn" data-sl="LF" onclick="setSaltos(this, 'LF')">LF (Unix)</button>
+            </div>
+          </div>
 
-        function inicializarConArchivo(arch) {
-            estado.archivoId     = arch.id || arch.file_id;
-            estado.nombreArchivo = arch.nombre_original;
-            estado.numTablas     = 0;
+          <hr class="opt-divider">
 
-            // Mostrar info del archivo
-            document.getElementById('archivo-nombre').textContent = arch.nombre_original;
-            document.getElementById('archivo-info').textContent =
-                `${arch.num_paginas} paginas · ${formatBytes(arch.tamano_bytes || arch.tamano || 0)}`;
+          <!-- Encoding (informativo) -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Encoding</div>
+            <div class="encoding-badge">🔤 utf-8-bom</div>
+          </div>
 
-            // Mostrar panel principal, ocultar zona de carga
-            document.getElementById('zona-carga').style.display = 'none';
-            document.getElementById('panel-principal').style.display = 'block';
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Extraer Tablas a CSV
+          </button>
+          <div class="action-note">Resultado en ZIP · máxima compresión</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            // Ocultar resultados previos y mostrar spinner
-            document.getElementById('analisis-resultados').style.display = 'none';
-            document.getElementById('analisis-cargando').style.display = 'flex';
-            document.getElementById('btn-ejecutar').disabled = true;
-            ocultarMensaje();
+  <footer>PDF Export — PDF a CSV</footer>
+</div>
 
-            // Analizar tablas de forma sincrona
-            analizarTablas(estado.archivoId);
-        }
+<script src="/static/js/common.js"></script>
+<script>
+  const estado = {
+    archivoId: null,
+    numTablas:  0,
+    separador:  ';',
+    saltosLinea: 'CRLF',
+    trabajoId:  null,
+  };
 
-        // === ANALISIS DE TABLAS ===
-        async function analizarTablas(archivoId) {
-            try {
-                const resp = await fetch('/api/v1/convert/to-csv/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ file_id: archivoId })
-                });
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 
-                const datos = await resp.json();
+  // ── Sidebar ──
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
 
-                document.getElementById('analisis-cargando').style.display = 'none';
-                document.getElementById('analisis-resultados').style.display = 'block';
+  // ── Drop zone ──
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') subirArchivo(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) subirArchivo(fileInput.files[0]); });
 
-                if (!datos.success) {
-                    mostrarResultadoError(datos.error?.message || 'Error en el analisis');
-                    return;
-                }
+  // ── Server files ──
+  let serverOpen = false;
+  function toggleServerFiles() {
+    serverOpen = !serverOpen;
+    document.getElementById('server-files').classList.toggle('open', serverOpen);
+    document.getElementById('server-arrow').textContent = serverOpen ? '▾' : '▸';
+  }
 
-                const info = datos.data;
-                estado.numTablas = info.num_tablas;
+  async function cargarArchivosServidor() {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (!d.success || !d.data.length) return;
+      const cont = document.getElementById('server-files-contenido');
+      d.data.forEach(a => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'server-file-btn';
+        btn.innerHTML = `<span class="sf-name">${escHtml(a.nombre_original)}</span><span class="sf-meta">${a.num_paginas} pág · ${formatBytes(a.tamano_bytes)}</span>`;
+        btn.onclick = () => inicializarConArchivo(a);
+        cont.appendChild(btn);
+      });
+    } catch(e) { console.warn('Error archivos servidor:', e); }
+  }
+  cargarArchivosServidor();
 
-                const divTablas   = document.getElementById('resultado-tablas');
-                const textoTablas = document.getElementById('texto-tablas');
-                const divIguales  = document.getElementById('resultado-iguales');
+  // ── Upload ──
+  async function subirArchivo(archivo) {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (d.success) {
+        const dup = d.data.find(f => f.nombre_original === archivo.name && f.tamano_bytes === archivo.size);
+        if (dup) { inicializarConArchivo(dup); return; }
+      }
+    } catch(e) {}
 
-                if (info.num_tablas === 0) {
-                    // Sin tablas
-                    divTablas.className = 'analisis-item warn';
-                    divTablas.querySelector('.analisis-icono').textContent = '⚠';
-                    textoTablas.textContent = 'WARNING: No se detectaron tablas en el documento';
-                    document.getElementById('btn-ejecutar').disabled = true;
-                } else {
-                    // Hay tablas
-                    divTablas.className = 'analisis-item ok';
-                    divTablas.querySelector('.analisis-icono').textContent = '✓';
-                    textoTablas.textContent = info.mensaje;
-                    document.getElementById('btn-ejecutar').disabled = false;
-                }
+    const progDiv = document.getElementById('progreso-carga');
+    const barra   = document.getElementById('barra-carga');
+    const texto   = document.getElementById('texto-carga');
+    progDiv.style.display = 'block';
 
-                // Mostrar aviso si hay tablas que parecen iguales O si el doc es multi-pagina
-                // (hay_continuaciones indica que puede haber tablas que continuan entre paginas)
-                if (info.tablas_iguales || info.hay_continuaciones) {
-                    divIguales.style.display = 'flex';
-                } else {
-                    divIguales.style.display = 'none';
-                }
+    const fd = new FormData();
+    fd.append('archivo', archivo);
+    fd.append('nombre', archivo.name);
+    fd.append('tamano', archivo.size);
+    fd.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
 
-                // Checkbox de unificar: activo siempre que haya tablas (el usuario decide)
-                document.getElementById('toggle-unificar-row').style.opacity =
-                    info.num_tablas > 0 ? '1' : '0.5';
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        barra.style.width = pct + '%';
+        texto.textContent = `Subiendo... ${pct}%`;
+      }
+    };
+    xhr.onload = () => {
+      progDiv.style.display = 'none';
+      try {
+        const d = JSON.parse(xhr.responseText);
+        if (d.success) inicializarConArchivo(d.data);
+        else mostrarMensaje('error', 'Error al subir: ' + (d.error?.message || 'Error'));
+      } catch(e) { mostrarMensaje('error', 'Error al procesar respuesta'); }
+    };
+    xhr.onerror = () => { progDiv.style.display = 'none'; mostrarMensaje('error', 'Error de conexión'); };
+    xhr.send(fd);
+  }
 
-            } catch (e) {
-                document.getElementById('analisis-cargando').style.display = 'none';
-                document.getElementById('analisis-resultados').style.display = 'block';
-                mostrarResultadoError('Error al analizar el documento: ' + e.message);
-            }
-        }
+  function inicializarConArchivo(arch) {
+    estado.archivoId = arch.id;
+    estado.numTablas = 0;
 
-        function mostrarResultadoError(msg) {
-            const div = document.getElementById('resultado-tablas');
-            div.className = 'analisis-item error';
-            div.querySelector('.analisis-icono').textContent = '✗';
-            document.getElementById('texto-tablas').textContent = msg;
-            document.getElementById('resultado-iguales').style.display = 'none';
-            document.getElementById('btn-ejecutar').disabled = true;
-        }
+    document.getElementById('nombre-archivo').textContent = arch.nombre_original;
+    document.getElementById('info-archivo').textContent   = `${arch.num_paginas} páginas · ${formatBytes(arch.tamano_bytes)}`;
+    document.getElementById('file-info-card').classList.add('visible');
+    document.getElementById('options-col').classList.add('visible');
 
-        // === OPCIONES ===
-        function setSeparador(btn, valor) {
-            estado.separador = valor;
-            document.querySelectorAll('[data-sep]').forEach(b => b.classList.remove('activo'));
-            btn.classList.add('activo');
-        }
+    // Reset analysis panel
+    document.getElementById('analysis-panel').classList.add('visible');
+    document.getElementById('analisis-cargando').style.display = 'flex';
+    document.getElementById('analisis-resultados').classList.add('hidden');
+    document.getElementById('btn-ejecutar').disabled = true;
+    ocultarMensaje();
 
-        function setSaltos(btn, valor) {
-            estado.saltosLinea = valor;
-            document.querySelectorAll('[data-sl]').forEach(b => b.classList.remove('activo'));
-            btn.classList.add('activo');
-        }
+    analizarTablas(arch.id);
+  }
 
-        // === EJECUTAR ===
-        async function ejecutar() {
-            if (estado.numTablas === 0) return;
+  // ── Análisis ──
+  async function analizarTablas(archivoId) {
+    try {
+      const r = await fetch(`${API}/convert/to-csv/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: archivoId })
+      });
+      const d = await r.json();
 
-            const unificarIguales = document.getElementById('opt-unificar').checked;
+      document.getElementById('analisis-cargando').style.display = 'none';
+      document.getElementById('analisis-resultados').classList.remove('hidden');
 
-            document.getElementById('btn-ejecutar').disabled = true;
-            document.getElementById('btn-ejecutar').textContent = 'Procesando...';
-            ocultarMensaje();
-            mostrarProgreso(0, 'Enviando solicitud...');
+      if (!d.success) { mostrarResultadoError(d.error?.message || 'Error en el análisis'); return; }
 
-            try {
-                const resp = await fetch('/api/v1/convert/to-csv', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        file_id: estado.archivoId,
-                        opciones: {
-                            unificar_iguales: unificarIguales,
-                            separador: estado.separador,
-                            saltos_linea: estado.saltosLinea,
-                        }
-                    })
-                });
+      const info = d.data;
+      estado.numTablas = info.num_tablas;
 
-                const datos = await resp.json();
+      const divTablas = document.getElementById('resultado-tablas');
+      const icono     = document.getElementById('icono-tablas');
 
-                if (!datos.success) {
-                    mostrarError(datos.error?.message || 'Error al iniciar la extraccion');
-                    ocultarProgreso();
-                    resetBoton();
-                    return;
-                }
+      if (info.num_tablas === 0) {
+        divTablas.className = 'analysis-item warn';
+        icono.textContent = '⚠';
+        document.getElementById('texto-tablas').textContent = 'WARNING: No se detectaron tablas en el documento';
+        document.getElementById('btn-ejecutar').disabled = true;
+      } else {
+        divTablas.className = 'analysis-item ok';
+        icono.textContent = '✓';
+        document.getElementById('texto-tablas').textContent = info.mensaje;
+        document.getElementById('btn-ejecutar').disabled = false;
+      }
 
-                estado.trabajoId = datos.data.job_id;
-                seguirProgreso(estado.trabajoId);
+      const divIguales = document.getElementById('resultado-iguales');
+      if (info.tablas_iguales || info.hay_continuaciones) divIguales.classList.remove('hidden');
+      else divIguales.classList.add('hidden');
 
-            } catch (e) {
-                mostrarError('Error de conexion: ' + e.message);
-                ocultarProgreso();
-                resetBoton();
-            }
-        }
+    } catch(e) {
+      document.getElementById('analisis-cargando').style.display = 'none';
+      document.getElementById('analisis-resultados').classList.remove('hidden');
+      mostrarResultadoError('Error al analizar: ' + e.message);
+    }
+  }
 
-        // === SEGUIMIENTO DE PROGRESO ===
-        function seguirProgreso(jobId) {
-            if (estado.intervalo) clearInterval(estado.intervalo);
+  function mostrarResultadoError(msg) {
+    const div = document.getElementById('resultado-tablas');
+    div.className = 'analysis-item error-item';
+    document.getElementById('icono-tablas').textContent = '✗';
+    document.getElementById('texto-tablas').textContent = msg;
+    document.getElementById('resultado-iguales').classList.add('hidden');
+    document.getElementById('btn-ejecutar').disabled = true;
+  }
 
-            estado.intervalo = setInterval(async () => {
-                try {
-                    const resp  = await fetch(`/api/v1/jobs/${jobId}`);
-                    const datos = await resp.json();
-                    if (!datos.success) return;
+  // ── Opciones ──
+  function setSeparador(btn, valor) {
+    estado.separador = valor;
+    document.querySelectorAll('[data-sep]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
-                    const trabajo = datos.data;
-                    mostrarProgreso(trabajo.progreso || 0, trabajo.mensaje || '...');
+  function setSaltos(btn, valor) {
+    estado.saltosLinea = valor;
+    document.querySelectorAll('[data-sl]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
-                    if (trabajo.estado === 'completado') {
-                        clearInterval(estado.intervalo);
-                        mostrarProgreso(100, 'Completado');
-                        setTimeout(() => {
-                            window.location.href = `/api/v1/download/${jobId}`;
-                            ocultarProgreso();
-                            resetBoton();
-                            mostrarExito('Extraccion completada. Descarga iniciada.');
-                        }, 600);
+  // ── Ejecutar ──
+  async function ejecutar() {
+    if (estado.numTablas === 0) return;
 
-                    } else if (trabajo.estado === 'error') {
-                        clearInterval(estado.intervalo);
-                        ocultarProgreso();
-                        resetBoton();
-                        mostrarError('Error: ' + (trabajo.mensaje || 'Error desconocido'));
-                    }
-                } catch (e) {
-                    console.error('Error verificando progreso:', e);
-                }
-            }, 1500);
-        }
+    const unificar = document.getElementById('opt-unificar').checked;
+    const btn = document.getElementById('btn-ejecutar');
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
+    ocultarMensaje();
+    mostrarProcesando(0, 'Enviando solicitud...');
 
-        // === HELPERS ===
-        function mostrarProgreso(pct, msg) {
-            document.getElementById('progreso-seccion').style.display = 'block';
-            document.getElementById('barra-progreso').style.width = pct + '%';
-            document.getElementById('progreso-mensaje').textContent = msg;
-            document.getElementById('progreso-porcentaje').textContent = pct + '%';
-        }
+    try {
+      const r = await fetch(`${API}/convert/to-csv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: estado.archivoId,
+          opciones: {
+            unificar_iguales: unificar,
+            separador:        estado.separador,
+            saltos_linea:     estado.saltosLinea,
+          }
+        })
+      });
+      const d = await r.json();
 
-        function ocultarProgreso() {
-            document.getElementById('progreso-seccion').style.display = 'none';
-        }
+      if (!d.success) {
+        mostrarMensaje('error', d.error?.message || 'Error al iniciar la extracción');
+        ocultarProcesando(); resetBoton(); return;
+      }
 
-        function mostrarError(msg) {
-            const el = document.getElementById('mensaje-estado');
-            el.className = 'status-message error';
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
+      estado.trabajoId = d.data.job_id;
+      monitorearProgreso(estado.trabajoId);
 
-        function mostrarExito(msg) {
-            const el = document.getElementById('mensaje-estado');
-            el.className = 'status-message success';
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
+    } catch(e) {
+      mostrarMensaje('error', 'Error de conexión: ' + e.message);
+      ocultarProcesando(); resetBoton();
+    }
+  }
 
-        function ocultarMensaje() {
-            document.getElementById('mensaje-estado').style.display = 'none';
-        }
+  // ── SSE + fallback polling ──
+  function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+    sse.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        mostrarProcesando(d.progreso || 0, d.mensaje || '...');
+        if (d.estado === 'completado') { sse.close(); finalizarExito(jobId); }
+        else if (d.estado === 'error') { sse.close(); finalizarConError(d.mensaje || 'Error'); }
+      } catch(_) {}
+    };
+    sse.onerror = () => { sse.close(); verificarEstadoFinal(jobId); };
+  }
 
-        function resetBoton() {
-            document.getElementById('btn-ejecutar').disabled = estado.numTablas === 0;
-            document.getElementById('btn-ejecutar').textContent = 'Extraer Tablas a CSV';
-        }
+  async function verificarEstadoFinal(jobId) {
+    try {
+      const r = await fetch(`${API}/jobs/${jobId}`);
+      const d = await r.json();
+      if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+      const job = d.data;
+      mostrarProcesando(job.progreso || 0, job.mensaje || '...');
+      if (job.estado === 'completado') finalizarExito(jobId);
+      else if (job.estado === 'error') finalizarConError(job.mensaje || 'Error');
+      else setTimeout(() => verificarEstadoFinal(jobId), 2000);
+    } catch(e) { setTimeout(() => verificarEstadoFinal(jobId), 2000); }
+  }
 
-        function formatBytes(bytes) {
-            if (!bytes) return '0 B';
-            if (bytes < 1024)    return bytes + ' B';
-            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / 1048576).toFixed(1) + ' MB';
-        }
+  function finalizarExito(jobId) {
+    mostrarProcesando(100, 'Completado');
+    setTimeout(() => {
+      window.PDFExport.descargarResultado(jobId);
+      ocultarProcesando();
+      resetBoton();
+      mostrarMensaje('success', 'Extracción completada. Descarga iniciada.');
+    }, 600);
+  }
 
-        function escHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-    </script>
+  function finalizarConError(msg) {
+    ocultarProcesando(); resetBoton();
+    mostrarMensaje('error', 'Error: ' + msg);
+  }
+
+  // ── Helpers UI ──
+  function mostrarProcesando(pct, msg) {
+    document.getElementById('processing-panel').classList.add('visible');
+    document.getElementById('barra-proceso').style.width = pct + '%';
+    document.getElementById('texto-proceso').textContent = msg;
+    document.getElementById('porcentaje-proceso').textContent = pct + '%';
+  }
+  function ocultarProcesando() { document.getElementById('processing-panel').classList.remove('visible'); }
+
+  function mostrarMensaje(tipo, msg) {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message visible ' + tipo;
+    el.textContent = msg;
+  }
+  function ocultarMensaje() {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message'; el.textContent = '';
+  }
+
+  function resetBoton() {
+    const btn = document.getElementById('btn-ejecutar');
+    btn.disabled = estado.numTablas === 0;
+    btn.textContent = 'Extraer Tablas a CSV';
+  }
+
+  function formatBytes(b) {
+    if (!b) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 </body>
 </html>

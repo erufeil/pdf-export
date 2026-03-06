@@ -1,417 +1,529 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Migrar SQL - PDF-Export & Import</title>
-    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        /* Estilos especificos para NDM a secuencia de tablas */
-        .ndm-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 25px;
-            margin-top: 20px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migrar SQL — PDF Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --sidebar:  #161B22;
+      --card:     #1C2128;
+      --border:   #30363D;
+      --red:      #E63946;
+      --orange:   #F4A261;
+      --blue:     #58A6FF;
+      --green:    #3FB950;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-            height: fit-content;
-        }
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      transition: width 0.2s ease; overflow: hidden;
+    }
+    #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 14px;
+      border-bottom: 1px solid var(--border); min-height: 56px; white-space: nowrap;
+    }
+    .sidebar-logo {
+      width: 28px; height: 28px; background: var(--red); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
+      color: #fff; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    #sidebar.collapsed .sidebar-title { display: none; }
+    .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 10px 16px 4px; white-space: nowrap;
+    }
+    #sidebar.collapsed .nav-section-label { opacity: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      color: var(--muted); text-decoration: none; font-size: 12.5px;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-badge {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--card);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    #sidebar.collapsed .nav-item span:last-child { display: none; }
+    .sidebar-toggle {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      color: var(--muted); font-size: 12px; transition: color 0.15s; white-space: nowrap;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+    .toggle-icon { font-size: 16px; flex-shrink: 0; }
+    #sidebar.collapsed .toggle-label { display: none; }
 
-        /* Vista previa del resultado */
-        .preview-section {
-            margin-top: 20px;
-        }
+    /* ── Main ── */
+    #main {
+      margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+      min-height: 100vh; transition: margin-left 0.2s ease;
+    }
+    #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; background: var(--sidebar); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+    .topbar-badge {
+      margin-left: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
 
-        .preview-container {
-            background: var(--color-background);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            padding: 15px;
-            max-height: 500px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; max-width: 1200px; width: 100%; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: 13px; }
 
-        .preview-placeholder {
-            color: var(--color-text-light);
-            font-style: italic;
-            text-align: center;
-            padding: 40px;
-        }
+    /* ── Two-col layout ── */
+    .layout { display: grid; grid-template-columns: 1fr 270px; gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
-        .preview-stats {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 
-        /* Info del archivo */
-        .file-info-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--color-background);
-            padding: 12px 20px;
-            border-radius: var(--radius-md);
-            margin-bottom: 20px;
-        }
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .dropzone:hover, .dropzone.dragover { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; font-family: 'IBM Plex Mono', monospace; }
+    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .dropzone-text strong { color: var(--blue); }
+    .dropzone-hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+    .hidden { display: none; }
 
-        .file-info-name {
-            font-weight: 500;
-        }
+    /* ── Upload progress ── */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
-        .file-info-size {
-            color: var(--color-primary);
-            font-weight: 600;
-        }
+    /* ── File info ── */
+    .file-info-card { display: none; }
+    .file-info-card.visible { display: flex; align-items: center; gap: 12px; }
+    .file-icon-ndm {
+      width: 40px; height: 40px; background: rgba(244,162,97,0.12); border: 1px solid rgba(244,162,97,0.3);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--orange); flex-shrink: 0;
+    }
+    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .file-meta p { font-size: 11.5px; color: var(--muted); }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .ndm-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    /* ── Preview section ── */
+    .preview-section { display: none; }
+    .preview-section.visible { display: block; }
+    .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .preview-title { font-size: 13px; font-weight: 600; }
+    .preview-stats { font-size: 12px; color: var(--muted); }
+    .preview-stats strong { color: var(--blue); font-family: 'IBM Plex Mono', monospace; }
+    .preview-box {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; max-height: 440px; overflow-y: auto;
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7;
+      white-space: pre-wrap; word-wrap: break-word; color: var(--text);
+    }
+    .preview-placeholder { color: var(--muted); font-style: italic; text-align: center; padding: 30px; }
+
+    /* ── Processing panel ── */
+    .processing-panel { display: none; }
+    .processing-panel.visible { display: block; }
+    .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+    /* ── Status message ── */
+    .status-message { display: none; padding: 10px 14px; border-radius: 7px; font-size: 12.5px; margin-top: 12px; }
+    .status-message.visible { display: block; }
+    .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+
+    /* ── Right col ── */
+    .options-col { display: none; position: sticky; top: 80px; }
+    .options-col.visible { display: block; }
+    .desc-text { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+    .btn-action {
+      width: 100%; padding: 12px; background: var(--orange); color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; margin-bottom: 8px;
+    }
+    .btn-action:hover:not(:disabled) { opacity: 0.85; }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-note { font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* ── Info strip ── */
+    .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(244,162,97,0.05); border: 1px solid rgba(244,162,97,0.15); border-radius: 7px; }
+    .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Footer ── */
+    footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo" style="font-size: 2rem;"><a href="/" style="color: inherit; text-decoration: none;">PDF-Export &amp; Import</a></h1>
-            <p class="subtitle">Orden de migracion de tablas SQL</p>
-        </header>
 
-        <main class="main-content">
-            <div class="ndm-container">
-                <!-- Panel principal -->
-                <section class="main-panel">
-                    <!-- Zona de carga -->
-                    <div id="zona-carga" class="upload-zone">
-                        <div class="upload-icon">NDM</div>
-                        <p class="upload-text">Arrastra un archivo .ndm2 aqui</p>
-                        <p class="upload-hint">o haz clic para seleccionar (Navicat Data Modeler)</p>
-                    </div>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF</div>
+    <span class="sidebar-title">PDF Export</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Tengo un PDF…</div>
+    <a class="nav-item" href="/static/pdf-to-txt.html"><span class="nav-badge">TXT</span><span>PDF a Texto</span></a>
+    <a class="nav-item" href="/static/pdf-to-docx.html"><span class="nav-badge">DOC</span><span>PDF a DOCX</span></a>
+    <a class="nav-item" href="/static/pdf-to-png.html"><span class="nav-badge">PNG</span><span>PDF a PNG</span></a>
+    <a class="nav-item" href="/static/pdf-to-jpg.html"><span class="nav-badge">JPG</span><span>PDF a JPG</span></a>
+    <a class="nav-item" href="/static/pdf-compress.html"><span class="nav-badge">ZIP</span><span>Comprimir PDF</span></a>
+    <a class="nav-item" href="/static/pdf-extract-images.html"><span class="nav-badge">IMG</span><span>Extraer Imágenes</span></a>
+    <a class="nav-item" href="/static/pdf-split.html"><span class="nav-badge">CUT</span><span>Cortar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-rotate.html"><span class="nav-badge">ROT</span><span>Rotar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-merge.html"><span class="nav-badge">MRG</span><span>Unir PDFs</span></a>
+    <a class="nav-item" href="/static/pdf-extract-pages.html"><span class="nav-badge">EXT</span><span>Extraer Páginas</span></a>
+    <a class="nav-item" href="/static/pdf-reorder.html"><span class="nav-badge">ORD</span><span>Reordenar</span></a>
+    <a class="nav-item" href="/static/pdf-to-csv.html"><span class="nav-badge">CSV</span><span>PDF a CSV</span></a>
+    <div class="nav-section-label">Quiero un PDF…</div>
+    <a class="nav-item" href="/static/html-to-pdf.html"><span class="nav-badge">HTM</span><span>HTML a PDF</span></a>
+    <a class="nav-item" href="/static/img-to-1pdf.html"><span class="nav-badge">IMG</span><span>IMG a PDF</span></a>
+    <div class="nav-section-label">Utilidades</div>
+    <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
+    <a class="nav-item active" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
+    <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+  </div>
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <span class="toggle-icon">⇤</span>
+    <span class="toggle-label">Contraer</span>
+  </div>
+</nav>
 
-                    <!-- Progreso de carga -->
-                    <div id="progreso-carga" class="progress-large" style="display: none;">
-                        <div class="progress-bar-large">
-                            <div class="progress-fill" id="barra-progreso"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span id="texto-progreso">Subiendo...</span>
-                            <span id="porcentaje-progreso">0%</span>
-                        </div>
-                    </div>
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span>Utilidades</span>
+      <span class="sep">›</span>
+      <span class="current">Migrar SQL</span>
+    </div>
+    <span class="topbar-badge">NDM</span>
+  </div>
 
-                    <!-- Info del archivo cargado -->
-                    <div id="info-archivo" class="file-info-bar" style="display: none;">
-                        <span class="file-info-name" id="nombre-archivo">archivo.ndm2</span>
-                        <span class="file-info-size" id="tamano-archivo">0 KB</span>
-                    </div>
-
-                    <!-- Vista previa del resultado -->
-                    <div id="seccion-preview" class="preview-section" style="display: none;">
-                        <div class="preview-header">
-                            <h3>Resultado</h3>
-                            <div class="preview-stats">
-                                <span id="preview-tablas">0</span> tablas encontradas
-                            </div>
-                        </div>
-                        <div id="preview-container" class="preview-container">
-                            <p class="preview-placeholder">El resultado aparecera aqui...</p>
-                        </div>
-                    </div>
-
-                    <!-- Mensajes de estado -->
-                    <div id="mensaje-estado" class="status-message" style="display: none;"></div>
-                </section>
-
-                <!-- Panel de opciones -->
-                <aside id="panel-opciones" class="options-panel" style="display: none;">
-                    <h3 style="margin-bottom: 15px;">Migrar SQL</h3>
-
-                    <p style="font-size: 0.9rem; color: var(--color-text-light); margin-bottom: 20px;">
-                        Analiza las tablas del archivo Navicat Data Modeler (.ndm2) y genera el orden
-                        secuencial de migracion respetando las dependencias de Foreign Keys.
-                    </p>
-
-                    <p style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 20px;">
-                        El resultado es un archivo de texto plano (.txt) con la lista ordenada de tablas.
-                    </p>
-
-                    <!-- Botones de accion -->
-                    <div class="action-buttons" style="margin-top: 25px;">
-                        <button id="btn-ejecutar" class="btn btn-primary" disabled>
-                            Generar Orden
-                        </button>
-                    </div>
-
-                    <!-- Progreso de procesamiento -->
-                    <div id="progreso-proceso" class="progress-large" style="display: none; margin-top: 15px;">
-                        <div class="progress-bar-large">
-                            <div class="progress-fill" id="barra-proceso"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span id="texto-proceso">Procesando...</span>
-                            <span id="porcentaje-proceso">0%</span>
-                        </div>
-                    </div>
-                </aside>
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF para la Soberania Digital Empresarial</p>
-            <p class="footer-info"><a href="/">Volver al inicio</a></p>
-            <p class="footer-info" id="app-version"></p>
-
-            <div class="footer-legal" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border); font-size: 0.85rem; color: var(--color-text-light); text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--color-text);">Aviso de uso y alcance</h4>
-                <p style="margin-bottom: 10px;">Esta aplicacion y su API estan destinadas a uso privado.
-                No se implementan claves de acceso a nivel de aplicacion con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-
-                <p style="margin-bottom: 10px;">Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ).
-                En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticacion, quedando dicha configuracion bajo el criterio y responsabilidad del usuario.</p>
-
-                <p style="margin-bottom: 10px;">Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberania digital sobre los recursos informaticos utilizados para el procesamiento de documentos.</p>
-
-                <p>El codigo y la aplicacion se distribuyen bajo una licencia de uso publico y amplio, permitiendo su utilizacion, modificacion y adaptacion conforme a dicho marco.</p>
-            </div>
-        </footer>
+  <div class="content">
+    <div class="page-header">
+      <h1>Migrar SQL — Orden de Tablas</h1>
+      <p>Analiza un archivo Navicat Data Modeler (.ndm2) y genera el orden secuencial de migración respetando las dependencias de Foreign Keys.</p>
     </div>
 
-    <script src="/config.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script>
-        /**
-         * NDM a Secuencia de Tablas SQL - JavaScript
-         */
+    <div class="layout">
+      <!-- ── Columna izquierda ── -->
+      <div>
+        <!-- Drop zone -->
+        <div class="card" id="card-upload">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">NDM</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un archivo aquí<br>
+              <span class="dropzone-hint">Navicat Data Modeler (.ndm2) o JSON</span>
+            </div>
+          </div>
 
-        // Variables globales
-        let archivoId = null;
-        let archivoInfo = null;
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
+        </div>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar zona de carga (acepta .ndm2 y .json)
-            const zonaCarga = document.getElementById('zona-carga');
+        <!-- File info -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-icon-ndm">NDM2</div>
+          <div class="file-meta">
+            <h3 id="nombre-archivo">—</h3>
+            <p id="info-archivo">—</p>
+          </div>
+        </div>
 
-            // Configurar drag & drop manual (no usa DropZone porque acepta .ndm2, no .pdf)
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evento => {
-                zonaCarga.addEventListener(evento, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-            });
+        <!-- Preview -->
+        <div class="card preview-section" id="preview-section">
+          <div class="preview-header">
+            <span class="preview-title">Resultado</span>
+            <span class="preview-stats"><strong id="preview-tablas">0</strong> tablas encontradas</span>
+          </div>
+          <div class="preview-box" id="preview-box">
+            <span class="preview-placeholder">El resultado aparecerá aquí…</span>
+          </div>
+        </div>
 
-            ['dragenter', 'dragover'].forEach(evento => {
-                zonaCarga.addEventListener(evento, () => zonaCarga.classList.add('dragover'));
-            });
+        <!-- Processing -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Procesando</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
 
-            ['dragleave', 'drop'].forEach(evento => {
-                zonaCarga.addEventListener(evento, () => zonaCarga.classList.remove('dragover'));
-            });
+        <!-- Status -->
+        <div class="status-message" id="mensaje-estado"></div>
 
-            zonaCarga.addEventListener('drop', (e) => {
-                const archivos = e.dataTransfer.files;
-                if (archivos.length > 0) manejarArchivo(archivos[0]);
-            });
+        <div class="info-strip">
+          <p>El resultado se descarga automáticamente como un archivo .TXT compatible con el Bloc de Notas de Windows (CRLF).</p>
+        </div>
+      </div>
 
-            zonaCarga.addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.ndm2,.json';
-                input.addEventListener('change', () => {
-                    if (input.files.length > 0) manejarArchivo(input.files[0]);
-                });
-                input.click();
-            });
+      <!-- ── Columna derecha ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Configuración</div>
+          <p class="desc-text">
+            Analiza las Foreign Keys del archivo NDM2 y ordena las tablas para que las dependencias se migren primero.<br><br>
+            Resultado: lista numerada de tablas en orden de migración.
+          </p>
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutarConversion()">
+            Generar Orden
+          </button>
+          <div class="action-note">Descarga automática al terminar</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            // Boton ejecutar
-            document.getElementById('btn-ejecutar').addEventListener('click', ejecutarConversion);
+  <footer>PDF Export — Migrar SQL (NDM2)</footer>
+</div>
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+  let archivoId = null;
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
+  // ── Sidebar ──
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
+
+  // ── Drop zone ──
+  const dropZone = document.getElementById('drop-zone');
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+    dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
+  });
+  ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, () => dropZone.classList.add('dragover')));
+  ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, () => dropZone.classList.remove('dragover')));
+
+  dropZone.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) manejarArchivo(f);
+  });
+
+  dropZone.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.ndm2,.json';
+    input.addEventListener('change', () => { if (input.files[0]) manejarArchivo(input.files[0]); });
+    input.click();
+  });
+
+  // ── Subir archivo ──
+  async function manejarArchivo(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['ndm2', 'json'].includes(ext)) {
+      mostrarMensaje('error', 'Solo se permiten archivos .ndm2 o .json');
+      return;
+    }
+
+    const progDiv = document.getElementById('progreso-carga');
+    const barra   = document.getElementById('barra-carga');
+    const texto   = document.getElementById('texto-carga');
+    progDiv.style.display = 'block';
+
+    const fd = new FormData();
+    fd.append('archivo', file);
+    fd.append('nombre', file.name);
+    fd.append('tamano', file.size);
+    fd.append('fecha_modificacion', new Date(file.lastModified).toISOString());
+
+    try {
+      const resultado = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            barra.style.width = pct + '%';
+            texto.textContent = `Subiendo... ${pct}%`;
+          }
         });
+        xhr.addEventListener('load', () => {
+          try {
+            const r = JSON.parse(xhr.responseText);
+            if (xhr.status === 200 && r.success) resolve(r.data);
+            else reject(new Error(r.error?.message || 'Error al subir'));
+          } catch(e) { reject(e); }
+        });
+        xhr.addEventListener('error', () => reject(new Error('Error de conexión')));
+        xhr.open('POST', `${API}/upload`);
+        xhr.send(fd);
+      });
 
-        /**
-         * Maneja el archivo seleccionado o arrastrado.
-         */
-        async function manejarArchivo(file) {
-            // Validar extension
-            const extension = file.name.split('.').pop().toLowerCase();
-            if (!['ndm2', 'json'].includes(extension)) {
-                mostrarError('Solo se permiten archivos .ndm2 o .json');
-                return;
-            }
+      archivoId = resultado.id;
+      progDiv.style.display = 'none';
 
-            // Mostrar progreso de carga
-            document.getElementById('zona-carga').style.display = 'none';
-            document.getElementById('progreso-carga').style.display = 'block';
+      document.getElementById('nombre-archivo').textContent = file.name;
+      document.getElementById('info-archivo').textContent   = formatBytes(file.size);
+      document.getElementById('file-info-card').classList.add('visible');
+      document.getElementById('options-col').classList.add('visible');
+      document.getElementById('btn-ejecutar').disabled = false;
+      ocultarMensaje();
 
-            // Subir archivo usando XMLHttpRequest para progreso
-            const formData = new FormData();
-            formData.append('archivo', file);
-            formData.append('nombre', file.name);
-            formData.append('tamano', file.size);
-            formData.append('fecha_modificacion', new Date(file.lastModified).toISOString());
+    } catch(err) {
+      progDiv.style.display = 'none';
+      mostrarMensaje('error', err.message);
+    }
+  }
 
-            try {
-                const resultado = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
+  // ── Ejecutar conversión ──
+  async function ejecutarConversion() {
+    if (!archivoId) return;
+    const btn = document.getElementById('btn-ejecutar');
+    btn.disabled = true;
+    ocultarMensaje();
+    mostrarProcesando(0, 'Enviando trabajo...');
 
-                    xhr.upload.addEventListener('progress', (e) => {
-                        if (e.lengthComputable) {
-                            const pct = Math.round((e.loaded / e.total) * 100);
-                            document.getElementById('barra-progreso').style.width = pct + '%';
-                            document.getElementById('porcentaje-progreso').textContent = pct + '%';
-                        }
-                    });
+    try {
+      const r = await fetch(`${API}/convert/ndm-to-tables-seq`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: archivoId, opciones: { sin_comprimir: true } })
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error?.message || 'Error iniciando conversión');
 
-                    xhr.addEventListener('load', () => {
-                        try {
-                            const resp = JSON.parse(xhr.responseText);
-                            if (xhr.status === 200 && resp.success) {
-                                resolve(resp.data);
-                            } else {
-                                reject(new Error(resp.error?.message || 'Error al subir archivo'));
-                            }
-                        } catch (e) {
-                            reject(e);
-                        }
-                    });
+      monitorearProgreso(d.data.job_id);
 
-                    xhr.addEventListener('error', () => reject(new Error('Error de conexion')));
-                    xhr.open('POST', `${window.AppConfig.API_BASE_URL}/upload`);
-                    xhr.send(formData);
-                });
+    } catch(err) {
+      ocultarProcesando();
+      btn.disabled = false;
+      mostrarMensaje('error', err.message);
+    }
+  }
 
-                // Archivo subido correctamente
-                archivoId = resultado.id;
-                archivoInfo = resultado;
+  // ── SSE + fallback polling ──
+  function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+    sse.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        mostrarProcesando(d.progreso || 0, d.mensaje || '...');
+        if (d.estado === 'completado') { sse.close(); finalizarExito(jobId); }
+        else if (d.estado === 'error') { sse.close(); finalizarConError(d.mensaje || 'Error'); }
+      } catch(_) {}
+    };
+    sse.onerror = () => { sse.close(); verificarEstadoFinal(jobId); };
+  }
 
-                // Mostrar info del archivo
-                document.getElementById('progreso-carga').style.display = 'none';
-                document.getElementById('info-archivo').style.display = 'flex';
-                document.getElementById('nombre-archivo').textContent = file.name;
-                document.getElementById('tamano-archivo').textContent = formatearTamano(file.size);
+  async function verificarEstadoFinal(jobId) {
+    try {
+      const r = await fetch(`${API}/jobs/${jobId}`);
+      const d = await r.json();
+      if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+      const job = d.data;
+      mostrarProcesando(job.progreso || 0, job.mensaje || '...');
+      if (job.estado === 'completado') finalizarExito(jobId);
+      else if (job.estado === 'error') finalizarConError(job.mensaje || 'Error');
+      else setTimeout(() => verificarEstadoFinal(jobId), 2000);
+    } catch(e) { setTimeout(() => verificarEstadoFinal(jobId), 2000); }
+  }
 
-                // Mostrar panel de opciones y habilitar boton
-                document.getElementById('panel-opciones').style.display = 'block';
-                document.getElementById('btn-ejecutar').disabled = false;
+  async function finalizarExito(jobId) {
+    mostrarProcesando(100, '¡Listo!');
+    // Mostrar preview del resultado
+    try {
+      const r = await fetch(`${API}/download/${jobId}`);
+      const texto = await r.text();
+      const previewBox = document.getElementById('preview-box');
+      previewBox.textContent = texto;
+      const lineas = texto.split('\n').filter(l => /^\d+\.\s/.test(l.trim()));
+      document.getElementById('preview-tablas').textContent = lineas.length;
+      document.getElementById('preview-section').classList.add('visible');
+    } catch(e) { console.warn('Error cargando preview:', e); }
 
-            } catch (error) {
-                mostrarError(error.message);
-                document.getElementById('progreso-carga').style.display = 'none';
-                document.getElementById('zona-carga').style.display = 'block';
-            }
-        }
+    setTimeout(() => {
+      window.PDFExport.descargarResultado(jobId);
+      ocultarProcesando();
+      document.getElementById('btn-ejecutar').disabled = false;
+      mostrarMensaje('success', 'Orden generado. Descarga iniciada.');
+    }, 400);
+  }
 
-        /**
-         * Ejecuta la conversion y monitorea progreso.
-         */
-        async function ejecutarConversion() {
-            if (!archivoId) return;
+  function finalizarConError(msg) {
+    ocultarProcesando();
+    document.getElementById('btn-ejecutar').disabled = false;
+    mostrarMensaje('error', 'Error: ' + msg);
+  }
 
-            const btnEjecutar = document.getElementById('btn-ejecutar');
-            btnEjecutar.disabled = true;
+  // ── Helpers UI ──
+  function mostrarProcesando(pct, msg) {
+    document.getElementById('processing-panel').classList.add('visible');
+    document.getElementById('barra-proceso').style.width = pct + '%';
+    document.getElementById('texto-proceso').textContent = msg;
+    document.getElementById('porcentaje-proceso').textContent = pct + '%';
+  }
+  function ocultarProcesando() { document.getElementById('processing-panel').classList.remove('visible'); }
 
-            // Mostrar progreso
-            document.getElementById('progreso-proceso').style.display = 'block';
+  function mostrarMensaje(tipo, msg) {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message visible ' + tipo;
+    el.textContent = msg;
+  }
+  function ocultarMensaje() {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message'; el.textContent = '';
+  }
 
-            try {
-                // Iniciar conversion
-                const respuesta = await fetch(`${window.AppConfig.API_BASE_URL}/convert/ndm-to-tables-seq`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        file_id: archivoId,
-                        opciones: { sin_comprimir: true }
-                    })
-                });
-
-                const datos = await respuesta.json();
-
-                if (!datos.success) {
-                    throw new Error(datos.error?.message || 'Error iniciando conversion');
-                }
-
-                const trabajoId = datos.data.job_id;
-
-                // Monitorear progreso con SSE
-                monitorearProgreso(
-                    trabajoId,
-                    // onProgress
-                    (progreso, mensaje) => {
-                        document.getElementById('barra-proceso').style.width = progreso + '%';
-                        document.getElementById('porcentaje-proceso').textContent = progreso + '%';
-                        document.getElementById('texto-proceso').textContent = mensaje || 'Procesando...';
-                    },
-                    // onComplete
-                    async (jobId) => {
-                        document.getElementById('progreso-proceso').style.display = 'none';
-
-                        // Descargar el resultado como texto para mostrarlo
-                        try {
-                            const descResp = await fetch(`${window.AppConfig.API_BASE_URL}/download/${jobId}`);
-                            const textoResultado = await descResp.text();
-
-                            // Mostrar preview
-                            document.getElementById('seccion-preview').style.display = 'block';
-                            document.getElementById('preview-container').textContent = textoResultado;
-
-                            // Contar tablas (lineas que empiezan con numero seguido de punto)
-                            const lineasTablas = textoResultado.split('\n').filter(l => /^\d+\.\s/.test(l.trim()));
-                            document.getElementById('preview-tablas').textContent = lineasTablas.length;
-
-                        } catch (e) {
-                            console.error('Error mostrando resultado:', e);
-                        }
-
-                        // Iniciar descarga automatica
-                        descargarResultado(jobId);
-
-                        // Rehabilitar boton
-                        btnEjecutar.disabled = false;
-                    },
-                    // onError
-                    (error) => {
-                        document.getElementById('progreso-proceso').style.display = 'none';
-                        mostrarError(error);
-                        btnEjecutar.disabled = false;
-                    }
-                );
-
-            } catch (error) {
-                document.getElementById('progreso-proceso').style.display = 'none';
-                mostrarError(error.message);
-                btnEjecutar.disabled = false;
-            }
-        }
-
-        /**
-         * Muestra un mensaje de error.
-         */
-        function mostrarError(mensaje) {
-            const elem = document.getElementById('mensaje-estado');
-            elem.className = 'status-message error';
-            elem.textContent = mensaje;
-            elem.style.display = 'block';
-            setTimeout(() => { elem.style.display = 'none'; }, 8000);
-        }
-    </script>
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+</script>
 </body>
 </html>

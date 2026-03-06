@@ -278,6 +278,8 @@
             color: var(--color-text-light);
         }
 
+        #mensaje-estado { display: none; margin-top: 12px; }
+
         /* Lista vacia */
         .empty-list {
             text-align: center;
@@ -358,6 +360,9 @@
                     </div>
                     <div class="progress-msg" id="progress-msg">Iniciando...</div>
                 </div>
+
+                <!-- Mensajes de estado -->
+                <div id="mensaje-estado" class="status-message"></div>
 
             </div>
 
@@ -453,6 +458,7 @@
     const progressMsg   = document.getElementById('progress-msg');
     const resultadoSec  = document.getElementById('resultado-section');
     const linkDescarga  = document.getElementById('link-descarga');
+    const mensajeEstado = document.getElementById('mensaje-estado');
     const API           = window.AppConfig.API_BASE_URL;
 
     // ============================================================
@@ -472,7 +478,7 @@
         dropZone.classList.remove('drag-over');
         const archivos = Array.from(e.dataTransfer.files).filter(f => esImagen(f.name));
         if (archivos.length) procesarArchivosLocales(archivos);
-        else window.PDFExport.mostrarMensaje('Solo se aceptan imagenes (JPG, PNG, WEBP, etc.)', 'warning');
+        else window.PDFExport.mostrarMensaje(mensajeEstado, 'Solo se aceptan imagenes (JPG, PNG, WEBP, etc.)', 'warning');
     });
 
     inputArchivos.addEventListener('change', () => {
@@ -506,7 +512,7 @@
     async function subirArchivoSiNecesario(archivo) {
         // Verificar si ya esta en la lista local (por nombre + tamaño)
         if (estado.items.find(i => i.nombre === archivo.name && i.tamano === archivo.size)) {
-            window.PDFExport.mostrarMensaje(`"${archivo.name}" ya esta en la lista`, 'warning');
+            window.PDFExport.mostrarMensaje(mensajeEstado, `"${archivo.name}" ya esta en la lista`, 'warning');
             return;
         }
 
@@ -554,13 +560,13 @@
                     thumbUrl
                 });
                 if (data.data.ya_existia) {
-                    window.PDFExport.mostrarMensaje(`"${archivo.name}" ya estaba en el servidor`, 'info');
+                    window.PDFExport.mostrarMensaje(mensajeEstado, `"${archivo.name}" ya estaba en el servidor`, 'info');
                 }
             } else {
-                window.PDFExport.mostrarMensaje(`Error subiendo "${archivo.name}": ${data.error.message}`, 'error');
+                window.PDFExport.mostrarMensaje(mensajeEstado, `Error subiendo "${archivo.name}": ${data.error.message}`, 'error');
             }
         } catch (e) {
-            window.PDFExport.mostrarMensaje(`Error de red subiendo "${archivo.name}"`, 'error');
+            window.PDFExport.mostrarMensaje(mensajeEstado, `Error de red subiendo "${archivo.name}"`, 'error');
         }
     }
 
@@ -569,7 +575,7 @@
     // ============================================================
     function agregarItem(item) {
         if (estado.items.find(i => i.file_id === item.file_id)) {
-            window.PDFExport.mostrarMensaje(`"${item.nombre}" ya esta en la lista`, 'warning');
+            window.PDFExport.mostrarMensaje(mensajeEstado, `"${item.nombre}" ya esta en la lista`, 'warning');
             return;
         }
         estado.items.push(item);
@@ -761,7 +767,7 @@
             const data = await resp.json();
 
             if (!data.success) {
-                window.PDFExport.mostrarMensaje(`Error: ${data.error.message}`, 'error');
+                window.PDFExport.mostrarMensaje(mensajeEstado, `Error: ${data.error.message}`, 'error');
                 btnConvertir.disabled = false;
                 progressSec.classList.remove('visible');
                 return;
@@ -770,7 +776,7 @@
             monitorearProgreso(data.data.job_id);
 
         } catch (e) {
-            window.PDFExport.mostrarMensaje('Error de red al iniciar la conversion', 'error');
+            window.PDFExport.mostrarMensaje(mensajeEstado, 'Error de red al iniciar la conversion', 'error');
             btnConvertir.disabled = false;
             progressSec.classList.remove('visible');
         }
@@ -813,7 +819,7 @@
                     sse.close();
                     progressMsg.textContent = 'Error: ' + (datos.mensaje || 'Fallo desconocido');
                     progressFill.style.background = 'var(--color-danger)';
-                    window.PDFExport.mostrarMensaje(datos.mensaje || 'Error en la conversion', 'error');
+                    window.PDFExport.mostrarMensaje(mensajeEstado, datos.mensaje || 'Error en la conversion', 'error');
                     btnConvertir.disabled = false;
                 }
 

@@ -3,456 +3,635 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotar PDF - PDF-Export & Import</title>
+    <title>Rotar PDF — PDF-Export</title>
     <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Estilos especificos para Rotar PDF */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 30px;
-            align-items: start;
-        }
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+      }
 
-        @media (max-width: 900px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--color-border);
-        }
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
 
-        .option-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w); min-height: 100vh;
+        background: var(--sidebar); border-right: 1px solid var(--border);
+        display: flex; flex-direction: column;
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1); overflow: hidden;
+      }
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
 
-        .option-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+      .sidebar-logo {
+        display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+        border-bottom: 1px solid var(--border); cursor: pointer; text-decoration: none; color: var(--text);
+        height: var(--header-h); flex-shrink: 0;
+      }
+      .logo-icon {
+        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+        color: white; flex-shrink: 0; letter-spacing: -1px;
+      }
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
-        .option-section h4 {
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
+      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+      .nav-section-label {
+        font-size: 10px; font-weight: 600; color: var(--text-muted);
+        letter-spacing: .08em; text-transform: uppercase;
+        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
 
-        /* Info del archivo */
-        .file-info-card {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-            margin-bottom: 20px;
-        }
+      .nav-item {
+        display: flex; align-items: center; gap: 10px; padding: 8px 14px; cursor: pointer;
+        border-left: 3px solid transparent; transition: background 0.15s;
+        white-space: nowrap; position: relative; text-decoration: none; color: inherit;
+        -webkit-user-select: none; user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active { background: var(--bg); border-left-color: var(--red); }
+      .nav-item.active .nav-label { color: var(--text); }
+      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
 
-        .file-info-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B; color: var(--text); padding: 5px 10px;
+        border-radius: 6px; font-size: 12px; white-space: nowrap;
+        border: 1px solid var(--border); pointer-events: none; z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
 
-        .file-info-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--color-primary), #1d4ed8);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+      .collapse-btn {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        color: var(--text-muted); font-size: 13px; padding: 6px 0;
+        -webkit-user-select: none; user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
 
-        .file-info-details h3 {
-            margin: 0 0 5px 0;
-            font-size: 1rem;
-        }
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+        display: flex; flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .file-info-details .file-meta {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+      /* HEADER */
+      .header {
+        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; padding: 0 24px; gap: 14px;
+        position: sticky; top: 0; z-index: 50;
+      }
+      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+      .breadcrumb a { color: var(--text-muted); cursor: pointer; transition: color 0.15s; text-decoration: none; display: flex; align-items: center; }
+      .breadcrumb a:hover { color: var(--red); }
+      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
 
-        /* Grilla de miniaturas */
-        .thumbnails-section {
-            background: var(--color-surface);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--color-border);
-        }
+      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .stat-chip {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+      }
+      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-        .thumbnails-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+      .home-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+        padding: 5px 12px; font-size: 13px; color: var(--text-muted);
+        cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+        font-family: inherit; text-decoration: none;
+      }
+      .home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
 
-        .thumbnails-header h3 {
-            margin: 0;
-        }
+      /* ─── CONTENT ─── */
+      .content { padding: 28px 32px; flex: 1; max-width: 1200px; width: 100%; }
 
-        .quick-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+      .page-header { display: flex; align-items: flex-start; margin-bottom: 28px; }
+      .page-title-group { display: flex; align-items: center; gap: 14px; }
+      .page-badge {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+        background: rgba(230,57,70,0.12); color: var(--red); border: 1px solid rgba(230,57,70,0.3);
+        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+      }
+      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
-        .quick-actions button {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            border: 1px solid var(--color-border);
-            background: var(--color-background);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      /* ─── TWO COLUMN LAYOUT ─── */
+      .two-col { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
 
-        .quick-actions button:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-        }
+      /* DROP ZONE */
+      .dropzone {
+        background: var(--card); border: 2px dashed var(--border); border-radius: 14px;
+        padding: 48px 24px; text-align: center; cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .dropzone:hover, .dropzone.drag-over { border-color: var(--red); background: rgba(230,57,70,0.04); }
+      .dropzone-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+      .dropzone-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+      .dropzone-sub { font-size: 12px; color: var(--text-muted); }
 
-        .thumbnails-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-        }
+      /* FILE INFO */
+      .file-info-card {
+        display: none;
+        background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+        padding: 16px 20px; margin-top: 14px;
+      }
+      .file-info-card.visible { display: block; }
+      .file-info-header { display: flex; align-items: center; gap: 12px; }
+      .file-icon-box {
+        width: 40px; height: 40px; background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,.25);
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 11px; color: var(--red);
+        flex-shrink: 0;
+      }
+      .file-name-text { font-size: 14px; font-weight: 600; color: var(--text); }
+      .file-meta-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-        .page-thumbnail {
-            position: relative;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: var(--color-background);
-        }
+      /* PROGRESS BARS */
+      .progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+      .progress-fill {
+        height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--orange));
+        border-radius: 2px; transition: width 0.3s ease;
+      }
+      .progress-info-row {
+        display: flex; justify-content: space-between; font-size: 12px;
+        color: var(--text-muted); margin-bottom: 6px;
+      }
 
-        .page-thumbnail:hover {
-            border-color: var(--color-primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+      /* THUMBNAILS SECTION */
+      .thumbnails-panel {
+        display: none;
+        background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+        margin-top: 14px; overflow: hidden;
+      }
+      .thumbnails-panel.visible { display: block; }
+      .thumbnails-panel-header {
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        padding: 14px 16px; border-bottom: 1px solid var(--border);
+      }
+      .thumbnails-panel-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+      .quick-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+      .quick-btn {
+        padding: 5px 12px; font-size: 12px; border: 1px solid var(--border);
+        background: var(--bg); border-radius: 6px; cursor: pointer; color: var(--text-muted);
+        font-family: inherit; transition: border-color 0.15s, color 0.15s;
+      }
+      .quick-btn:hover { border-color: var(--text-muted); color: var(--text); }
 
-        .page-thumbnail.rotated {
-            border-color: var(--color-primary);
-            background: rgba(37, 99, 235, 0.05);
-        }
+      .thumbnails-hint {
+        padding: 10px 16px; font-size: 12px; color: var(--text-muted);
+        background: rgba(88,166,255,0.04); border-bottom: 1px solid var(--border);
+      }
+      .thumbnails-hint strong { color: var(--blue); }
 
-        .thumbnail-image-container {
-            position: relative;
-            width: 100%;
-            height: 160px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+      .thumbnails-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px; padding: 16px;
+      }
 
-        .thumbnail-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-        }
+      /* Page thumbnail cards */
+      .page-thumbnail {
+        position: relative; border: 2px solid var(--border); border-radius: 8px;
+        overflow: hidden; cursor: pointer; background: var(--bg);
+        transition: border-color 0.15s, transform 0.15s;
+      }
+      .page-thumbnail:hover { border-color: var(--text-muted); transform: translateY(-2px); }
+      .page-thumbnail.rotated { border-color: var(--red); background: rgba(230,57,70,0.04); }
 
-        .page-info {
-            padding: 8px;
-            text-align: center;
-            border-top: 1px solid var(--color-border);
-            font-size: 0.85rem;
-        }
+      .thumbnail-image-container {
+        width: 100%; height: 150px;
+        display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
+      }
+      .thumbnail-image {
+        max-width: 100%; max-height: 100%; object-fit: contain;
+        transition: transform 0.3s ease;
+      }
+      .rotation-indicator {
+        position: absolute; top: 6px; right: 6px;
+        width: 26px; height: 26px; background: var(--red);
+        color: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px; font-weight: 700; font-family: 'IBM Plex Mono', monospace;
+      }
+      .rotation-indicator.zero { background: var(--border); }
 
-        .page-number {
-            font-weight: 600;
-        }
+      .page-info {
+        padding: 6px 8px; text-align: center; border-top: 1px solid var(--border);
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+      }
+      .page-number { font-weight: 700; color: var(--text); }
+      .rotation-badge {
+        display: inline-block; padding: 1px 6px;
+        background: var(--red); color: white; border-radius: 4px;
+        font-size: 10px; margin-left: 4px;
+      }
+      .rotation-badge.no-rotation { background: var(--border); color: var(--text-muted); }
 
-        .rotation-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            background: var(--color-primary);
-            color: white;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            margin-left: 5px;
-        }
+      /* Paginador */
+      .pagination {
+        display: flex; justify-content: center; align-items: center; gap: 16px;
+        padding: 14px 16px; border-top: 1px solid var(--border);
+      }
+      .pagination-btn {
+        padding: 7px 14px; font-size: 12px; border: 1px solid var(--border);
+        background: var(--bg); border-radius: 6px; cursor: pointer; color: var(--text-muted);
+        font-family: inherit; transition: border-color 0.15s, color 0.15s;
+      }
+      .pagination-btn:hover:not(:disabled) { border-color: var(--text-muted); color: var(--text); }
+      .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+      .pagination-info { font-size: 12px; color: var(--text-muted); }
 
-        .rotation-badge.no-rotation {
-            background: var(--color-text-light);
-        }
+      /* PROCESSING PANEL */
+      .processing-panel {
+        display: none;
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+        padding: 14px 16px; margin-top: 14px;
+      }
+      .processing-panel.visible { display: block; }
 
-        /* Indicador de rotacion sobre la imagen */
-        .rotation-indicator {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 28px;
-            height: 28px;
-            background: rgba(37, 99, 235, 0.9);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
+      /* STATUS MESSAGE */
+      .status-message {
+        display: none; border-radius: 10px; padding: 14px 16px; margin-top: 14px;
+        font-size: 13px; text-align: center;
+      }
+      .status-message.success { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,.25); color: var(--green); }
+      .status-message.error   { background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,.25); color: var(--red); }
+      .status-message.info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,.25); color: var(--blue); }
 
-        /* Paginador */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid var(--color-border);
-        }
+      /* INFO STRIP */
+      .info-strip {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,.15);
+        border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text-muted);
+        margin-top: 20px;
+      }
+      .info-strip strong { color: var(--blue); }
 
-        .pagination button {
-            padding: 8px 16px;
-            border: 1px solid var(--color-border);
-            background: var(--color-background);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      /* ─── OPTIONS PANEL (right col) ─── */
+      .options-panel {
+        background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      }
+      .options-panel + .options-panel { margin-top: 12px; }
+      .options-header {
+        padding: 14px 18px; border-bottom: 1px solid var(--border);
+        font-size: 12px; font-weight: 600; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+      }
 
-        .pagination button:hover:not(:disabled) {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-        }
+      /* Changes summary */
+      .changes-summary { padding: 20px 18px; text-align: center; }
+      .changes-count {
+        font-family: 'IBM Plex Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--red);
+      }
+      .changes-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+      /* Legend */
+      .legend-list { padding: 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+      .legend-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); }
+      .legend-badge {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
+        padding: 2px 7px; border-radius: 4px; min-width: 34px; text-align: center;
+      }
+      .legend-badge.none { background: var(--border); color: var(--text-muted); }
+      .legend-badge.rot  { background: rgba(230,57,70,0.15); border: 1px solid rgba(230,57,70,.35); color: var(--red); }
 
-        .pagination-info {
-            font-size: 0.9rem;
-            color: var(--color-text-light);
-        }
+      /* ACTION BUTTONS */
+      .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding: 0 0 4px; }
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+        cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; text-decoration: none;
+      }
+      .btn-primary { background: var(--red); color: white; }
+      .btn-primary:hover { background: #c9303c; box-shadow: 0 4px 16px rgba(230,57,70,.35); transform: translateY(-1px); }
+      .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-        /* Resumen de cambios */
-        .changes-summary {
-            background: var(--color-background);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
+      /* Ocultos por defecto */
+      #progreso-carga { display: none; margin-top: 14px; }
+      #panel-opciones { display: none; }
 
-        .changes-count {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--color-primary);
-        }
+      /* ─── FOOTER ─── */
+      .site-footer {
+        border-top: 1px solid var(--border); background: var(--sidebar);
+        padding: 20px 32px 28px; margin-top: 40px;
+      }
+      .footer-inner { max-width: 1200px; }
+      .footer-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .footer-brand { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+      .footer-brand-icon {
+        width: 28px; height: 28px; font-size: 11px; background: var(--red); border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: white;
+        letter-spacing: -1px; flex-shrink: 0;
+      }
+      .footer-brand strong { color: var(--text); }
+      .footer-home-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+        padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--text-muted);
+        text-decoration: none; white-space: nowrap; flex-shrink: 0;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+      }
+      .footer-home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
+      .footer-divider { height: 1px; background: var(--border); margin: 16px 0; }
+      .footer-version { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+      .footer-legal { margin-top: 10px; }
+      .footer-legal summary {
+        font-size: 12px; color: var(--text-muted); cursor: pointer;
+        -webkit-user-select: none; user-select: none;
+        list-style: none; display: flex; align-items: center; gap: 6px; transition: color 0.15s;
+      }
+      .footer-legal summary:hover { color: var(--text); }
+      .footer-legal[open] summary { color: var(--text); margin-bottom: 12px; }
+      .footer-legal-body {
+        font-size: 12px; color: var(--text-muted); line-height: 1.7;
+        border-left: 2px solid var(--border); padding-left: 14px;
+        display: flex; flex-direction: column; gap: 8px; max-width: 720px;
+      }
 
-        .changes-label {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-        /* Barra de progreso */
-        .process-progress {
-            margin-top: 20px;
-        }
-
-        .process-progress .progress-bar-container {
-            height: 8px;
-            background: var(--color-border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .process-progress .progress-bar {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
-
-        .process-progress .progress-text {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
-
-        /* Instrucciones */
-        .instructions {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-            margin-bottom: 15px;
-            padding: 10px;
-            background: var(--color-background);
-            border-radius: 6px;
-        }
-
-        .instructions strong {
-            color: var(--color-text);
-        }
+      @media (max-width: 900px) {
+        .two-col { grid-template-columns: 1fr; }
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        .content { padding: 20px 16px; }
+      }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Rotar PDF</h1>
-            <p>Rota paginas individuales del PDF haciendo clic en las miniaturas</p>
-        </header>
 
-        <main class="content-grid">
-            <!-- Seccion principal -->
-            <section class="main-section">
-                <!-- Zona de carga -->
-                <div id="zona-carga" class="upload-zone">
-                    <div class="upload-icon">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </div>
-                    <p class="upload-text">Arrastra tu archivo PDF aqui</p>
-                    <p class="upload-subtext">o haz clic para seleccionar</p>
-                    <input type="file" id="file-input" accept=".pdf,application/pdf" hidden>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <a class="sidebar-logo" href="/">
+        <div class="logo-icon">PDF</div>
+        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+    </a>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
+        <a class="nav-item active" href="/" data-tooltip="Tengo un PDF...">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Miscelaneos">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">Miscelaneos</span>
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
+        <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="breadcrumb">
+            <a href="/" title="Inicio">🏠</a>
+            <span class="sep">/</span>
+            <a href="/">Tengo un PDF...</a>
+            <span class="sep">/</span>
+            <span class="current">Rotar PDF</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Online</div>
+            <a class="home-btn" href="/">🏠 Inicio</a>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-title-group">
+                <div class="page-badge">ROT</div>
+                <div>
+                    <div class="page-title">Rotar PDF</div>
+                    <div class="page-subtitle">Haz clic en las miniaturas para rotar paginas individuales 90° en sentido horario</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-col">
+
+            <!-- COLUMNA IZQUIERDA -->
+            <div>
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📄</span>
+                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
                 </div>
 
                 <!-- Progreso de carga -->
-                <div id="progreso-carga" class="upload-progress" style="display: none;">
-                    <div class="progress-bar-container">
-                        <div id="barra-progreso" class="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="texto-progreso">Subiendo archivo...</span>
+                <div id="progreso-carga">
+                    <div class="progress-info-row">
+                        <span id="texto-progreso">Subiendo...</span>
                         <span id="porcentaje-progreso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-progreso"></div>
                     </div>
                 </div>
 
-                <!-- Info del archivo -->
-                <div id="info-archivo" class="file-info-card" style="display: none;">
+                <!-- Info archivo -->
+                <div class="file-info-card" id="info-archivo">
                     <div class="file-info-header">
-                        <div class="file-info-icon">PDF</div>
-                        <div class="file-info-details">
-                            <h3 id="nombre-archivo">documento.pdf</h3>
-                            <div class="file-meta">
-                                <span id="num-paginas">0</span> paginas
-                            </div>
+                        <div class="file-icon-box">PDF</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Grilla de miniaturas -->
-                <div id="thumbnails-section" class="thumbnails-section" style="display: none;">
-                    <div class="thumbnails-header">
-                        <h3>Paginas</h3>
-                        <div class="quick-actions">
-                            <button id="btn-rotar-todas-90">Rotar todas 90°</button>
-                            <button id="btn-rotar-todas-180">Rotar todas 180°</button>
-                            <button id="btn-restaurar">Restaurar</button>
+                <div class="thumbnails-panel" id="thumbnails-section">
+                    <div class="thumbnails-panel-header">
+                        <span class="thumbnails-panel-title">Paginas del Documento</span>
+                        <div class="quick-btns">
+                            <button class="quick-btn" id="btn-rotar-todas-90">↻ 90° todas</button>
+                            <button class="quick-btn" id="btn-rotar-todas-180">↻ 180° todas</button>
+                            <button class="quick-btn" id="btn-restaurar">Restaurar</button>
                         </div>
                     </div>
-
-                    <div class="instructions">
-                        <strong>Clic</strong> en una miniatura para rotar 90° en sentido horario
+                    <div class="thumbnails-hint">
+                        <strong>Clic</strong> en una pagina para rotar 90° en sentido horario
                     </div>
-
-                    <div id="thumbnails-grid" class="thumbnails-grid">
-                        <!-- Las miniaturas se cargan dinamicamente -->
-                    </div>
-
-                    <!-- Paginador -->
+                    <div id="thumbnails-grid" class="thumbnails-grid"></div>
                     <div id="pagination" class="pagination" style="display: none;">
-                        <button id="btn-anterior">Anterior</button>
+                        <button class="pagination-btn" id="btn-anterior">← Anterior</button>
                         <span class="pagination-info">
-                            Paginas <span id="pag-inicio">1</span>-<span id="pag-fin">20</span> de <span id="pag-total">0</span>
+                            Pags. <span id="pag-inicio">1</span>–<span id="pag-fin">20</span> de <span id="pag-total">0</span>
                         </span>
-                        <button id="btn-siguiente">Siguiente</button>
+                        <button class="pagination-btn" id="btn-siguiente">Siguiente →</button>
                     </div>
                 </div>
 
-                <!-- Mensajes de estado -->
-                <div id="mensaje-estado" class="status-message" style="display: none;"></div>
-            </section>
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
 
-            <!-- Panel de opciones -->
-            <aside id="panel-opciones" class="options-panel" style="display: none;">
-                <h3 style="margin-bottom: 20px;">Rotaciones</h3>
+                <div class="info-strip">
+                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: opciones -->
+            <div id="panel-opciones">
 
                 <!-- Resumen de cambios -->
-                <div class="option-section">
+                <div class="options-panel">
+                    <div class="options-header">Cambios Pendientes</div>
                     <div class="changes-summary">
                         <div class="changes-count" id="num-cambios">0</div>
                         <div class="changes-label">paginas modificadas</div>
                     </div>
                 </div>
 
-                <!-- Leyenda de rotaciones -->
-                <div class="option-section">
-                    <h4>Leyenda</h4>
-                    <div style="font-size: 0.85rem; color: var(--color-text-light);">
-                        <p><span class="rotation-badge no-rotation">0°</span> Sin rotacion</p>
-                        <p><span class="rotation-badge">90°</span> Rotacion aplicada</p>
-                        <p><span class="rotation-badge">180°</span> Rotacion aplicada</p>
-                        <p><span class="rotation-badge">270°</span> Rotacion aplicada</p>
+                <!-- Leyenda -->
+                <div class="options-panel">
+                    <div class="options-header">Leyenda</div>
+                    <div class="legend-list">
+                        <div class="legend-item">
+                            <span class="legend-badge none">0°</span>
+                            <span>Sin rotacion</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge rot">90°</span>
+                            <span>Rotacion aplicada</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge rot">180°</span>
+                            <span>Rotacion aplicada</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge rot">270°</span>
+                            <span>Rotacion aplicada</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Botones de accion -->
-                <div class="action-buttons" style="margin-top: 20px;">
-                    <button id="btn-aplicar" class="btn btn-primary" disabled>
-                        Aplicar y Descargar
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" id="btn-aplicar" disabled>
+                        ↻ Aplicar y Descargar
                     </button>
                 </div>
 
                 <!-- Progreso de procesamiento -->
-                <div id="progreso-proceso" class="process-progress" style="display: none;">
-                    <div class="progress-bar-container">
-                        <div id="barra-proceso" class="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-text">
+                <div class="processing-panel" id="progreso-proceso">
+                    <div class="progress-info-row">
                         <span id="texto-proceso">Procesando...</span>
                         <span id="porcentaje-proceso">0%</span>
                     </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-proceso"></div>
+                    </div>
                 </div>
-            </aside>
-        </main>
 
-        <footer class="footer">
-            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF para la Soberanía Digital Empresarial</p>
-            <p class="footer-info"><a href="/">Volver al inicio</a></p>
-            <p class="footer-info" id="app-version"></p>
-
-            <div class="footer-legal" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border); font-size: 0.85rem; color: var(--color-text-light); text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--color-text);">Aviso de uso y alcance</h4>
-                <p style="margin-bottom: 10px;">Esta aplicación y su API están destinadas a uso privado.
-                No se implementan claves de acceso a nivel de aplicación con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-
-                <p style="margin-bottom: 10px;">Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ).
-                En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticación, quedando dicha configuración bajo el criterio y responsabilidad del usuario.</p>
-
-                <p style="margin-bottom: 10px;">Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberanía digital sobre los recursos informáticos utilizados para el procesamiento de documentos.</p>
-
-                <p>El código y la aplicación se distribuyen bajo una licencia de uso público y amplio, permitiendo su utilización, modificación y adaptación conforme a dicho marco.</p>
             </div>
-        </footer>
-    </div>
 
-    <script src="/config.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/pdf-rotate.js"></script>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <div class="footer-brand-icon">PDF</div>
+                    <span><strong>PDF-Export &amp; Import</strong> — Herramientas de conversion PDF para la Soberania Digital Empresarial</span>
+                </div>
+                <a href="/" class="footer-home-btn">🏠 Volver al inicio</a>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-version" id="app-version"></div>
+            <details class="footer-legal">
+                <summary>⚖️ Aviso de uso y alcance</summary>
+                <div class="footer-legal-body">
+                    <p>Esta aplicacion y su API estan destinadas a uso privado. No se implementan claves de acceso a nivel de aplicacion con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
+                    <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ). En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticacion.</p>
+                    <p>Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberania digital sobre los recursos informaticos utilizados para el procesamiento de documentos. El codigo y la aplicacion se distribuyen bajo una licencia de uso publico y amplio.</p>
+                </div>
+            </details>
+        </div>
+    </footer>
+
+</div>
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('main').classList.toggle('expanded');
+    }
+</script>
+<script src="/static/js/pdf-rotate.js"></script>
 </body>
 </html>
