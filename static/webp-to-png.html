@@ -3,451 +3,713 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WEBP a PNG - PDF-Export & Import</title>
+    <title>WEBP a PNG — PDF-Export</title>
     <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 30px;
-            align-items: start;
-        }
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+      }
 
-        @media (max-width: 800px) {
-            .content-grid { grid-template-columns: 1fr; }
-        }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .options-panel {
-            background: var(--color-surface);
-            border-radius: var(--radius-lg);
-            padding: 25px;
-            border: 1px solid var(--color-border);
-            position: sticky;
-            top: 20px;
-        }
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
 
-        /* Zona de drop */
-        .drop-zone {
-            border: 2px dashed var(--color-border);
-            border-radius: var(--radius-lg);
-            padding: 50px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: var(--color-surface);
-            margin-bottom: 20px;
-        }
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1);
+        overflow: hidden;
+      }
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
 
-        .drop-zone:hover,
-        .drop-zone.drag-over {
-            border-color: var(--color-primary);
-            background: #eff6ff;
-        }
+      .sidebar-logo {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer; text-decoration: none; color: var(--text);
+        height: var(--header-h); flex-shrink: 0;
+      }
+      .logo-icon {
+        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+        color: white; flex-shrink: 0; letter-spacing: -1px;
+      }
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
-        .drop-zone.archivo-cargado {
-            border-color: var(--color-success);
-            background: #f0fdf4;
-        }
+      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+      .nav-section-label {
+        font-size: 10px; font-weight: 600; color: var(--text-muted);
+        letter-spacing: .08em; text-transform: uppercase;
+        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
 
-        .drop-zone p {
-            color: var(--color-text-light);
-            margin: 8px 0 0;
-            font-size: 0.9rem;
-        }
+      .nav-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 14px; cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 0.15s; white-space: nowrap; position: relative;
+        text-decoration: none; color: inherit;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active { background: var(--bg); border-left-color: var(--red); }
+      .nav-item.active .nav-label { color: var(--text); }
+      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
 
-        /* Preview de la imagen */
-        .preview-wrap {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B; color: var(--text); padding: 5px 10px;
+        border-radius: 6px; font-size: 12px; white-space: nowrap;
+        border: 1px solid var(--border); pointer-events: none; z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
 
-        .preview-wrap.visible { display: block; }
+      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+      .collapse-btn {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        color: var(--text-muted); font-size: 13px; padding: 6px 0;
+        -webkit-user-select: none; user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
 
-        .preview-img {
-            max-width: 100%;
-            max-height: 400px;
-            object-fit: contain;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--color-border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+        display: flex; flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .preview-info {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+      /* HEADER */
+      .header {
+        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; padding: 0 24px; gap: 14px;
+        position: sticky; top: 0; z-index: 50;
+      }
+      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+      .breadcrumb a {
+        color: var(--text-muted); cursor: pointer; transition: color 0.15s;
+        text-decoration: none; display: flex; align-items: center;
+      }
+      .breadcrumb a:hover { color: var(--red); }
+      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
 
-        /* Progreso */
-        .progress-section {
-            display: none;
-            margin-top: 20px;
-        }
+      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .stat-chip {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+      }
+      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-        .progress-section.visible { display: block; }
+      .home-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+        padding: 5px 12px; font-size: 13px; color: var(--text-muted);
+        cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+        font-family: inherit; text-decoration: none;
+      }
+      .home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
 
-        .progress-bar-wrap {
-            background: var(--color-border);
-            border-radius: 4px;
-            height: 8px;
-            overflow: hidden;
-            margin: 8px 0;
-        }
+      /* ─── CONTENT ─── */
+      .content { padding: 28px 32px; flex: 1; max-width: 1100px; width: 100%; }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
+      /* Page header */
+      .page-header {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        margin-bottom: 28px; gap: 16px;
+      }
+      .page-title-group { display: flex; align-items: center; gap: 14px; }
+      .page-badge {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+        background: rgba(244,162,97,0.12); color: var(--orange); border: 1px solid rgba(244,162,97,0.3);
+        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+      }
+      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
-        .progress-msg {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+      /* ─── TWO COLUMN LAYOUT ─── */
+      .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
 
-        /* Info del archivo cargado */
-        .archivo-info {
-            display: none;
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-            border-radius: var(--radius-md);
-            padding: 12px 16px;
-            font-size: 0.88rem;
-            margin-top: 10px;
-        }
+      /* ─── CARD ─── */
+      .card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 20px; margin-bottom: 16px;
+      }
+      .card-title {
+        font-size: 12px; font-weight: 600; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+      }
 
-        .archivo-info.visible { display: block; }
+      /* DROP ZONE */
+      .dropzone {
+        background: var(--card);
+        border: 2px dashed var(--border);
+        border-radius: 14px;
+        padding: 48px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .dropzone:hover, .dropzone.drag-over {
+        border-color: var(--orange);
+        background: rgba(244,162,97,0.04);
+      }
+      .dropzone.loaded {
+        border-color: var(--green);
+        background: rgba(63,185,80,0.04);
+        padding: 20px 24px;
+      }
+      .dropzone-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+      .dropzone-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+      .dropzone-sub { font-size: 13px; color: var(--text-muted); }
+      .dropzone-sub strong { color: var(--text); }
 
-        .archivo-info strong { color: var(--color-success-dark, #166534); }
+      /* UPLOAD PROGRESS */
+      #progreso-carga { display: none; margin-bottom: 16px; }
+      .progress-info-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+      .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+      .progress-fill { height: 100%; background: var(--orange); border-radius: 4px; transition: width 0.3s; width: 0%; }
 
-        #mensaje-estado { display: none; margin-top: 12px; }
+      /* FILE INFO CARD */
+      #file-info-card { display: none; margin-bottom: 16px; }
+      .file-info-header { display: flex; align-items: center; gap: 12px; }
+      .file-icon-box {
+        width: 38px; height: 38px; background: rgba(244,162,97,0.12);
+        border: 1px solid rgba(244,162,97,0.3); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 10px;
+        color: var(--orange); flex-shrink: 0; letter-spacing: -1px;
+      }
+      .file-name-text { font-size: 14px; font-weight: 600; color: var(--text); }
+      .file-meta-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+      /* IMAGE PREVIEW */
+      #preview-wrap { display: none; margin-bottom: 16px; }
+      .preview-img {
+        width: 100%; max-height: 360px; object-fit: contain;
+        border-radius: 10px; border: 1px solid var(--border);
+        background: rgba(0,0,0,0.3);
+      }
+      .preview-info-text { font-size: 12px; color: var(--text-muted); margin-top: 8px; text-align: center; }
+
+      /* PROCESSING PANEL */
+      #processing-panel { display: none; margin-bottom: 16px; }
+      #processing-panel.visible { display: block; }
+      .proc-info-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+      .proc-fill { height: 100%; background: var(--orange); border-radius: 4px; transition: width 0.3s; width: 0%; }
+
+      /* STATUS MESSAGE */
+      .status-message { display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+      .status-message.visible { display: block; }
+      .status-message.success { background: rgba(63,185,80,0.12); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+      .status-message.error { background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+      .status-message.info { background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); color: var(--blue); }
+
+      /* OPTIONS COLUMN */
+      .options-col { display: flex; flex-direction: column; gap: 0; }
+
+      /* INFO BOX */
+      .info-box {
+        background: rgba(244,162,97,0.06); border: 1px solid rgba(244,162,97,0.2);
+        border-radius: 10px; padding: 14px; margin-bottom: 16px;
+        font-size: 13px; color: var(--text-muted); line-height: 1.6;
+      }
+      .info-box p + p { margin-top: 8px; }
+
+      /* ACTION BUTTON */
+      .btn-action {
+        width: 100%; padding: 13px; border-radius: 10px; border: none; cursor: pointer;
+        font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600;
+        background: var(--orange); color: #0D1117;
+        transition: opacity 0.2s, transform 0.1s;
+        margin-bottom: 10px;
+      }
+      .btn-action:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+      .btn-action:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+      /* DOWNLOAD BUTTON */
+      .btn-download {
+        display: none; width: 100%; padding: 13px; border-radius: 10px;
+        border: 1px solid var(--green); cursor: pointer;
+        font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600;
+        background: rgba(63,185,80,0.12); color: var(--green);
+        text-align: center; text-decoration: none;
+        transition: background 0.15s;
+        margin-bottom: 10px;
+      }
+      .btn-download:hover { background: rgba(63,185,80,0.2); }
+      .btn-download.visible { display: block; }
+
+      .btn-secondary {
+        width: 100%; padding: 10px; border-radius: 8px;
+        border: 1px solid var(--border); cursor: pointer;
+        font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;
+        background: transparent; color: var(--text-muted);
+        text-align: center; text-decoration: none;
+        transition: background 0.15s, border-color 0.15s;
+        display: block;
+      }
+      .btn-secondary:hover { background: var(--card-hover); border-color: var(--text-muted); color: var(--text); }
+
+      /* Ocultar input file nativo */
+      #input-archivo { display: none; }
+
+      /* scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .two-col { grid-template-columns: 1fr; }
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        .content { padding: 20px 16px; }
+      }
     </style>
 </head>
 <body>
-    <div class="container">
 
-        <!-- Header -->
-        <header class="header">
-            <h1 style="font-size: 1.8rem;">WEBP a PNG</h1>
-            <p class="subtitle">Convierte una imagen WEBP a PNG conservando la maxima calidad</p>
-        </header>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <a class="sidebar-logo" href="/">
+        <div class="logo-icon">PDF</div>
+        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+    </a>
 
-        <div class="content-grid">
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
+        <a class="nav-item" href="/" data-tooltip="Tengo un PDF...">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </a>
+        <a class="nav-item active" href="/" data-tooltip="Miscelaneos">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">Miscelaneos</span>
+        </a>
+    </div>
 
-            <!-- Columna principal -->
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
+        <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="breadcrumb">
+            <a href="/" title="Inicio">🏠</a>
+            <span class="sep">/</span>
+            <a href="/">Tengo un PDF...</a>
+            <span class="sep">/</span>
+            <span class="current">WEBP a PNG</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Online</div>
+            <a class="home-btn" href="/">Tengo un PDF...</a>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-title-group">
+                <div class="page-badge">WEBP</div>
+                <div>
+                    <div class="page-title">WEBP a PNG</div>
+                    <div class="page-subtitle">Convierte una imagen WEBP a PNG conservando la maxima calidad</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-col">
+
+            <!-- COLUMNA IZQUIERDA -->
             <div>
                 <!-- Drop zone -->
-                <div class="drop-zone" id="drop-zone">
-                    <div style="font-size: 2.5rem;">🖼️</div>
-                    <strong>Arrastra un WEBP aqui o haz click para seleccionar</strong>
-                    <p>Solo archivos .webp &mdash; tamaño maximo 1 GB</p>
-                    <input type="file" id="input-archivo" accept=".webp" style="display:none">
+                <div class="dropzone" id="drop-zone">
+                    <span class="dropzone-icon">🖼️</span>
+                    <div class="dropzone-title">Arrastra un archivo WEBP aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>solo .webp</strong></div>
+                    <input type="file" id="input-archivo" accept=".webp">
                 </div>
 
-                <!-- Info del archivo cargado -->
-                <div class="archivo-info" id="archivo-info">
-                    <strong id="archivo-nombre"></strong><br>
-                    <span id="archivo-meta"></span>
-                </div>
-
-                <!-- Preview -->
-                <div class="preview-wrap" id="preview-wrap">
-                    <img id="preview-img" class="preview-img" src="" alt="Vista previa">
-                    <div class="preview-info" id="preview-info"></div>
-                </div>
-
-                <!-- Progreso -->
-                <div class="progress-section" id="progress-section">
-                    <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+                <!-- Progreso de carga -->
+                <div id="progreso-carga">
+                    <div class="card">
+                        <div class="progress-info-row">
+                            <span id="texto-carga">Subiendo...</span>
+                            <span id="pct-carga">0%</span>
+                        </div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-fill" id="barra-carga"></div>
+                        </div>
                     </div>
-                    <div class="progress-msg" id="progress-msg">Iniciando...</div>
                 </div>
 
-                <!-- Mensajes de estado -->
-                <div id="mensaje-estado" class="status-message"></div>
+                <!-- Info del archivo -->
+                <div id="file-info-card" class="card">
+                    <div class="file-info-header">
+                        <div class="file-icon-box">WEBP</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">imagen.webp</div>
+                            <div class="file-meta-text" id="meta-archivo">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview de imagen -->
+                <div id="preview-wrap">
+                    <img id="preview-img" class="preview-img" src="" alt="Vista previa">
+                    <div class="preview-info-text" id="preview-info"></div>
+                </div>
+
+                <!-- Progreso de proceso -->
+                <div id="processing-panel">
+                    <div class="card">
+                        <div class="proc-info-row">
+                            <span id="texto-proceso">Convirtiendo...</span>
+                            <span id="pct-proceso">0%</span>
+                        </div>
+                        <div class="progress-bar-wrap">
+                            <div class="proc-fill" id="barra-proceso"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
             </div>
 
-            <!-- Panel lateral -->
-            <div class="options-panel">
-                <h3 style="margin-bottom: 15px; font-size: 1rem;">Conversion</h3>
+            <!-- COLUMNA DERECHA: opciones -->
+            <div class="options-col">
+                <div class="card">
+                    <div class="card-title">Conversion</div>
+                    <div class="info-box">
+                        <p>Conversion directa WEBP → PNG sin perdida de calidad.</p>
+                        <p>La transparencia (canal alpha) se preserva.</p>
+                        <p>Si el WEBP es animado se extrae solo el primer frame.</p>
+                    </div>
 
-                <div style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 20px; line-height: 1.5;">
-                    <p>Conversion directa WEBP → PNG.</p>
-                    <p style="margin-top: 6px;">PNG es sin perdida: la calidad de la imagen se mantiene intacta.</p>
-                    <p style="margin-top: 6px;">La transparencia (canal alpha) se preserva.</p>
-                    <p style="margin-top: 6px;">Si el WEBP es animado se extrae solo el primer frame.</p>
-                </div>
+                    <button type="button" class="btn-action" id="btn-convertir" disabled>
+                        Convertir a PNG
+                    </button>
 
-                <button class="btn btn-primary" id="btn-convertir" disabled style="width:100%; padding:12px;">
-                    Convertir a PNG
-                </button>
-
-                <div id="resultado-section" style="display:none; margin-top:15px;">
-                    <a id="link-descarga" class="btn btn-success"
-                       style="width:100%; text-align:center; padding:12px; display:block;">
-                        Descargar PNG
+                    <a id="btn-descarga" class="btn-download" href="#">
+                        ⬇ Descargar PNG
                     </a>
-                </div>
 
-                <div style="margin-top: 20px;">
-                    <a href="/" class="btn btn-secondary" style="width:100%; text-align:center; display:block;">
-                        ← Volver al inicio
-                    </a>
+                    <a class="btn-secondary" href="/">Tengo un PDF...</a>
                 </div>
             </div>
 
         </div>
+    </main>
+</div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF</p>
-            <p class="footer-info"><a href="/">Volver al inicio</a></p>
-            <p class="footer-info" id="app-version"></p>
-        </footer>
-    </div>
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+const API = window.AppConfig.API_BASE_URL;
 
-    <script src="/config.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script>
-    // ============================================================
-    // Estado
-    // ============================================================
-    const estado = {
-        archivoId: null,
-        jobId: null
+// ─── Estado ───
+const estado = { archivoId: null };
+
+// ─── DOM ───
+const dropZone      = document.getElementById('drop-zone');
+const inputArchivo  = document.getElementById('input-archivo');
+const progresoCarga = document.getElementById('progreso-carga');
+const barraCarga    = document.getElementById('barra-carga');
+const textoCarga    = document.getElementById('texto-carga');
+const pctCarga      = document.getElementById('pct-carga');
+const fileInfoCard  = document.getElementById('file-info-card');
+const nombreArchivo = document.getElementById('nombre-archivo');
+const metaArchivo   = document.getElementById('meta-archivo');
+const previewWrap   = document.getElementById('preview-wrap');
+const previewImg    = document.getElementById('preview-img');
+const previewInfo   = document.getElementById('preview-info');
+const procPanel     = document.getElementById('processing-panel');
+const barraProceso  = document.getElementById('barra-proceso');
+const textoProceso  = document.getElementById('texto-proceso');
+const pctProceso    = document.getElementById('pct-proceso');
+const mensajeEstado = document.getElementById('mensaje-estado');
+const btnConvertir  = document.getElementById('btn-convertir');
+const btnDescarga   = document.getElementById('btn-descarga');
+
+// ─── Drop zone ───
+dropZone.addEventListener('click', () => inputArchivo.click());
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const archivos = Array.from(e.dataTransfer.files);
+    const webp = archivos.find(f => f.name.toLowerCase().endsWith('.webp'));
+    if (webp) procesarArchivo(webp);
+    else mostrarMensaje('Solo se aceptan archivos .webp', 'error');
+});
+inputArchivo.addEventListener('change', () => {
+    if (inputArchivo.files[0]) procesarArchivo(inputArchivo.files[0]);
+    inputArchivo.value = '';
+});
+
+// ─── Procesar archivo ───
+async function procesarArchivo(archivo) {
+    // Preview inmediato
+    const urlLocal = URL.createObjectURL(archivo);
+    previewImg.src = urlLocal;
+    previewWrap.style.display = 'block';
+    previewImg.onload = () => {
+        previewInfo.textContent =
+            `${previewImg.naturalWidth} × ${previewImg.naturalHeight} px · ${window.PDFExport.formatearTamano(archivo.size)}`;
     };
 
-    // ============================================================
-    // Referencias al DOM
-    // ============================================================
-    const dropZone      = document.getElementById('drop-zone');
-    const inputArchivo  = document.getElementById('input-archivo');
-    const archivoInfo   = document.getElementById('archivo-info');
-    const archivoNombre = document.getElementById('archivo-nombre');
-    const archivoMeta   = document.getElementById('archivo-meta');
-    const previewWrap   = document.getElementById('preview-wrap');
-    const previewImg    = document.getElementById('preview-img');
-    const previewInfo   = document.getElementById('preview-info');
-    const btnConvertir  = document.getElementById('btn-convertir');
-    const progressSec   = document.getElementById('progress-section');
-    const progressFill  = document.getElementById('progress-fill');
-    const progressMsg   = document.getElementById('progress-msg');
-    const resultadoSec  = document.getElementById('resultado-section');
-    const linkDescarga  = document.getElementById('link-descarga');
-    const mensajeEstado = document.getElementById('mensaje-estado');
-    const API           = window.AppConfig.API_BASE_URL;
+    // Info del archivo
+    nombreArchivo.textContent = archivo.name;
+    metaArchivo.textContent = window.PDFExport.formatearTamano(archivo.size);
+    fileInfoCard.style.display = 'block';
+    dropZone.classList.add('loaded');
+    btnConvertir.disabled = true;
+    btnDescarga.classList.remove('visible');
 
-    // ============================================================
-    // Drop zone
-    // ============================================================
-    dropZone.addEventListener('click', () => inputArchivo.click());
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const archivos = Array.from(e.dataTransfer.files);
-        const webp = archivos.find(f => f.name.toLowerCase().endsWith('.webp'));
-        if (webp) {
-            procesarArchivo(webp);
-        } else {
-            window.PDFExport.mostrarMensaje(mensajeEstado, 'Solo se aceptan archivos .webp', 'warning');
+    // Intentar deduplicacion
+    try {
+        const checkResp = await fetch(`${API}/check-duplicate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: archivo.name, tamano: archivo.size, fecha_modificacion: new Date(archivo.lastModified).toISOString() })
+        });
+        const checkData = await checkResp.json();
+        if (checkData.success && checkData.data.exists) {
+            estado.archivoId = checkData.data.file.id;
+            btnConvertir.disabled = false;
+            return;
         }
-    });
+    } catch (e) { /* si falla, subir directamente */ }
 
-    inputArchivo.addEventListener('change', () => {
-        if (inputArchivo.files[0]) procesarArchivo(inputArchivo.files[0]);
-        inputArchivo.value = '';
-    });
+    // Subir archivo con progreso
+    progresoCarga.style.display = 'block';
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('nombre', archivo.name);
+    formData.append('tamano', archivo.size);
+    formData.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
 
-    // ============================================================
-    // Procesar archivo: mostrar preview local y subir al servidor
-    // ============================================================
-    async function procesarArchivo(archivo) {
-        // Mostrar preview inmediato desde el archivo local
-        const urlLocal = URL.createObjectURL(archivo);
-        previewImg.src = urlLocal;
-        previewWrap.classList.add('visible');
-
-        // Esperar a que cargue para obtener dimensiones
-        previewImg.onload = () => {
-            previewInfo.textContent =
-                `${previewImg.naturalWidth} × ${previewImg.naturalHeight} px · ` +
-                `${window.PDFExport.formatearTamano(archivo.size)}`;
-        };
-
-        // Actualizar info del archivo
-        archivoNombre.textContent = archivo.name;
-        archivoMeta.textContent = window.PDFExport.formatearTamano(archivo.size);
-        archivoInfo.classList.add('visible');
-        dropZone.classList.add('archivo-cargado');
-
-        // Deshabilitar boton mientras sube
-        btnConvertir.disabled = true;
-        resultadoSec.style.display = 'none';
-
-        await subirArchivoSiNecesario(archivo);
-    }
-
-    async function subirArchivoSiNecesario(archivo) {
-        // Verificar si ya existe en el servidor
-        try {
-            const checkResp = await fetch(`${API}/check-duplicate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: archivo.name,
-                    tamano: archivo.size,
-                    fecha_modificacion: new Date(archivo.lastModified).toISOString()
-                })
-            });
-            const checkData = await checkResp.json();
-
-            if (checkData.success && checkData.data.exists) {
-                estado.archivoId = checkData.data.file.id;
-                btnConvertir.disabled = false;
-                return;
-            }
-        } catch (e) {
-            // Si falla la verificacion, intentar subir directamente
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            barraCarga.style.width = pct + '%';
+            pctCarga.textContent = pct + '%';
         }
-
-        // Subir el archivo
-        const formData = new FormData();
-        formData.append('archivo', archivo);
-        formData.append('nombre', archivo.name);
-        formData.append('tamano', archivo.size);
-        formData.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
-
+    };
+    xhr.onload = () => {
+        progresoCarga.style.display = 'none';
         try {
-            const resp = await fetch(`${API}/upload`, { method: 'POST', body: formData });
-            const data = await resp.json();
-
+            const data = JSON.parse(xhr.responseText);
             if (data.success) {
                 estado.archivoId = data.data.id;
                 btnConvertir.disabled = false;
+                if (data.data.ya_existia) mostrarMensaje('Archivo ya estaba en el servidor, se reutilizo', 'info');
             } else {
-                window.PDFExport.mostrarMensaje(mensajeEstado, `Error al subir: ${data.error.message}`, 'error');
-                btnConvertir.disabled = true;
+                mostrarMensaje(data.error?.message || 'Error al subir el archivo', 'error');
             }
         } catch (e) {
-            window.PDFExport.mostrarMensaje(mensajeEstado, 'Error de red al subir el archivo', 'error');
-            btnConvertir.disabled = true;
+            mostrarMensaje('Error al procesar respuesta del servidor', 'error');
         }
+    };
+    xhr.onerror = () => {
+        progresoCarga.style.display = 'none';
+        mostrarMensaje('Error de red al subir el archivo', 'error');
+    };
+    xhr.send(formData);
+}
+
+// ─── Ejecutar conversion ───
+btnConvertir.addEventListener('click', async () => {
+    if (!estado.archivoId) return;
+
+    btnConvertir.disabled = true;
+    btnDescarga.classList.remove('visible');
+    procPanel.classList.add('visible');
+    barraProceso.style.width = '0%';
+    textoProceso.textContent = 'Iniciando...';
+    pctProceso.textContent = '0%';
+
+    try {
+        const resp = await fetch(`${API}/convert/webp-to-png`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_id: estado.archivoId })
+        });
+        const data = await resp.json();
+
+        if (!data.success) {
+            mostrarMensaje(data.error?.message || 'Error al iniciar la conversion', 'error');
+            resetBoton();
+            return;
+        }
+
+        monitorearProgreso(data.data.job_id);
+    } catch (e) {
+        mostrarMensaje('Error de red al iniciar la conversion', 'error');
+        resetBoton();
     }
+});
 
-    // ============================================================
-    // Ejecutar conversion
-    // ============================================================
-    btnConvertir.addEventListener('click', async () => {
-        if (!estado.archivoId) return;
+// ─── SSE + fallback ───
+function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
 
-        btnConvertir.disabled = true;
-        resultadoSec.style.display = 'none';
-        progressSec.classList.add('visible');
-        progressFill.style.width = '0%';
-        progressFill.style.background = 'var(--color-primary)';
-        progressMsg.textContent = 'Iniciando...';
-
+    sse.onmessage = (e) => {
         try {
-            const resp = await fetch(`${API}/convert/webp-to-png`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_id: estado.archivoId })
-            });
-            const data = await resp.json();
+            const d = JSON.parse(e.data);
+            barraProceso.style.width = (d.progreso || 0) + '%';
+            pctProceso.textContent = (d.progreso || 0) + '%';
+            textoProceso.textContent = d.mensaje || 'Procesando...';
 
-            if (!data.success) {
-                window.PDFExport.mostrarMensaje(mensajeEstado, `Error: ${data.error.message}`, 'error');
-                btnConvertir.disabled = false;
-                progressSec.classList.remove('visible');
+            if (d.estado === 'completado') {
+                sse.close();
+                finalizarExito(jobId);
+            } else if (d.estado === 'error') {
+                sse.close();
+                mostrarMensaje(d.mensaje || 'Error en la conversion', 'error');
+                resetBoton();
+            }
+        } catch (err) { /* ignorar */ }
+    };
+
+    sse.onerror = () => {
+        sse.close();
+        verificarEstadoFinal(jobId);
+    };
+}
+
+async function verificarEstadoFinal(jobId) {
+    try {
+        const resp = await fetch(`${API}/jobs/${jobId}`);
+        const data = await resp.json();
+        if (data.success) {
+            const est = data.data.estado;
+            if (est === 'completado') {
+                finalizarExito(jobId);
                 return;
+            } else if (est === 'procesando' || est === 'pendiente') {
+                setTimeout(() => verificarEstadoFinal(jobId), 2000);
+                return;
+            } else if (est === 'error') {
+                mostrarMensaje(data.data.mensaje || 'Error en la conversion', 'error');
             }
-
-            monitorearProgreso(data.data.job_id);
-
-        } catch (e) {
-            window.PDFExport.mostrarMensaje(mensajeEstado, 'Error de red al iniciar la conversion', 'error');
-            btnConvertir.disabled = false;
-            progressSec.classList.remove('visible');
         }
-    });
+    } catch (e) { /* silencioso */ }
+    resetBoton();
+}
 
-    // ============================================================
-    // Monitorear progreso via SSE
-    // ============================================================
-    function monitorearProgreso(jobId) {
-        estado.jobId = jobId;
-        const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+function finalizarExito(jobId) {
+    barraProceso.style.width = '100%';
+    pctProceso.textContent = '100%';
+    textoProceso.textContent = 'Completado';
+    mostrarMensaje('Conversion completada. Iniciando descarga...', 'success');
 
-        sse.onmessage = (e) => {
-            try {
-                const datos = JSON.parse(e.data);
+    const urlDescarga = `${API}/download/${jobId}`;
+    btnDescarga.href = urlDescarga;
+    btnDescarga.classList.add('visible');
+    window.PDFExport.descargarResultado(jobId);
+    resetBoton();
+}
 
-                progressFill.style.width = datos.progreso + '%';
-                progressMsg.textContent = datos.mensaje || `${datos.progreso}%`;
+function resetBoton() {
+    procPanel.classList.remove('visible');
+    btnConvertir.disabled = !estado.archivoId;
+}
 
-                if (datos.estado === 'completado') {
-                    sse.close();
-                    progressFill.style.width = '100%';
-                    progressMsg.textContent = 'Completado. Descargando...';
+// ─── Mensaje de estado ───
+function mostrarMensaje(texto, tipo) {
+    mensajeEstado.textContent = texto;
+    mensajeEstado.className = 'status-message visible ' + tipo;
+    setTimeout(() => { mensajeEstado.className = 'status-message'; }, 5000);
+}
 
-                    const urlDescarga = `${API}/download/${jobId}`;
-                    linkDescarga.href = urlDescarga;
-                    resultadoSec.style.display = 'block';
-
-                    // Descarga automatica
-                    const a = document.createElement('a');
-                    a.href = urlDescarga;
-                    a.download = '';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-
-                    btnConvertir.disabled = false;
-
-                } else if (datos.estado === 'error') {
-                    sse.close();
-                    progressMsg.textContent = 'Error: ' + (datos.mensaje || 'Fallo desconocido');
-                    progressFill.style.background = 'var(--color-danger)';
-                    window.PDFExport.mostrarMensaje(mensajeEstado, datos.mensaje || 'Error en la conversion', 'error');
-                    btnConvertir.disabled = false;
-                }
-
-            } catch (err) { /* ignorar errores de parseo */ }
-        };
-
-        sse.onerror = () => {
-            sse.close();
-            progressMsg.textContent = 'Verificando estado...';
-            verificarEstadoFinal(jobId);
-        };
-    }
-
-    async function verificarEstadoFinal(jobId) {
-        try {
-            const resp = await fetch(`${API}/jobs/${jobId}`);
-            const data = await resp.json();
-            if (data.success && data.data.estado === 'completado') {
-                progressFill.style.width = '100%';
-                progressMsg.textContent = 'Completado.';
-                const urlDescarga = `${API}/download/${jobId}`;
-                linkDescarga.href = urlDescarga;
-                resultadoSec.style.display = 'block';
-            }
-        } catch (e) { /* silencioso */ }
-        btnConvertir.disabled = false;
-    }
-    </script>
+// ─── Sidebar toggle ───
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+}
+</script>
 </body>
 </html>

@@ -3,331 +3,877 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortar PDF - PDF-Export & Import</title>
+    <title>Cortar PDF — PDF-Export</title>
     <link rel="icon" type="image/x-icon" href="/static/fav.ico">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Estilos especificos para cortar PDF */
-        .split-container {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 25px;
-            margin-top: 20px;
-        }
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+      }
 
-        .pdf-preview {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            padding: 20px;
-            background: var(--color-background);
-            border-radius: var(--radius-md);
-        }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .preview-card {
-            text-align: center;
-        }
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
 
-        .preview-card img {
-            max-width: 180px;
-            max-height: 250px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-sm);
-        }
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1);
+        overflow: hidden;
+      }
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
 
-        .preview-label {
-            margin-top: 8px;
-            font-size: 0.9rem;
-            color: var(--color-text-light);
-        }
+      .sidebar-logo {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer; text-decoration: none; color: var(--text);
+        height: var(--header-h); flex-shrink: 0;
+      }
+      .logo-icon {
+        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+        color: white; flex-shrink: 0; letter-spacing: -1px;
+      }
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
-        /* Panel de cortes */
-        .cuts-panel {
-            background: var(--color-surface);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-        }
+      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+      .nav-section-label {
+        font-size: 10px; font-weight: 600; color: var(--text-muted);
+        letter-spacing: .08em; text-transform: uppercase;
+        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
 
-        .cuts-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--color-border);
-        }
+      .nav-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 14px; cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 0.15s; white-space: nowrap; position: relative;
+        text-decoration: none; color: inherit;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active { background: var(--bg); border-left-color: var(--red); }
+      .nav-item.active .nav-label { color: var(--text); }
+      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
 
-        .cuts-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B; color: var(--text); padding: 5px 10px;
+        border-radius: 6px; font-size: 12px; white-space: nowrap;
+        border: 1px solid var(--border); pointer-events: none; z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
 
-        .cut-item {
-            background: var(--color-background);
-            border-radius: var(--radius-md);
-            padding: 15px;
-            border: 2px solid var(--color-border);
-        }
+      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+      .collapse-btn {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        color: var(--text-muted); font-size: 13px; padding: 6px 0;
+        -webkit-user-select: none; user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
 
-        .cut-item.active {
-            border-color: var(--color-primary);
-        }
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+        display: flex; flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
 
-        .cut-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+      /* HEADER */
+      .header {
+        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; padding: 0 24px; gap: 14px;
+        position: sticky; top: 0; z-index: 50;
+      }
+      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+      .breadcrumb a {
+        color: var(--text-muted); cursor: pointer; transition: color 0.15s;
+        text-decoration: none; display: flex; align-items: center;
+      }
+      .breadcrumb a:hover { color: var(--red); }
+      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
 
-        .cut-title {
-            font-weight: 600;
-            color: var(--color-text);
-        }
+      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .stat-chip {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+      }
+      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-        .cut-pages {
-            font-size: 0.85rem;
-            color: var(--color-text-light);
-        }
+      .home-btn {
+        display: flex; align-items: center; gap: 6px;
+        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+        padding: 5px 12px; font-size: 13px; color: var(--text-muted);
+        cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+        font-family: inherit; text-decoration: none;
+      }
+      .home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
 
-        .cut-range {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      /* ─── CONTENT ─── */
+      .content { padding: 28px 32px; flex: 1; max-width: 1200px; width: 100%; }
 
-        .cut-range input {
-            width: 70px;
-            padding: 8px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            text-align: center;
-            font-size: 1rem;
-        }
+      /* Page header */
+      .page-header { display: flex; align-items: flex-start; margin-bottom: 28px; gap: 16px; }
+      .page-title-group { display: flex; align-items: center; gap: 14px; }
+      .page-badge {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+        background: rgba(230,57,70,0.12); color: var(--red); border: 1px solid rgba(230,57,70,0.3);
+        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+      }
+      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
-        .cut-range input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
+      /* ─── ZONA DE CARGA (columna única) ─── */
 
-        .cut-range span {
-            color: var(--color-text-light);
-        }
+      /* ─── CARD ─── */
+      .card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 20px; margin-bottom: 16px;
+      }
+      .card-title {
+        font-size: 12px; font-weight: 600; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+      }
 
-        .cut-thumbnails {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-        }
+      /* DROP ZONE */
+      .dropzone {
+        background: var(--card); border: 2px dashed var(--border);
+        border-radius: 14px; padding: 48px 24px; text-align: center;
+        cursor: pointer; transition: border-color 0.2s, background 0.2s;
+        margin-bottom: 16px;
+      }
+      .dropzone:hover, .dropzone.drag-over { border-color: var(--red); background: rgba(230,57,70,0.04); }
+      .dropzone-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+      .dropzone-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+      .dropzone-sub { font-size: 13px; color: var(--text-muted); }
+      .dropzone-sub strong { color: var(--text); }
+      #file-input { display: none; }
 
-        .cut-thumb {
-            flex: 1;
-            text-align: center;
-        }
+      /* PROGRESS */
+      .progress-info-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+      .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+      .progress-fill { height: 100%; background: var(--red); border-radius: 4px; transition: width 0.3s; width: 0%; }
 
-        .cut-thumb img {
-            max-width: 80px;
-            max-height: 110px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-        }
+      #progreso-carga { display: none; margin-bottom: 16px; }
 
-        .cut-thumb-label {
-            font-size: 0.75rem;
-            color: var(--color-text-light);
-            margin-top: 4px;
-        }
+      /* FILE INFO CARD */
+      #file-info-card { display: none; margin-bottom: 16px; }
+      .file-info-header { display: flex; align-items: center; gap: 12px; }
+      .file-icon-box {
+        width: 38px; height: 38px; background: rgba(230,57,70,0.12);
+        border: 1px solid rgba(230,57,70,0.3); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 10px;
+        color: var(--red); flex-shrink: 0;
+      }
+      .file-name-text { font-size: 14px; font-weight: 600; color: var(--text); }
+      .file-meta-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-        .btn-remove-cut {
-            background: none;
-            border: none;
-            color: var(--color-danger);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 5px;
-        }
+      /* BARRA SUPERIOR DEL PANEL DE CORTES */
+      .cuts-top-bar {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+      }
+      .cuts-top-bar .card-title { margin-bottom: 0; white-space: nowrap; }
+      .auto-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+      .cuts-exec { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
-        .btn-remove-cut:hover {
-            opacity: 0.7;
-        }
+      /* LISTA DE CORTES HORIZONTAL */
 
-        /* Opciones de corte automatico */
-        .auto-split-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--color-border);
-        }
+      /* STATUS MESSAGE */
+      .status-message { display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+      .status-message.visible { display: block; }
+      .status-message.success { background: rgba(63,185,80,0.12); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+      .status-message.error { background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+      .status-message.info { background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); color: var(--blue); }
 
-        .auto-split-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+      /* ── PANEL DE CORTES (ancho completo) ── */
+      #cuts-panel { display: none; }
+      #cuts-panel.visible { display: block; }
 
-        .auto-split-row input {
-            width: 60px;
-            padding: 8px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            text-align: center;
-        }
+      /* Lista de cortes — columna única, cada corte ocupa todo el ancho */
+      #lista-cortes { display: flex; flex-direction: column; gap: 12px; }
 
-        /* Info del archivo */
-        .file-info-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--color-background);
-            padding: 12px 20px;
-            border-radius: var(--radius-md);
-            margin-bottom: 20px;
-        }
+      /* Cada corte — tarjeta de ancho completo */
+      .cut-item {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: 10px; padding: 16px;
+        transition: border-color 0.15s; width: 100%;
+      }
+      .cut-item.active { border-color: var(--red); }
 
-        .file-info-name {
-            font-weight: 500;
-        }
+      /* Fila única: Corte N | X pags. | Desde pag [input] hasta [input] [×] */
+      .cut-row {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+      }
+      .cut-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700;
+        color: var(--red); background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25);
+        border-radius: 5px; padding: 2px 8px; white-space: nowrap;
+      }
+      .cut-sep { color: var(--border); font-size: 14px; }
+      .cut-pages-count { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+      .cut-range-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+      .cut-input {
+        width: 72px; padding: 6px 8px; background: var(--card); border: 1px solid var(--border);
+        border-radius: 6px; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px; text-align: center;
+      }
+      .cut-input:focus { outline: none; border-color: var(--red); }
 
-        .file-info-pages {
-            color: var(--color-primary);
-            font-weight: 600;
-        }
+      .btn-remove-cut {
+        background: none; border: none; color: var(--text-muted); cursor: pointer;
+        font-size: 18px; padding: 2px 6px; border-radius: 4px; margin-left: auto;
+        transition: color 0.15s, background 0.15s; line-height: 1;
+      }
+      .btn-remove-cut:hover { color: var(--red); background: rgba(230,57,70,0.1); }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .split-container {
-                grid-template-columns: 1fr;
-            }
+      /* Miniaturas — dos columnas, ocupa todo el ancho disponible */
+      .cut-thumbs { display: flex; gap: 12px; }
+      .cut-thumb { flex: 1; text-align: center; }
+      .cut-thumb img {
+        width: 100%; max-height: 420px; object-fit: contain;
+        border: 1px solid var(--border); border-radius: 8px;
+        display: block; margin: 0 auto 6px;
+        background: rgba(0,0,0,0.3);
+      }
+      .cut-thumb-label { font-size: 11px; color: var(--text-muted); }
 
-            .pdf-preview {
-                flex-wrap: wrap;
-            }
-        }
+      /* Acciones del panel de cortes */
+      .cuts-actions {
+        display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+      }
+      .btn-cut-action {
+        padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
+        background: var(--bg); color: var(--text-muted); font-size: 12px; cursor: pointer;
+        font-family: inherit; transition: border-color 0.15s, color 0.15s;
+      }
+      .btn-cut-action:hover { border-color: var(--red); color: var(--text); }
+      .btn-cut-action.primary { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.3); color: var(--red); }
+
+      /* Auto-corte — ahora en la barra superior, estilos en .cuts-top-bar */
+      .auto-input {
+        width: 60px; padding: 6px 8px; background: var(--card); border: 1px solid var(--border);
+        border-radius: 6px; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px; text-align: center;
+      }
+      .auto-input:focus { outline: none; border-color: var(--red); }
+
+      .proc-fill { height: 100%; background: var(--red); border-radius: 4px; transition: width 0.3s; width: 0%; }
+
+      /* EXECUTE BUTTON */
+      .btn-action {
+        padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+        font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600;
+        background: var(--red); color: white;
+        transition: opacity 0.2s, transform 0.1s; white-space: nowrap;
+      }
+      .btn-action:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+      .btn-action:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+      .btn-download {
+        display: none; padding: 10px 20px; border-radius: 10px;
+        border: 1px solid var(--green); cursor: pointer;
+        font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600;
+        background: rgba(63,185,80,0.12); color: var(--green);
+        text-align: center; text-decoration: none; white-space: nowrap;
+        transition: background 0.15s;
+      }
+      .btn-download:hover { background: rgba(63,185,80,0.2); }
+      .btn-download.visible { display: block; }
+
+      /* Ocultar input file nativo y elementos inicialmente ocultos */
+      #file-input { display: none; }
+      #progreso-carga { display: none; }
+      #file-info-card { display: none; }
+
+      /* Separacion del panel de proceso */
+      #processing-panel { display: none; margin-bottom: 14px; }
+      #processing-panel.visible { display: block; }
+
+      /* scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        .content { padding: 20px 16px; }
+        .cut-thumb img { max-height: 260px; }
+      }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo" style="font-size: 2rem;"><a href="/" style="color: inherit; text-decoration: none;">PDF-Export &amp; Import</a></h1>
-            <p class="subtitle">Cortar PDF en partes</p>
-        </header>
 
-        <main class="main-content">
-            <!-- Panel principal -->
-            <section class="main-panel">
-                <!-- Zona de carga -->
-                <div id="zona-carga" class="upload-zone">
-                    <div class="upload-icon">PDF</div>
-                    <p class="upload-text">Arrastra un archivo PDF aqui</p>
-                    <p class="upload-hint">o haz clic para seleccionar (maximo 1GB)</p>
-                </div>
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <a class="sidebar-logo" href="/">
+        <div class="logo-icon">PDF</div>
+        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+    </a>
 
-                <!-- Progreso de carga -->
-                <div id="progreso-carga" class="progress-large" style="display: none;">
-                    <div class="progress-bar-large">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                </div>
-
-                <!-- Info del archivo cargado -->
-                <div id="info-archivo" class="file-info-bar" style="display: none;">
-                    <span class="file-info-name" id="nombre-archivo">documento.pdf</span>
-                    <span class="file-info-pages"><span id="num-paginas">0</span> paginas</span>
-                </div>
-
-                <!-- Vista previa del PDF -->
-                <div id="vista-previa" class="pdf-preview" style="display: none;">
-                    <div class="preview-card">
-                        <img id="thumb-primera" src="" alt="Primera pagina">
-                        <p class="preview-label">Primera pagina</p>
-                    </div>
-                    <div class="preview-card">
-                        <img id="thumb-ultima" src="" alt="Ultima pagina">
-                        <p class="preview-label">Ultima pagina</p>
-                    </div>
-                </div>
-
-                <!-- Mensajes de estado -->
-                <div id="mensaje-estado" class="status-message" style="display: none;"></div>
-            </section>
-
-            <!-- Panel de cortes (lateral) -->
-            <aside id="panel-cortes" class="cuts-panel" style="display: none;">
-                <div class="cuts-header">
-                    <h3>Cortes</h3>
-                    <button id="btn-agregar-corte" class="btn btn-primary btn-small">+ Agregar corte</button>
-                </div>
-
-                <!-- Lista de cortes -->
-                <div id="lista-cortes" class="cuts-list">
-                    <!-- Los cortes se agregan dinamicamente -->
-                </div>
-
-                <!-- Corte automatico -->
-                <div class="auto-split-section">
-                    <h4 style="margin-bottom: 12px;">Corte automatico</h4>
-                    <div class="auto-split-row">
-                        <span>Dividir en</span>
-                        <input type="number" id="num-partes-auto" min="2" max="20" value="2">
-                        <span>partes iguales</span>
-                        <button id="btn-auto-split" class="btn btn-small" style="background: var(--color-secondary); color: white;">
-                            Calcular
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Botones de accion -->
-                <div class="action-buttons" style="margin-top: 25px;">
-                    <button id="btn-ejecutar" class="btn btn-primary" disabled>
-                        Cortar y Descargar
-                    </button>
-                </div>
-
-                <!-- Progreso de procesamiento -->
-                <div id="progreso-proceso" class="progress-large" style="display: none; margin-top: 15px;">
-                    <div class="progress-bar-large">
-                        <div class="progress-fill" id="barra-proceso"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="texto-proceso">Procesando...</span>
-                        <span id="porcentaje-proceso">0%</span>
-                    </div>
-                </div>
-            </aside>
-        </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p><strong>PDF-Export & Import</strong> - Herramientas de conversion PDF para la Soberanía Digital Empresarial</p>
-            <p class="footer-info"><a href="/">Volver al inicio</a></p>
-            <p class="footer-info" id="app-version"></p>
-
-            <div class="footer-legal" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border); font-size: 0.85rem; color: var(--color-text-light); text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--color-text);">Aviso de uso y alcance</h4>
-                <p style="margin-bottom: 10px;">Esta aplicación y su API están destinadas a uso privado.
-                No se implementan claves de acceso a nivel de aplicación con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-
-                <p style="margin-bottom: 10px;">Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ).
-                En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticación, quedando dicha configuración bajo el criterio y responsabilidad del usuario.</p>
-
-                <p style="margin-bottom: 10px;">Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberanía digital sobre los recursos informáticos utilizados para el procesamiento de documentos.</p>
-
-                <p>El código y la aplicación se distribuyen bajo una licencia de uso público y amplio, permitiendo su utilización, modificación y adaptación conforme a dicho marco.</p>
-            </div>
-        </footer>
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
+        <a class="nav-item active" href="/" data-tooltip="Tengo un PDF...">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Miscelaneos">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">Miscelaneos</span>
+        </a>
     </div>
 
-    <script src="/config.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/pdf-split.js"></script>
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
+        <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="breadcrumb">
+            <a href="/" title="Inicio">🏠</a>
+            <span class="sep">/</span>
+            <a href="/">Tengo un PDF...</a>
+            <span class="sep">/</span>
+            <span class="current">Cortar PDF</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Online</div>
+            <a class="home-btn" href="/">Tengo un PDF...</a>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-title-group">
+                <div class="page-badge">CUT</div>
+                <div>
+                    <div class="page-title">Cortar PDF</div>
+                    <div class="page-subtitle">Divide un PDF en partes definiendo rangos de paginas — hasta 20 cortes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drop zone (se oculta al cargar) -->
+        <div class="dropzone" id="drop-zone">
+            <span class="dropzone-icon">✂️</span>
+            <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+            <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
+            <input type="file" id="file-input" accept=".pdf,application/pdf">
+        </div>
+
+        <!-- Progreso de carga -->
+        <div id="progreso-carga" class="card">
+            <div class="progress-info-row">
+                <span id="texto-carga">Subiendo...</span>
+                <span id="pct-carga">0%</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-fill" id="barra-carga"></div>
+            </div>
+        </div>
+
+        <!-- Info del archivo cargado -->
+        <div id="file-info-card" class="card">
+            <div class="file-info-header">
+                <div class="file-icon-box">PDF</div>
+                <div>
+                    <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                    <div class="file-meta-text" id="info-paginas">— paginas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje de estado -->
+        <div class="status-message" id="mensaje-estado"></div>
+
+        <!-- PANEL DE CORTES — ancho completo -->
+        <div id="cuts-panel">
+            <div class="card">
+                <!-- Cabecera: titulo + acciones + auto-split + boton ejecutar en una fila -->
+                <div class="cuts-top-bar">
+                    <span class="card-title">Cortes a generar</span>
+                    <div class="cuts-actions">
+                        <button type="button" class="btn-cut-action primary" id="btn-agregar">+ Agregar corte</button>
+                        <label for="num-partes" class="auto-label">Dividir en</label>
+                        <input type="number" class="auto-input" id="num-partes" min="2" max="20" value="2">
+                        <label for="num-partes" class="auto-label">partes iguales</label>
+                        <button type="button" class="btn-cut-action" id="btn-auto-split">Calcular</button>
+                    </div>
+                    <div class="cuts-exec">
+                        <button type="button" class="btn-action" id="btn-ejecutar" disabled>
+                            ✂️ Cortar y Descargar
+                        </button>
+                        <a id="btn-descarga" class="btn-download" href="#">⬇ Descargar resultado</a>
+                    </div>
+                </div>
+
+                <!-- Progreso de proceso -->
+                <div id="processing-panel">
+                    <div class="progress-info-row">
+                        <span id="texto-proceso">Procesando...</span>
+                        <span id="pct-proceso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="proc-fill" id="barra-proceso"></div>
+                    </div>
+                </div>
+
+                <!-- Lista de cortes en fila horizontal -->
+                <div id="lista-cortes"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+const API = window.AppConfig.API_BASE_URL;
+
+// ─── Estado global ───
+const estado = {
+    archivoId: null,
+    numPaginas: 0,
+    cortes: [],
+    procesando: false
+};
+
+// ─── DOM ───
+const dropZone      = document.getElementById('drop-zone');
+const fileInput     = document.getElementById('file-input');
+const progresoCarga = document.getElementById('progreso-carga');
+const barraCarga    = document.getElementById('barra-carga');
+const textoCarga    = document.getElementById('texto-carga');
+const pctCarga      = document.getElementById('pct-carga');
+const fileInfoCard  = document.getElementById('file-info-card');
+const nombreArchivo = document.getElementById('nombre-archivo');
+const infoPaginas   = document.getElementById('info-paginas');
+const cutsPanel     = document.getElementById('cuts-panel');
+const listaCortes   = document.getElementById('lista-cortes');
+const btnAgregar    = document.getElementById('btn-agregar');
+const numPartes     = document.getElementById('num-partes');
+const btnAutoSplit  = document.getElementById('btn-auto-split');
+const btnEjecutar   = document.getElementById('btn-ejecutar');
+const procPanel     = document.getElementById('processing-panel');
+const barraProceso  = document.getElementById('barra-proceso');
+const textoProceso  = document.getElementById('texto-proceso');
+const pctProceso    = document.getElementById('pct-proceso');
+const btnDescarga   = document.getElementById('btn-descarga');
+const mensajeEstado = document.getElementById('mensaje-estado');
+
+// ─── Drop zone ───
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const f = Array.from(e.dataTransfer.files).find(f => f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf');
+    if (f) manejarArchivo(f);
+    else mostrarMensaje('Solo se aceptan archivos PDF', 'error');
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) manejarArchivo(fileInput.files[0]);
+    fileInput.value = '';
+});
+
+// ─── Manejar archivo ───
+async function manejarArchivo(archivo) {
+    dropZone.style.display = 'none';
+    progresoCarga.style.display = 'block';
+    barraCarga.style.width = '0%';
+    pctCarga.textContent = '0%';
+    textoCarga.textContent = 'Subiendo...';
+
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('nombre', archivo.name);
+    formData.append('tamano', archivo.size);
+    formData.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            barraCarga.style.width = pct + '%';
+            pctCarga.textContent = pct + '%';
+        }
+    };
+    xhr.onload = () => {
+        progresoCarga.style.display = 'none';
+        try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+                cargarArchivo(data.data);
+            } else {
+                dropZone.style.display = '';
+                mostrarMensaje(data.error?.message || 'Error al subir el archivo', 'error');
+            }
+        } catch (e) {
+            dropZone.style.display = '';
+            mostrarMensaje('Error al procesar respuesta del servidor', 'error');
+        }
+    };
+    xhr.onerror = () => {
+        progresoCarga.style.display = 'none';
+        dropZone.style.display = '';
+        mostrarMensaje('Error de red al subir el archivo', 'error');
+    };
+    xhr.send(formData);
+}
+
+// ─── Cargar datos del archivo ───
+function cargarArchivo(data) {
+    estado.archivoId = data.id;
+    estado.numPaginas = data.num_paginas;
+
+    // Mostrar info del archivo (drop zone ya se ocultó en manejarArchivo)
+    nombreArchivo.textContent = data.nombre_original;
+    infoPaginas.textContent = `${data.num_paginas} paginas · ${window.PDFExport.formatearTamano(data.tamano_bytes)}`;
+    fileInfoCard.style.display = 'block';
+
+    // Mostrar panel de cortes con el primer corte por defecto
+    cutsPanel.classList.add('visible');
+    estado.cortes = [];
+    agregarCorte();
+
+    if (data.ya_existia) mostrarMensaje('Archivo ya estaba en el servidor, se reutilizo', 'info');
+}
+
+// ─── Agregar corte ───
+btnAgregar.addEventListener('click', agregarCorte);
+
+function agregarCorte() {
+    if (estado.cortes.length >= 20) {
+        mostrarMensaje('Maximo 20 cortes permitidos', 'error');
+        return;
+    }
+
+    let inicio = 1;
+    if (estado.cortes.length > 0) {
+        inicio = estado.cortes[estado.cortes.length - 1].fin + 1;
+    }
+
+    if (inicio > estado.numPaginas && estado.numPaginas > 0) {
+        mostrarMensaje('No hay mas paginas disponibles para agregar cortes', 'error');
+        return;
+    }
+
+    const corte = {
+        id: Date.now() + Math.random(),
+        inicio: inicio,
+        fin: estado.numPaginas || 1
+    };
+
+    estado.cortes.push(corte);
+    renderizarCortes();
+    actualizarBoton();
+}
+
+// ─── Eliminar corte ───
+function eliminarCorte(id) {
+    estado.cortes = estado.cortes.filter(c => c.id !== id);
+    renderizarCortes();
+    actualizarBoton();
+}
+
+// ─── Actualizar campo de un corte ───
+function actualizarCampo(id, campo, valor) {
+    const corte = estado.cortes.find(c => c.id === id);
+    if (!corte) return;
+
+    valor = Math.max(1, Math.min(parseInt(valor) || 1, estado.numPaginas));
+    corte[campo] = valor;
+    if (corte.inicio > corte.fin) {
+        if (campo === 'inicio') corte.fin = corte.inicio;
+        else corte.inicio = corte.fin;
+    }
+    renderizarCortes();
+}
+
+// ─── Actualizar miniaturas de un corte al salir del campo ───
+function actualizarMiniaturas(id) {
+    const corte = estado.cortes.find(c => c.id === id);
+    if (!corte || !estado.archivoId) return;
+
+    const imgI = document.getElementById(`thumb-i-${id}`);
+    const imgF = document.getElementById(`thumb-f-${id}`);
+    if (imgI) imgI.src = `${API}/files/${estado.archivoId}/thumbnail/${corte.inicio - 1}`;
+    if (imgF) imgF.src = `${API}/files/${estado.archivoId}/thumbnail/${corte.fin - 1}`;
+}
+
+// ─── Renderizar lista de cortes ───
+function renderizarCortes() {
+    listaCortes.innerHTML = estado.cortes.map((corte, idx) => {
+        const numPags = corte.fin - corte.inicio + 1;
+        const puedeEliminar = estado.cortes.length > 1;
+        return `
+        <div class="cut-item" data-id="${corte.id}">
+            <div class="cut-row">
+                <span class="cut-num">Corte ${idx + 1}</span>
+                <span class="cut-sep">|</span>
+                <span class="cut-pages-count">${numPags} pag${numPags !== 1 ? 's' : ''}.</span>
+                <span class="cut-sep">|</span>
+                <span class="cut-range-label">Desde pag.</span>
+                <input type="number" class="cut-input" value="${corte.inicio}"
+                       min="1" max="${estado.numPaginas}"
+                       onchange="actualizarCampo(${corte.id}, 'inicio', this.value)"
+                       onblur="actualizarMiniaturas(${corte.id})">
+                <span class="cut-range-label">hasta</span>
+                <input type="number" class="cut-input" value="${corte.fin}"
+                       min="1" max="${estado.numPaginas}"
+                       onchange="actualizarCampo(${corte.id}, 'fin', this.value)"
+                       onblur="actualizarMiniaturas(${corte.id})">
+                ${puedeEliminar ? `<button type="button" class="btn-remove-cut" onclick="eliminarCorte(${corte.id})" title="Eliminar">×</button>` : ''}
+            </div>
+            <div class="cut-thumbs">
+                <div class="cut-thumb">
+                    <img id="thumb-i-${corte.id}"
+                         src="${estado.archivoId ? API + '/files/' + estado.archivoId + '/thumbnail/' + (corte.inicio - 1) : ''}"
+                         alt="Pag. ${corte.inicio}">
+                    <div class="cut-thumb-label">Pag. ${corte.inicio}</div>
+                </div>
+                <div class="cut-thumb">
+                    <img id="thumb-f-${corte.id}"
+                         src="${estado.archivoId ? API + '/files/' + estado.archivoId + '/thumbnail/' + (corte.fin - 1) : ''}"
+                         alt="Pag. ${corte.fin}">
+                    <div class="cut-thumb-label">Pag. ${corte.fin}</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Corte automatico ───
+btnAutoSplit.addEventListener('click', calcularCortesAuto);
+
+function calcularCortesAuto() {
+    const n = parseInt(numPartes.value) || 2;
+
+    if (n < 2) { mostrarMensaje('Minimo 2 partes', 'error'); return; }
+    if (n > 20) { mostrarMensaje('Maximo 20 partes', 'error'); return; }
+    if (n > estado.numPaginas) {
+        mostrarMensaje(`No se puede dividir en ${n} partes un doc. de ${estado.numPaginas} paginas`, 'error');
+        return;
+    }
+
+    const base = Math.floor(estado.numPaginas / n);
+    const extra = estado.numPaginas % n;
+    estado.cortes = [];
+    let pag = 1;
+
+    for (let i = 0; i < n; i++) {
+        const tam = base + (i < extra ? 1 : 0);
+        estado.cortes.push({ id: Date.now() + i, inicio: pag, fin: pag + tam - 1 });
+        pag += tam;
+    }
+
+    renderizarCortes();
+    actualizarBoton();
+    mostrarMensaje(`Dividido en ${n} partes iguales`, 'info');
+}
+
+// ─── Actualizar estado del boton ───
+function actualizarBoton() {
+    btnEjecutar.disabled = estado.cortes.length === 0 || estado.procesando || !estado.archivoId;
+}
+
+// ─── Ejecutar cortes ───
+btnEjecutar.addEventListener('click', ejecutarCortes);
+
+async function ejecutarCortes() {
+    if (estado.procesando || estado.cortes.length === 0) return;
+
+    estado.procesando = true;
+    actualizarBoton();
+    btnDescarga.classList.remove('visible');
+    procPanel.classList.add('visible');
+    barraProceso.style.width = '0%';
+    pctProceso.textContent = '0%';
+    textoProceso.textContent = 'Iniciando...';
+
+    const payload = {
+        file_id: estado.archivoId,
+        opciones: {
+            cortes: estado.cortes.map(c => ({ inicio: c.inicio, fin: c.fin }))
+        }
+    };
+
+    try {
+        const resp = await fetch(`${API}/convert/split`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+
+        if (!data.success) {
+            mostrarMensaje(data.error?.message || 'Error al iniciar el corte', 'error');
+            resetBoton();
+            return;
+        }
+
+        monitorearProgreso(data.data.job_id);
+    } catch (e) {
+        mostrarMensaje('Error de red al iniciar el corte', 'error');
+        resetBoton();
+    }
+}
+
+// ─── SSE + fallback ───
+function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+
+    sse.onmessage = (e) => {
+        try {
+            const d = JSON.parse(e.data);
+            barraProceso.style.width = (d.progreso || 0) + '%';
+            pctProceso.textContent = (d.progreso || 0) + '%';
+            textoProceso.textContent = d.mensaje || 'Procesando...';
+
+            if (d.estado === 'completado') {
+                sse.close();
+                finalizarExito(jobId);
+            } else if (d.estado === 'error') {
+                sse.close();
+                mostrarMensaje(d.mensaje || 'Error en el procesamiento', 'error');
+                resetBoton();
+            }
+        } catch (err) { /* ignorar */ }
+    };
+
+    sse.onerror = () => {
+        sse.close();
+        verificarEstadoFinal(jobId);
+    };
+}
+
+async function verificarEstadoFinal(jobId) {
+    try {
+        const resp = await fetch(`${API}/jobs/${jobId}`);
+        const data = await resp.json();
+        if (data.success) {
+            const est = data.data.estado;
+            if (est === 'completado') { finalizarExito(jobId); return; }
+            if (est === 'procesando' || est === 'pendiente') { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+            if (est === 'error') mostrarMensaje(data.data.mensaje || 'Error en el procesamiento', 'error');
+        }
+    } catch (e) { /* silencioso */ }
+    resetBoton();
+}
+
+function finalizarExito(jobId) {
+    barraProceso.style.width = '100%';
+    pctProceso.textContent = '100%';
+    textoProceso.textContent = 'Completado';
+    mostrarMensaje('Cortes completados. Iniciando descarga...', 'success');
+    const urlDescarga = `${API}/download/${jobId}`;
+    btnDescarga.href = urlDescarga;
+    btnDescarga.classList.add('visible');
+    window.PDFExport.descargarResultado(jobId);
+    resetBoton();
+}
+
+function resetBoton() {
+    estado.procesando = false;
+    actualizarBoton();
+}
+
+function mostrarMensaje(texto, tipo) {
+    mensajeEstado.textContent = texto;
+    mensajeEstado.className = 'status-message visible ' + tipo;
+    setTimeout(() => { mensajeEstado.className = 'status-message'; }, 5000);
+}
+
+// ─── Sidebar toggle ───
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+}
+
+// ─── Exponer funciones globales (usadas en onclick del template HTML) ───
+window.eliminarCorte = eliminarCorte;
+window.actualizarCampo = actualizarCampo;
+window.actualizarMiniaturas = actualizarMiniaturas;
+</script>
 </body>
 </html>
