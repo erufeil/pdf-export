@@ -84,6 +84,50 @@ def _recolectar_xrefs_imagenes(doc: fitz.Document) -> set:
     return xrefs
 
 
+def _extraer_imagen_xref(doc: fitz.Document, xref: int) -> dict | None:
+    """
+    Extrae una imagen de un xref con dos intentos:
+      1) extract_image (preserva formato original: jpeg, png, jp2, etc.)
+         Si reporta dimensiones 0x0, las corrige con PIL.
+      2) Pixmap (fallback): convierte al vuelo a PNG cualquier formato que
+         extract_image no puede manejar (JBIG2, CCITT, 1-bit, etc.).
+
+    Returns dict con keys: image(bytes), ext(str), width(int), height(int)
+            o None si ambos metodos fallan.
+    """
+    # Intento 1: extract_image — preserva formato original
+    try:
+        imagen = doc.extract_image(xref)
+        if imagen and imagen.get('image'):
+            ancho = imagen.get('width', 0)
+            alto = imagen.get('height', 0)
+            # Dimensiones invalidas (0x0): corregir con PIL
+            if ancho == 0 or alto == 0:
+                try:
+                    pil_img = Image.open(BytesIO(imagen['image']))
+                    imagen['width'], imagen['height'] = pil_img.size
+                except Exception:
+                    pass
+            return imagen
+    except Exception:
+        pass
+
+    # Intento 2: Pixmap — funciona con JBIG2, CCITT, 1-bit y otros formatos exoticos
+    try:
+        pix = fitz.Pixmap(doc, xref)
+        if pix.width > 0 and pix.height > 0:
+            return {
+                'image': pix.tobytes('png'),
+                'ext': 'png',
+                'width': pix.width,
+                'height': pix.height
+            }
+    except Exception:
+        pass
+
+    return None
+
+
 def contar_imagenes_pdf(ruta_pdf: Path) -> int:
     """Cuenta el numero de imagenes en un PDF usando deteccion doble."""
     doc = fitz.open(str(ruta_pdf))
@@ -139,13 +183,10 @@ def extraer_imagenes_pdf(
         )
 
         try:
-            imagen_base = doc.extract_image(xref)
+            imagen_base = _extraer_imagen_xref(doc, xref)
 
             if not imagen_base:
-                logger.warning(f"xref {xref}: extract_image devolvio None")
-                continue
-            if not imagen_base.get('image'):
-                logger.warning(f"xref {xref}: bytes vacios (ext={imagen_base.get('ext')}, w={imagen_base.get('width')}, h={imagen_base.get('height')})")
+                logger.warning(f"xref {xref}: no se pudo extraer (extract_image ni Pixmap)")
                 continue
 
             img_bytes = imagen_base['image']
@@ -153,8 +194,8 @@ def extraer_imagenes_pdf(
             ancho = imagen_base.get('width', 0)
             alto = imagen_base.get('height', 0)
 
-            # Filtrar por tamano minimo
-            if ancho < tamano_minimo or alto < tamano_minimo:
+            # Filtrar por tamano minimo (solo si el filtro esta activo)
+            if tamano_minimo > 0 and (ancho < tamano_minimo or alto < tamano_minimo):
                 logger.debug(f"xref {xref}: imagen demasiado pequena ({ancho}x{alto}px), omitida")
                 continue
 
@@ -260,12 +301,9 @@ def obtener_conteo_imagenes(archivo_id: str) -> dict:
 
     for xref in sorted(xrefs_imagenes):
         try:
-            imagen_base = doc.extract_image(xref)
+            imagen_base = _extraer_imagen_xref(doc, xref)
             if not imagen_base:
-                logger.warning(f"xref {xref}: extract_image devolvio None")
-                continue
-            if not imagen_base.get('image'):
-                logger.warning(f"xref {xref}: extract_image devolvio bytes vacios (ext={imagen_base.get('ext')}, w={imagen_base.get('width')}, h={imagen_base.get('height')})")
+                logger.warning(f"xref {xref}: no se pudo extraer para conteo")
                 continue
             contador += 1
             imagenes.append({
@@ -278,7 +316,7 @@ def obtener_conteo_imagenes(archivo_id: str) -> dict:
             })
             logger.debug(f"xref {xref}: {imagen_base.get('width')}x{imagen_base.get('height')} {imagen_base.get('ext')} ({len(imagen_base['image'])} bytes)")
         except Exception as e:
-            logger.warning(f"xref {xref}: excepcion en extract_image: {e}")
+            logger.warning(f"xref {xref}: excepcion en conteo: {e}")
 
     doc.close()
 

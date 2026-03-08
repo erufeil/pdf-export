@@ -191,7 +191,7 @@ function renderizarMiniaturas(paginas) {
         thumbnail.className = `page-thumbnail ${tieneRotacion ? 'rotated' : ''}`;
         thumbnail.dataset.pagina = pagina.numero;
 
-        const urlMiniatura = `${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/${pagina.numero}`;
+        const urlMiniatura = `${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/${pagina.numero - 1}`;
 
         thumbnail.innerHTML = `
             <div class="thumbnail-image-container">

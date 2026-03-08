@@ -219,14 +219,23 @@
       .file-name-text { font-size: 14px; font-weight: 600; color: var(--text); }
       .file-meta-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-      /* BARRA SUPERIOR DEL PANEL DE CORTES */
+      /* BARRA SUPERIOR DEL PANEL DE CORTES — 3 zonas */
       .cuts-top-bar {
-        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
       }
-      .cuts-top-bar .card-title { margin-bottom: 0; white-space: nowrap; }
-      .auto-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
-      .cuts-exec { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+      /* Zona izquierda: titulo + boton Agregar */
+      .bar-left { display: flex; flex-direction: column; gap: 8px; }
+      .bar-left .card-title { margin-bottom: 0; }
+      /* Zona central: etiqueta con input + boton Calcular — ocupa el espacio disponible, centrada */
+      .bar-center { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+      .bar-divlabel {
+        font-size: 12px; color: var(--text-muted);
+        display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      }
+      /* Zona derecha: separador + botones de ejecucion */
+      .bar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+      .bar-sep { color: var(--border); font-size: 16px; padding: 0 4px; -webkit-user-select: none; user-select: none; }
 
       /* LISTA DE CORTES HORIZONTAL */
 
@@ -467,21 +476,27 @@
         <!-- PANEL DE CORTES — ancho completo -->
         <div id="cuts-panel">
             <div class="card">
-                <!-- Cabecera: titulo + acciones + auto-split + boton ejecutar en una fila -->
+                <!-- Cabecera: 3 zonas -->
                 <div class="cuts-top-bar">
-                    <span class="card-title">Cortes a generar</span>
-                    <div class="cuts-actions">
-                        <button type="button" class="btn-cut-action primary" id="btn-agregar">+ Agregar corte</button>
-                        <label for="num-partes" class="auto-label">Dividir en</label>
-                        <input type="number" class="auto-input" id="num-partes" min="2" max="20" value="2">
-                        <label for="num-partes" class="auto-label">partes iguales</label>
-                        <button type="button" class="btn-cut-action" id="btn-auto-split">Calcular</button>
+                    <!-- Izquierda: titulo + boton agregar -->
+                    <div class="bar-left">
+                        <span class="card-title">Cortes a generar</span>
+                        <button type="button" class="btn-cut-action primary" id="btn-agregar">Agregar corte +1</button>
                     </div>
-                    <div class="cuts-exec">
-                        <button type="button" class="btn-action" id="btn-ejecutar" disabled>
-                            ✂️ Cortar y Descargar
-                        </button>
-                        <a id="btn-descarga" class="btn-download" href="#">⬇ Descargar resultado</a>
+                    <!-- Centro: label con input + boton calcular -->
+                    <div class="bar-center">
+                        <span class="bar-divlabel">
+                            Dividir en
+                            <input type="number" class="auto-input" id="num-partes" min="2" max="20" value="2" title="Numero de partes">
+                            partes iguales
+                        </span>
+                        <button type="button" class="btn-cut-action primary" id="btn-auto-split">Cortar x <span id="lbl-num-partes">2</span> partes =</button>
+                    </div>
+                    <!-- Derecha: separador + ejecutar + descargar -->
+                    <div class="bar-right">
+                        <span class="bar-sep">|</span>
+                        <button type="button" class="btn-action" id="btn-ejecutar" disabled>✂️ Cortar y Descargar</button>
+                        <a id="btn-descarga" class="btn-download" href="#">⬇ Descargar</a>
                     </div>
                 </div>
 
@@ -722,6 +737,12 @@ function renderizarCortes() {
         </div>`;
     }).join('');
 }
+
+// ─── Actualizar texto del boton de auto-split al cambiar el numero ───
+const lblNumPartes = document.getElementById('lbl-num-partes');
+numPartes.addEventListener('input', () => {
+    lblNumPartes.textContent = numPartes.value || '2';
+});
 
 // ─── Corte automatico ───
 btnAutoSplit.addEventListener('click', calcularCortesAuto);
