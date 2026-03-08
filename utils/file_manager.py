@@ -291,6 +291,11 @@ def generar_miniatura(ruta_pdf: Path, pagina: int = 0) -> bytes:
         # Renderizar pagina
         pix = pag.get_pixmap(matrix=matriz)
 
+        # Convertir a RGB si el espacio de color no es compatible con PNG
+        # (CMYK, alpha extra, etc.) — frecuente en PDFs de imprenta en Linux
+        if pix.n > 4 or (pix.n == 4 and not pix.alpha):
+            pix = fitz.Pixmap(fitz.csRGB, pix)
+
         # Convertir a PNG
         png_bytes = pix.tobytes("png")
 
@@ -298,7 +303,7 @@ def generar_miniatura(ruta_pdf: Path, pagina: int = 0) -> bytes:
         return png_bytes
 
     except Exception as e:
-        logger.error(f"Error generando miniatura: {e}")
+        logger.error(f"Error generando miniatura (pagina={pagina}, ruta={ruta_pdf}): {e}")
         return None
 
 
