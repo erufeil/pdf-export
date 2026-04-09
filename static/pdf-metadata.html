@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadatos PDF — PDFexport</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:      #0D1117;
+            --sidebar: #161B22;
+            --card:    #1C2128;
+            --border:  #30363D;
+            --blue:    #58A6FF;
+            --green:   #3FB950;
+            --red:     #E63946;
+            --yellow:  #E3B341;
+            --orange:  #F4A261;
+            --purple:  #A371F7;
+            --text:    #E6EDF3;
+            --muted:   #8B949E;
+            --accent:  #58A6FF;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            background: var(--sidebar);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .topbar a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color .2s;
+        }
+        .topbar a:hover { color: var(--text); }
+        .topbar .sep { color: var(--border); }
+        .topbar .current { color: var(--accent); font-weight: 500; }
+
+        /* ── Layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: calc(100vh - 52px);
+        }
+        .sidebar {
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding: 24px 16px;
+        }
+        .main { padding: 32px 40px; max-width: 900px; }
+
+        /* ── Drop zone ── */
+        .service-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .service-badge {
+            background: var(--accent);
+            color: #000;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: .5px;
+        }
+        .service-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--card);
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(88,166,255,.06);
+        }
+        .drop-icon { font-size: 32px; margin-bottom: 10px; }
+        .drop-text { font-size: 14px; color: var(--muted); }
+        .drop-text strong { color: var(--accent); cursor: pointer; }
+        .drop-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+        /* Barra de progreso de upload */
+        .upload-bar-wrap {
+            display: none;
+            margin-top: 14px;
+        }
+        .upload-bar-track {
+            background: var(--border);
+            border-radius: 4px;
+            height: 6px;
+            overflow: hidden;
+        }
+        .upload-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            width: 0%;
+            transition: width .2s;
+        }
+        .upload-bar-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* Info del archivo cargado */
+        .file-info {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .file-info .fname { color: var(--accent); font-weight: 500; word-break: break-all; }
+        .file-info .fsize { color: var(--muted); margin-top: 2px; }
+
+        /* Botón principal */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: opacity .2s, transform .1s;
+        }
+        .btn:disabled { opacity: .4; cursor: not-allowed; }
+        .btn:not(:disabled):hover { opacity: .87; }
+        .btn:not(:disabled):active { transform: scale(.98); }
+        .btn-primary { background: var(--accent); color: #000; width: 100%; justify-content: center; margin-top: 14px; }
+        .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); font-size: 12px; padding: 6px 12px; }
+
+        /* ── Panel de resultados ── */
+        #panel-resultado { display: none; }
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* Secciones de metadatos */
+        .meta-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .meta-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .meta-section-header:hover { background: rgba(255,255,255,.03); }
+        .meta-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .meta-section-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .icon-blue   { background: rgba(88,166,255,.15); }
+        .icon-green  { background: rgba(63,185,80,.15); }
+        .icon-orange { background: rgba(244,162,97,.15); }
+        .icon-purple { background: rgba(163,113,247,.15); }
+        .icon-yellow { background: rgba(227,179,65,.15); }
+        .icon-red    { background: rgba(230,57,70,.15); }
+
+        .meta-section-toggle {
+            color: var(--muted);
+            font-size: 12px;
+            transition: transform .2s;
+        }
+        .meta-section.collapsed .meta-section-toggle { transform: rotate(-90deg); }
+        .meta-section-body { padding: 16px 18px; }
+        .meta-section.collapsed .meta-section-body { display: none; }
+
+        /* Filas de campos */
+        .meta-row {
+            display: grid;
+            grid-template-columns: 180px 1fr auto;
+            align-items: start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(48,54,61,.6);
+        }
+        .meta-row:last-child { border-bottom: none; }
+        .meta-key {
+            font-size: 12px;
+            color: var(--muted);
+            padding-top: 2px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .meta-value {
+            font-size: 13px;
+            color: var(--text);
+            word-break: break-all;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .meta-value.empty { color: var(--muted); font-style: italic; }
+        .meta-value .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+        .badge-yes   { background: rgba(63,185,80,.2);  color: var(--green); }
+        .badge-no    { background: rgba(139,148,158,.15); color: var(--muted); }
+        .badge-warn  { background: rgba(227,179,65,.2); color: var(--yellow); }
+        .badge-alert { background: rgba(230,57,70,.2);  color: var(--red); }
+        .badge-blue  { background: rgba(88,166,255,.2); color: var(--blue); }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 3px 7px;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+        .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+        /* Fuentes: lista colapsable */
+        .fonts-list {
+            margin-top: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+        .font-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            border-bottom: 1px solid rgba(48,54,61,.5);
+        }
+        .font-item:last-child { border-bottom: none; }
+        .font-name { color: var(--text); flex: 1; }
+        .font-type { color: var(--muted); font-size: 11px; }
+        .font-embed { font-size: 10px; }
+
+        /* XMP block */
+        .xmp-block {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            max-height: 280px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 4px;
+        }
+
+        /* Panel de edición */
+        .edit-section {
+            display: none;
+            margin-top: 16px;
+        }
+        .edit-section.visible { display: block; }
+        .edit-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 5px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .form-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 13px;
+            padding: 8px 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            outline: none;
+            transition: border-color .15s;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* Job progress dentro del sidebar */
+        .job-progress { display: none; margin-top: 16px; }
+        .job-bar-track {
+            background: var(--border);
+            border-radius: 4px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+        .job-bar-fill {
+            height: 100%;
+            background: var(--green);
+            border-radius: 4px;
+            width: 0%;
+            transition: width .4s;
+        }
+        .job-msg { font-size: 12px; color: var(--muted); }
+
+        /* Error / alerta */
+        .alerta {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 7px;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        .alerta-error { background: rgba(230,57,70,.12); border: 1px solid rgba(230,57,70,.4); color: #ff8088; }
+        .alerta-ok    { background: rgba(63,185,80,.12);  border: 1px solid rgba(63,185,80,.4);  color: var(--green); }
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+            .main { padding: 20px 16px; }
+            .meta-row { grid-template-columns: 1fr; }
+            .meta-key { padding-bottom: 2px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+    <a href="/">Tengo un PDF...</a>
+    <span class="sep">›</span>
+    <span class="current">Metadatos PDF</span>
+</div>
+
+<!-- Layout principal -->
+<div class="layout">
+
+    <!-- Sidebar: carga y controles -->
+    <aside class="sidebar">
+        <div class="service-label">
+            <span class="service-badge">META</span>
+            <span class="service-title">Metadatos PDF</span>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">🔍</div>
+            <div class="drop-text">
+                Arrastrá tu PDF aquí<br>
+                o <strong id="btnSeleccionar">seleccioná un archivo</strong>
+            </div>
+            <div class="drop-hint">Solo archivos .pdf</div>
+        </div>
+        <input type="file" id="inputArchivo" accept=".pdf" style="display:none">
+
+        <!-- Barra de upload -->
+        <div class="upload-bar-wrap" id="uploadWrap">
+            <div class="upload-bar-track">
+                <div class="upload-bar-fill" id="uploadFill"></div>
+            </div>
+            <div class="upload-bar-label" id="uploadLabel">Cargando…</div>
+        </div>
+
+        <!-- Info del archivo -->
+        <div class="file-info" id="fileInfo">
+            <div class="fname" id="fileName"></div>
+            <div class="fsize" id="fileSize"></div>
+        </div>
+
+        <!-- Error -->
+        <div class="alerta alerta-error" id="alertaError"></div>
+
+        <!-- Botón Extraer -->
+        <button class="btn btn-primary" id="btnExtraer" disabled>
+            🔍 Extraer Metadatos
+        </button>
+
+        <!-- Progreso del job (edición) -->
+        <div class="job-progress" id="jobProgress">
+            <div class="job-bar-track">
+                <div class="job-bar-fill" id="jobFill"></div>
+            </div>
+            <div class="job-msg" id="jobMsg">Procesando…</div>
+        </div>
+
+        <div class="alerta alerta-ok" id="alertaOk"></div>
+    </aside>
+
+    <!-- Main: resultados -->
+    <main class="main">
+
+        <!-- Estado inicial -->
+        <div id="panel-inicial" style="padding-top:60px; text-align:center; color:var(--muted);">
+            <div style="font-size:48px; margin-bottom:12px;">📄</div>
+            <div style="font-size:15px;">Cargá un PDF para ver sus metadatos</div>
+            <div style="font-size:13px; margin-top:8px;">Huella digital, permisos, fuentes, IDs internos y más</div>
+        </div>
+
+        <!-- Panel de resultados -->
+        <div id="panel-resultado">
+
+            <div class="result-header">
+                <div class="result-title">Metadatos del documento</div>
+                <div class="result-actions">
+                    <button class="btn btn-secondary" id="btnToggleEdit" style="display:none">
+                        ✏️ Editar metadatos
+                    </button>
+                </div>
+            </div>
+
+            <!-- 1. Básicos -->
+            <div class="meta-section" id="sec-basicos">
+                <div class="meta-section-header" onclick="toggleSec('sec-basicos')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-blue">📝</div>
+                        Metadatos básicos
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-basicos"></div>
+            </div>
+
+            <!-- 2. Fechas -->
+            <div class="meta-section" id="sec-fechas">
+                <div class="meta-section-header" onclick="toggleSec('sec-fechas')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-green">📅</div>
+                        Fechas y versión
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-fechas"></div>
+            </div>
+
+            <!-- 3. Identidad -->
+            <div class="meta-section" id="sec-identidad">
+                <div class="meta-section-header" onclick="toggleSec('sec-identidad')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-orange">🔑</div>
+                        Identidad del documento
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-identidad"></div>
+            </div>
+
+            <!-- 4. Estructura -->
+            <div class="meta-section" id="sec-estructura">
+                <div class="meta-section-header" onclick="toggleSec('sec-estructura')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-purple">🏗️</div>
+                        Estructura interna
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-estructura"></div>
+            </div>
+
+            <!-- 5. Permisos -->
+            <div class="meta-section" id="sec-permisos">
+                <div class="meta-section-header" onclick="toggleSec('sec-permisos')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-red">🔒</div>
+                        Permisos y seguridad
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-permisos"></div>
+            </div>
+
+            <!-- 6. XMP -->
+            <div class="meta-section collapsed" id="sec-xmp">
+                <div class="meta-section-header" onclick="toggleSec('sec-xmp')">
+                    <div class="meta-section-title">
+                        <div class="meta-section-icon icon-yellow">📋</div>
+                        XMP (metadatos XML completos)
+                    </div>
+                    <span class="meta-section-toggle">▾</span>
+                </div>
+                <div class="meta-section-body" id="body-xmp"></div>
+            </div>
+
+            <!-- Sección de edición -->
+            <div class="edit-section" id="editSection">
+                <div class="meta-section">
+                    <div class="meta-section-header">
+                        <div class="meta-section-title">
+                            <div class="meta-section-icon icon-blue">✏️</div>
+                            <div class="edit-title" style="margin:0">Editar metadatos</div>
+                        </div>
+                    </div>
+                    <div class="meta-section-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">titulo</label>
+                                <input class="form-input" id="edit-titulo" type="text" placeholder="Título del documento">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">autor</label>
+                                <input class="form-input" id="edit-autor" type="text" placeholder="Autor o autores">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">tema</label>
+                                <input class="form-input" id="edit-tema" type="text" placeholder="Tema o asunto">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">creador</label>
+                                <input class="form-input" id="edit-creador" type="text" placeholder="Aplicación que creó el PDF">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">palabras_clave</label>
+                                <input class="form-input" id="edit-palabras" type="text" placeholder="Palabras clave separadas por coma">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">productor</label>
+                                <input class="form-input" id="edit-productor" type="text" placeholder="Librería que generó el PDF">
+                            </div>
+                        </div>
+                        <button class="btn btn-green" id="btnGuardar" style="margin-top:8px">
+                            💾 Guardar y descargar PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /panel-resultado -->
+    </main>
+</div>
+
+<script>
+// ─── Configuración ────────────────────────────────────────────────────────────
+let API = '';
+let archivoId = null;
+let datosMetadatos = null;
+
+window.addEventListener('load', () => {
+    if (window.AppConfig && window.AppConfig.API_BASE_URL) {
+        API = window.AppConfig.API_BASE_URL;
+    } else {
+        const proto = location.protocol;
+        const host  = location.hostname;
+        const port  = location.port || (proto === 'https:' ? '443' : '80');
+        API = `${proto}//${host}:${port}/api/v1`;
+    }
+    cargarArchivosRecientes();
+});
+
+// ─── Drop zone ────────────────────────────────────────────────────────────────
+const dropZone   = document.getElementById('dropZone');
+const inputArch  = document.getElementById('inputArchivo');
+
+document.getElementById('btnSeleccionar').addEventListener('click', () => inputArch.click());
+dropZone.addEventListener('click', () => inputArch.click());
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) manejarArchivo(f);
+});
+inputArch.addEventListener('change', () => {
+    if (inputArch.files[0]) manejarArchivo(inputArch.files[0]);
+});
+
+function manejarArchivo(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        mostrarError('Solo se admiten archivos .pdf');
+        return;
+    }
+    ocultarError();
+    subirArchivo(file);
+}
+
+// ─── Upload ───────────────────────────────────────────────────────────────────
+function subirArchivo(file) {
+    const wrap  = document.getElementById('uploadWrap');
+    const fill  = document.getElementById('uploadFill');
+    const label = document.getElementById('uploadLabel');
+    wrap.style.display = 'block';
+    fill.style.width = '0%';
+    label.textContent = 'Cargando…';
+    document.getElementById('btnExtraer').disabled = true;
+
+    const form = new FormData();
+    form.append('archivo', file);
+    form.append('nombre', file.name);
+    form.append('tamano', file.size);
+    form.append('fecha_modificacion', new Date(file.lastModified).toISOString());
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+
+    xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            fill.style.width = pct + '%';
+            label.textContent = `${pct}% cargado`;
+        }
+    };
+
+    xhr.onload = () => {
+        wrap.style.display = 'none';
+        try {
+            const resp = JSON.parse(xhr.responseText);
+            if (resp.success) {
+                const d = resp.data;
+                archivoId = d.id;
+                mostrarInfoArchivo(d.nombre_original, d.tamano_bytes, d.ya_existia);
+                document.getElementById('btnExtraer').disabled = false;
+            } else {
+                mostrarError(resp.error?.message || 'Error al subir');
+            }
+        } catch (e) {
+            mostrarError('Error de respuesta del servidor');
+        }
+    };
+    xhr.onerror = () => {
+        wrap.style.display = 'none';
+        mostrarError('Error de conexión');
+    };
+    xhr.send(form);
+}
+
+function mostrarInfoArchivo(nombre, bytes, yaExistia) {
+    document.getElementById('fileInfo').style.display = 'block';
+    document.getElementById('fileName').textContent = nombre;
+    document.getElementById('fileSize').textContent =
+        formatBytes(bytes) + (yaExistia ? ' · Ya estaba en el servidor' : '');
+}
+
+function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+}
+
+// ─── Extraer metadatos ────────────────────────────────────────────────────────
+document.getElementById('btnExtraer').addEventListener('click', async () => {
+    if (!archivoId) return;
+    ocultarError();
+    document.getElementById('btnExtraer').disabled = true;
+    document.getElementById('btnExtraer').textContent = '⏳ Extrayendo…';
+    document.getElementById('panel-inicial').style.display = 'none';
+    document.getElementById('panel-resultado').style.display = 'none';
+
+    try {
+        const r = await fetch(`${API}/convert/metadata/extract`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_id: archivoId })
+        });
+        const resp = await r.json();
+        if (resp.success) {
+            datosMetadatos = resp.data;
+            renderizarMetadatos(resp.data);
+            document.getElementById('panel-resultado').style.display = 'block';
+        } else {
+            mostrarError(resp.error?.message || 'Error al extraer');
+            document.getElementById('panel-inicial').style.display = 'block';
+        }
+    } catch (e) {
+        mostrarError('Error de conexión');
+        document.getElementById('panel-inicial').style.display = 'block';
+    }
+
+    document.getElementById('btnExtraer').disabled = false;
+    document.getElementById('btnExtraer').textContent = '🔍 Extraer Metadatos';
+});
+
+// ─── Renderizar resultados ────────────────────────────────────────────────────
+function renderizarMetadatos(d) {
+    // Bloque 1: Básicos
+    renderBasicos(d.basicos);
+    // Bloque 2: Fechas
+    renderFechas(d.fechas);
+    // Bloque 3: Identidad
+    renderIdentidad(d.identidad);
+    // Bloque 4: Estructura
+    renderEstructura(d.estructura);
+    // Bloque 5: Permisos
+    renderPermisos(d.permisos);
+    // Bloque 6: XMP
+    renderXMP(d.xmp_xml);
+    // Prellenar formulario de edición
+    prellenarFormEdicion(d.basicos);
+    document.getElementById('btnToggleEdit').style.display = 'inline-flex';
+}
+
+function fila(clave, valorHtml, textoCopiar) {
+    const btnCopy = textoCopiar
+        ? `<button class="copy-btn" onclick="copiar(this,'${escapar(textoCopiar)}')">📋 copiar</button>`
+        : '';
+    return `<div class="meta-row">
+        <div class="meta-key">${clave}</div>
+        <div class="meta-value">${valorHtml || '<span class="empty">—</span>'}</div>
+        <div>${btnCopy}</div>
+    </div>`;
+}
+
+function badge(si, textoSi, textoNo, tipo) {
+    if (si) return `<span class="badge badge-${tipo || 'yes'}">${textoSi}</span>`;
+    return `<span class="badge badge-no">${textoNo}</span>`;
+}
+
+function renderBasicos(b) {
+    const el = document.getElementById('body-basicos');
+    el.innerHTML =
+        fila('titulo',          txt(b.titulo),          b.titulo) +
+        fila('autor',           txt(b.autor),           b.autor) +
+        fila('tema',            txt(b.tema),            b.tema) +
+        fila('palabras_clave',  txt(b.palabras_clave),  b.palabras_clave) +
+        fila('creador',         txt(b.creador),         b.creador) +
+        fila('productor',       txt(b.productor),       b.productor) +
+        (b.trapped ? fila('trapped', txt(b.trapped), b.trapped) : '');
+}
+
+function renderFechas(f) {
+    const el = document.getElementById('body-fechas');
+    el.innerHTML =
+        fila('creacion',      txt(f.creacion),     f.creacion) +
+        fila('modificacion',  txt(f.modificacion), f.modificacion) +
+        fila('formato_pdf',   txt(f.formato_pdf),  f.formato_pdf);
+}
+
+function renderIdentidad(id) {
+    const el = document.getElementById('body-identidad');
+
+    let fueModHtml = '';
+    if (id.fue_modificado === true)
+        fueModHtml = `<span class="badge badge-warn">⚠ Sí — IDs difieren</span>`;
+    else if (id.fue_modificado === false)
+        fueModHtml = `<span class="badge badge-yes">No</span>`;
+    else
+        fueModHtml = `<span class="badge badge-no">Desconocido</span>`;
+
+    el.innerHTML =
+        fila('version_pdf',    txt(id.version_pdf),  id.version_pdf) +
+        fila('id_original',    mono(id.id_original), id.id_original) +
+        fila('id_actual',      mono(id.id_actual),   id.id_actual) +
+        fila('fue_modificado', fueModHtml, '') +
+        fila('encriptado',
+            badge(id.encriptado, '⚠ Sí', 'No', id.encriptado ? 'alert' : 'no'),
+            id.encriptado ? 'Sí' : 'No') +
+        (id.cifrado_detalle ? fila('cifrado_detalle', txt(id.cifrado_detalle), id.cifrado_detalle) : '') +
+        fila('linealizado',
+            badge(id.linealizado, 'Sí (optimizado web)', 'No', id.linealizado ? 'blue' : 'no'),
+            '') +
+        fila('entradas_xref',  String(id.num_revisiones), String(id.num_revisiones));
+}
+
+function renderEstructura(e) {
+    const el = document.getElementById('body-estructura');
+
+    // Construcción de la lista de fuentes
+    let fuentesHtml = '';
+    if (e.fuentes && e.fuentes.length > 0) {
+        const items = e.fuentes.map(f =>
+            `<div class="font-item">
+                <span class="font-name">${esc(f.nombre)}</span>
+                <span class="font-type">${esc(f.tipo)}</span>
+                <span class="font-embed">${f.incrustada
+                    ? '<span class="badge badge-yes">incrustada</span>'
+                    : '<span class="badge badge-no">no incrustada</span>'}</span>
+            </div>`
+        ).join('');
+        fuentesHtml = `<div class="fonts-list">${items}</div>`;
+    }
+
+    let capasHtml = '';
+    if (e.capas && e.capas.length > 0) {
+        capasHtml = `<span class="badge badge-blue">${e.capas.length} capa(s)</span>: ${esc(e.capas.join(', '))}`;
+    } else {
+        capasHtml = `<span class="badge badge-no">Sin capas</span>`;
+    }
+
+    el.innerHTML =
+        fila('num_paginas',    String(e.num_paginas),   String(e.num_paginas)) +
+        fila('tamano_pagina',  txt(e.tamano_pagina),    e.tamano_pagina) +
+        fila('num_fuentes',
+            `${e.num_fuentes}${fuentesHtml}`, String(e.num_fuentes)) +
+        fila('num_imagenes',   String(e.num_imagenes),  String(e.num_imagenes)) +
+        fila('num_anotaciones', String(e.num_anotaciones), String(e.num_anotaciones)) +
+        fila('num_marcadores', String(e.num_marcadores), String(e.num_marcadores)) +
+        fila('num_formularios', String(e.num_formularios), String(e.num_formularios)) +
+        fila('num_adjuntos',   String(e.num_adjuntos),  String(e.num_adjuntos)) +
+        fila('javascript',
+            badge(e.tiene_javascript, '⚠ Presente', 'No', e.tiene_javascript ? 'alert' : 'no'),
+            e.tiene_javascript ? 'Sí' : 'No') +
+        fila('firmas_digitales',
+            e.num_firmas > 0
+                ? `<span class="badge badge-blue">${e.num_firmas} firma(s)</span>`
+                : `<span class="badge badge-no">Sin firmas</span>`,
+            String(e.num_firmas)) +
+        fila('capas_ocg', capasHtml, e.capas ? e.capas.join(', ') : '');
+}
+
+function renderPermisos(p) {
+    const el = document.getElementById('body-permisos');
+
+    function permFila(clave, label, val) {
+        return fila(clave,
+            val
+                ? `<span class="badge badge-yes">✓ Permitido</span>`
+                : `<span class="badge badge-alert">✗ Restringido</span>`,
+            val ? 'Permitido' : 'Restringido');
+    }
+
+    let html = '';
+    if (p.sin_restricciones) {
+        html = `<div class="meta-row"><div class="meta-key">estado</div>
+            <div class="meta-value"><span class="badge badge-yes">Sin restricciones (no encriptado)</span></div>
+            <div></div></div>`;
+    }
+    html +=
+        permFila('imprimir',          'Imprimir',            p.imprimir) +
+        permFila('imprimir_alta_cal', 'Imprimir alta calidad', p.imprimir_alta_cal) +
+        permFila('modificar',         'Modificar',           p.modificar) +
+        permFila('copiar',            'Copiar texto/imagen', p.copiar) +
+        permFila('anotar',            'Agregar anotaciones', p.anotar) +
+        permFila('rellenar_formulario', 'Rellenar formularios', p.rellenar_formulario) +
+        permFila('accesibilidad',     'Accesibilidad',       p.accesibilidad) +
+        permFila('ensamblar',         'Ensamblar/insertar',  p.ensamblar) +
+        fila('valor_raw', mono(String(p.valor_raw)), String(p.valor_raw));
+
+    el.innerHTML = html;
+}
+
+function renderXMP(xmp) {
+    const el = document.getElementById('body-xmp');
+    if (!xmp || !xmp.trim()) {
+        el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin metadatos XMP en este documento.</div>`;
+        return;
+    }
+    // Formatear XML
+    let formateado = xmp.replace(/></g, '>\n<').trim();
+    el.innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+            <button class="copy-btn" onclick="copiarTexto(${JSON.stringify(xmp)}, this)">📋 Copiar XML</button>
+        </div>
+        <div class="xmp-block">${esc(formateado)}</div>`;
+}
+
+// ─── Edición ──────────────────────────────────────────────────────────────────
+function prellenarFormEdicion(b) {
+    document.getElementById('edit-titulo').value    = b.titulo || '';
+    document.getElementById('edit-autor').value     = b.autor || '';
+    document.getElementById('edit-tema').value      = b.tema || '';
+    document.getElementById('edit-creador').value   = b.creador || '';
+    document.getElementById('edit-palabras').value  = b.palabras_clave || '';
+    document.getElementById('edit-productor').value = b.productor || '';
+}
+
+document.getElementById('btnToggleEdit').addEventListener('click', () => {
+    const sec = document.getElementById('editSection');
+    const visible = sec.classList.toggle('visible');
+    document.getElementById('btnToggleEdit').textContent = visible ? '✏️ Cerrar edición' : '✏️ Editar metadatos';
+    if (visible) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('btnGuardar').addEventListener('click', async () => {
+    if (!archivoId) return;
+    ocultarError();
+
+    const body = {
+        file_id:        archivoId,
+        titulo:         document.getElementById('edit-titulo').value.trim(),
+        autor:          document.getElementById('edit-autor').value.trim(),
+        tema:           document.getElementById('edit-tema').value.trim(),
+        palabras_clave: document.getElementById('edit-palabras').value.trim(),
+        creador:        document.getElementById('edit-creador').value.trim(),
+        productor:      document.getElementById('edit-productor').value.trim(),
+    };
+
+    document.getElementById('btnGuardar').disabled = true;
+    document.getElementById('btnGuardar').textContent = '⏳ Procesando…';
+
+    try {
+        const r = await fetch(`${API}/convert/metadata/edit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const resp = await r.json();
+        if (resp.success) {
+            esperarJob(resp.data.job_id);
+        } else {
+            mostrarError(resp.error?.message || 'Error al guardar');
+            document.getElementById('btnGuardar').disabled = false;
+            document.getElementById('btnGuardar').textContent = '💾 Guardar y descargar PDF';
+        }
+    } catch (e) {
+        mostrarError('Error de conexión');
+        document.getElementById('btnGuardar').disabled = false;
+        document.getElementById('btnGuardar').textContent = '💾 Guardar y descargar PDF';
+    }
+});
+
+// ─── Polling del job ──────────────────────────────────────────────────────────
+function esperarJob(jobId) {
+    const progDiv  = document.getElementById('jobProgress');
+    const fill     = document.getElementById('jobFill');
+    const msgEl    = document.getElementById('jobMsg');
+    progDiv.style.display = 'block';
+
+    const intervalo = setInterval(async () => {
+        try {
+            const r = await fetch(`${API}/jobs/${jobId}`);
+            const data = await r.json();
+            const job = data.data;
+
+            fill.style.width   = (job.progreso || 0) + '%';
+            msgEl.textContent  = job.mensaje || 'Procesando…';
+
+            if (job.estado === 'completado') {
+                clearInterval(intervalo);
+                progDiv.style.display = 'none';
+                window.location.href = `${API}/download/${jobId}`;
+                mostrarOk('PDF descargado con metadatos actualizados.');
+                document.getElementById('btnGuardar').disabled = false;
+                document.getElementById('btnGuardar').textContent = '💾 Guardar y descargar PDF';
+            } else if (job.estado === 'error') {
+                clearInterval(intervalo);
+                progDiv.style.display = 'none';
+                mostrarError('Error: ' + job.mensaje);
+                document.getElementById('btnGuardar').disabled = false;
+                document.getElementById('btnGuardar').textContent = '💾 Guardar y descargar PDF';
+            }
+        } catch (e) {
+            // silencio — reintentará en el próximo tick
+        }
+    }, 1200);
+}
+
+// ─── Archivos recientes ───────────────────────────────────────────────────────
+async function cargarArchivosRecientes() {
+    // (función disponible para uso futuro)
+}
+
+// ─── Toggle secciones ─────────────────────────────────────────────────────────
+function toggleSec(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+}
+
+// ─── Helpers de UI ───────────────────────────────────────────────────────────
+function txt(v) { return v ? esc(v) : ''; }
+function mono(v) { return v ? `<code style="font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(v)}</code>` : ''; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapar(s) { return String(s).replace(/'/g, "\\'"); }
+
+function copiar(btn, texto) {
+    navigator.clipboard.writeText(texto).then(() => {
+        btn.textContent = '✓ copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 copiar'; btn.classList.remove('copied'); }, 1800);
+    });
+}
+function copiarTexto(texto, btn) {
+    navigator.clipboard.writeText(texto).then(() => {
+        btn.textContent = '✓ Copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 Copiar XML'; btn.classList.remove('copied'); }, 1800);
+    });
+}
+
+function mostrarError(msg) {
+    const el = document.getElementById('alertaError');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('alertaOk').style.display = 'none';
+}
+function ocultarError() {
+    document.getElementById('alertaError').style.display = 'none';
+}
+function mostrarOk(msg) {
+    const el = document.getElementById('alertaOk');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+</script>
+</body>
+</html>

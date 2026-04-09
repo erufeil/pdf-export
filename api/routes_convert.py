@@ -1408,6 +1408,78 @@ def convertir_img_to_txt():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/metadata/extract', methods=['POST'])
+def extraer_metadatos_pdf():
+    """
+    Extrae metadatos forenses completos de un PDF (Etapa 25).
+    Respuesta sincrona — no crea job.
+
+    Body JSON:
+      - file_id: ID del archivo PDF subido
+
+    Retorna:
+      - basicos, fechas, identidad, estructura, permisos, xmp_xml
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.pdf_metadata import extraer_metadatos
+        resultado = extraer_metadatos(archivo_id)
+        return respuesta_exitosa(resultado, 'Metadatos extraidos')
+    except Exception as e:
+        logger.error(f'Error extrayendo metadatos: {e}')
+        return respuesta_error('EXTRACT_ERROR', str(e), 500)
+
+
+@bp.route('/metadata/edit', methods=['POST'])
+def editar_metadatos_pdf():
+    """
+    Edita los metadatos basicos de un PDF y retorna el PDF modificado (Etapa 25).
+    Crea un job asincrono. Retorna PDF directo (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo PDF
+      - titulo, autor, tema, palabras_clave, creador, productor  (todos opcionales)
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Campos editables — todos son opcionales, se mezclan con los existentes
+    campos_editables = ['titulo', 'autor', 'tema', 'palabras_clave', 'creador', 'productor']
+    parametros = {k: datos[k] for k in campos_editables if k in datos}
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='metadata-edit',
+            parametros=parametros
+        )
+
+        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Edicion de metadatos iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo metadata-edit: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/img-to-txt/check', methods=['POST'])
 def verificar_tika_img():
     """

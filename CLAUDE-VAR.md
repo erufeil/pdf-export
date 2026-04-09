@@ -324,19 +324,74 @@ fecha_modificacion: string  ← ISO format (para detección de duplicados)
 }
 ```
 
+### `POST /api/v1/convert/to-csv`
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "unificar_iguales": true,
+    "separador": ";",
+    "saltos_linea": "CRLF"
+  }
+}
+```
+- Análisis previo sync: `POST /api/v1/convert/to-csv/analyze` → `{ "num_tablas": N, "tablas_iguales": bool, "mensaje": "..." }`
+
+### `POST /api/v1/convert/to-csv-ocr`  *(Etapa 22 — PDF escaneado)*
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "separador": ";",
+    "saltos_linea": "CRLF",
+    "idioma_ocr": "spa",
+    "unificar": false
+  }
+}
+```
+- `idioma_ocr`: código Tesseract — `"spa"`, `"eng"`, `"spa+eng"`, `"por"`, `"fra"`, `"deu"`, `"ita"`
+- Verificación Tika sync: `POST /api/v1/convert/to-csv-ocr/analyze` → `{ "tika_disponible": bool, "mensaje": "..." }`
+
+### `POST /api/v1/convert/svg-to-png`  *(Etapa 23)*
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "escala": 2
+  }
+}
+```
+- `escala`: `1` | `2` | `3` | `4` (multiplicador de resolución, default `2`)
+- Retorna PNG directo (sin ZIP)
+
+### `POST /api/v1/convert/img-to-txt`  *(Etapa 24)*
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "idioma_ocr": "spa"
+  }
+}
+```
+- Formatos soportados: `.jpg`, `.jpeg`, `.png`, `.tiff`, `.tif`, `.bmp`, `.gif`, `.webp`
+- Verificación Tika sync: `POST /api/v1/convert/img-to-txt/check` → `{ "tika_disponible": bool, "mensaje": "..." }`
+- Retorna TXT directo (sin ZIP), utf-8-bom
+
 ---
 
 ## 6. Configuración (`config.py`)
 
-| Variable                  | Descripción                              |
-|---------------------------|------------------------------------------|
-| `config.UPLOAD_FOLDER`    | `Path` a carpeta `uploads/`              |
-| `config.OUTPUT_FOLDER`    | `Path` a carpeta `outputs/`              |
-| `config.DATABASE_PATH`    | `Path` a `data/pdfexport.db`             |
-| `config.MAX_CONTENT_LENGTH` | 1 GB (1073741824 bytes)                |
-| `config.FILE_RETENTION_HOURS` | 4 horas                            |
-| `config.THUMBNAIL_DPI`    | DPI para miniaturas (default bajo)       |
-| `config.ALLOWED_EXTENSIONS` | Set con extensiones permitidas         |
+| Variable                    | Descripción                                           |
+|-----------------------------|-------------------------------------------------------|
+| `config.UPLOAD_FOLDER`      | `Path` a carpeta `uploads/`                           |
+| `config.OUTPUT_FOLDER`      | `Path` a carpeta `outputs/`                           |
+| `config.DATABASE_PATH`      | `Path` a `data/pdfexport.db`                          |
+| `config.MAX_CONTENT_LENGTH` | 1 GB (1073741824 bytes)                               |
+| `config.FILE_RETENTION_HOURS` | 4 horas                                             |
+| `config.THUMBNAIL_DPI`      | DPI para miniaturas (default bajo)                    |
+| `config.ALLOWED_EXTENSIONS` | Set con extensiones permitidas                        |
+| `config.TIKA_URL`           | URL de Apache Tika, default `http://172.21.0.17:9998` |
+| `config.NLM_INGESTOR_URL`   | URL de NLM Ingestor, default `http://172.21.0.19:5001`|
 
 ---
 

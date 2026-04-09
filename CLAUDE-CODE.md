@@ -217,46 +217,49 @@ function esperarTrabajo(jobId) {
 ```
 GET /api/v1/files/{archivo_id}/thumbnail/{pagina}
 
-- pagina: 1-indexed (la página 1 del PDF = thumbnail/1)
+- pagina: 0-INDEXED (la página 1 del PDF = thumbnail/0)
 - Devuelve: imagen PNG directamente (Content-Type: image/png)
 - Si falla: HTTP 404 o 500
 ```
 
 ```javascript
-// Cargar miniatura en un <img>
-img.src = `${API}/files/${archivoId}/thumbnail/${numPagina}`;
+// ⚠ IMPORTANTE: el endpoint es 0-indexed
+// Para mostrar la página N del PDF usar (N - 1):
+img.src = `${API}/files/${archivoId}/thumbnail/${numPagina - 1}`;
 
-// O como blob para mayor control:
-const r = await fetch(`${API}/files/${archivoId}/thumbnail/${numPagina}`);
-if (r.ok) {
-    const blob = await r.blob();
-    img.src = URL.createObjectURL(blob);
-}
+// Primera página:
+img.src = `${API}/files/${archivoId}/thumbnail/0`;
+
+// Última página (totalPaginas viene del upload response):
+img.src = `${API}/files/${archivoId}/thumbnail/${totalPaginas - 1}`;
 ```
 
 ---
 
 ## 9. Procesadores registrados en `app.py`
 
-| Tipo (string)      | Servicio                        |
-|--------------------|---------------------------------|
-| `'split'`          | pdf_split                       |
-| `'to-txt'`         | pdf_to_txt                      |
-| `'to-docx'`        | pdf_to_docx                     |
-| `'to-png'`         | pdf_to_images                   |
-| `'to-jpg'`         | pdf_to_images                   |
-| `'compress'`       | pdf_compress                    |
-| `'extract-images'` | pdf_extract_images              |
-| `'rotate'`         | pdf_rotate                      |
-| `'from-html'`      | html_to_pdf                     |
-| `'merge'`          | pdf_merge                       |
-| `'extract-pages'`  | pdf_extract_pages               |
-| `'reorder'`        | pdf_reorder                     |
-| `'ndm-to-tables-seq'` | ndm_to_tables_seq            |
-| `'scrape-url'`     | web_scraper                     |
-| `'to-csv'`         | pdf_to_csv                      |
-| `'img-to-1pdf'`    | img_to_1pdf                     |
-| `'webp-to-png'`    | webp_to_png                     |
+| Tipo (string)         | Servicio                   | Retorna     |
+|-----------------------|----------------------------|-------------|
+| `'split'`             | pdf_split                  | ZIP         |
+| `'to-txt'`            | pdf_to_txt                 | ZIP         |
+| `'to-docx'`           | pdf_to_docx                | ZIP         |
+| `'to-png'`            | pdf_to_images              | ZIP         |
+| `'to-jpg'`            | pdf_to_images              | ZIP         |
+| `'compress'`          | pdf_compress               | ZIP         |
+| `'extract-images'`    | pdf_extract_images         | ZIP         |
+| `'rotate'`            | pdf_rotate                 | ZIP         |
+| `'from-html'`         | html_to_pdf                | ZIP         |
+| `'merge'`             | pdf_merge                  | ZIP         |
+| `'extract-pages'`     | pdf_extract_pages          | ZIP         |
+| `'reorder'`           | pdf_reorder                | ZIP         |
+| `'ndm-to-tables-seq'` | ndm_to_tables_seq          | TXT directo |
+| `'scrape-url'`        | web_scraper                | ZIP         |
+| `'to-csv'`            | pdf_to_csv                 | ZIP         |
+| `'img-to-1pdf'`       | img_to_1pdf                | PDF directo |
+| `'webp-to-png'`       | webp_to_png                | PNG directo |
+| `'to-csv-ocr'`        | pdf_scanned_to_csv         | ZIP         |
+| `'svg-to-png'`        | svg_to_png                 | PNG directo |
+| `'img-to-txt'`        | img_to_txt                 | TXT directo |
 
 ---
 
