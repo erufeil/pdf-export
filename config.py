@@ -27,8 +27,8 @@ UPLOAD_FOLDER = BASE_DIR / 'uploads'
 OUTPUT_FOLDER = BASE_DIR / 'outputs'
 DATA_FOLDER = BASE_DIR / 'data'
 
-# Tamanio maximo de archivo: 1GB
-MAX_CONTENT_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB en bytes
+# Tamanio maximo de archivo — configurable via variable de entorno MAX_FILE_SIZE (bytes)
+MAX_CONTENT_LENGTH = int(os.getenv('MAX_FILE_SIZE', 1 * 1024 * 1024 * 1024))  # default 1GB
 
 # Extensiones permitidas
 ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp'}
@@ -49,7 +49,12 @@ THUMBNAIL_DPI = 72
 # URL base del servicio nlm-ingestor para extraccion avanzada de tablas de PDF.
 # Dejar vacio ('') para deshabilitar y usar solo PyMuPDF/pdfplumber como fallback.
 # Configurar NLM_INGESTOR_URL en el entorno para apuntar al contenedor correcto.
-NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://172.21.0.19:5001').strip()
+NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://ingestor:5001').strip()
+
+# URL base del servicio Apache Tika para extraccion con OCR (Etapa 22).
+# Tika procesa PDFs escaneados usando Tesseract internamente.
+# Dejar vacio ('') para deshabilitar. Requiere imagen apache/tika:latest-full.
+TIKA_URL = os.getenv('TIKA_URL', 'http://tika:9998').strip()
 
 # Ruta a poppler (necesario para pdf2image en Windows)
 # En Linux/Docker generalmente no es necesario si poppler-utils esta instalado

@@ -1230,3 +1230,205 @@ def convertir_webp_to_png():
     except Exception as e:
         logger.error(f"Error creando trabajo webp-to-png: {e}")
         return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/to-csv-ocr', methods=['POST'])
+def convertir_scanned_to_csv():
+    """
+    Convierte PDF escaneado a CSV usando Apache Tika con OCR.
+    Endpoint de la Etapa 22.
+
+    Body JSON:
+      - file_id     : ID del archivo PDF subido
+      - opciones    : {
+            separador   : ';' o ','
+            saltos_linea: 'CRLF' o 'LF'
+            idioma_ocr  : 'spa', 'eng', 'spa+eng', etc.
+            unificar    : bool
+        }
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='to-csv-ocr',
+            parametros={
+                'separador':    opciones.get('separador', ';'),
+                'saltos_linea': opciones.get('saltos_linea', 'CRLF'),
+                'idioma_ocr':   opciones.get('idioma_ocr', 'spa'),
+                'unificar':     opciones.get('unificar', False),
+            }
+        )
+
+        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion PDF escaneado a CSV iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo to-csv-ocr: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/to-csv-ocr/analyze', methods=['POST'])
+def analizar_pdf_escaneado():
+    """
+    Verificacion sincrona: comprueba si Tika esta disponible.
+    Retorna estado para mostrar en la UI antes de iniciar el job.
+
+    Body JSON:
+      - file_id: ID del archivo PDF subido
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.pdf_scanned_to_csv import analizar_pdf_escaneado as _analizar
+        resultado = _analizar(archivo_id)
+        return respuesta_exitosa(resultado)
+    except Exception as e:
+        logger.error(f"Error analizando PDF escaneado: {e}")
+        return respuesta_error('ANALYZE_ERROR', str(e), 500)
+
+
+@bp.route('/svg-to-png', methods=['POST'])
+def convertir_svg_to_png():
+    """
+    Convierte un archivo SVG a PNG usando cairosvg (Etapa 23).
+    Retorna PNG directamente (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo SVG subido
+      - opciones: { escala: 1|2|3|4 }
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Verificar que el archivo sea SVG
+    nombre = archivo['nombre_original'].lower()
+    if not nombre.endswith('.svg'):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser un SVG')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='svg-to-png',
+            parametros={
+                'escala': opciones.get('escala', 2),
+            }
+        )
+
+        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion SVG a PNG iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo svg-to-png: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/img-to-txt', methods=['POST'])
+def convertir_img_to_txt():
+    """
+    Extrae texto de una imagen usando Apache Tika + Tesseract OCR (Etapa 24).
+    Soporta JPG, PNG, TIFF, BMP, GIF, WEBP.
+    Retorna TXT directamente (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo imagen subido
+      - opciones: { idioma_ocr: 'spa'|'eng'|'spa+eng'|... }
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    # Verificar que sea un formato de imagen soportado
+    from services.img_to_txt import MIME_POR_EXTENSION
+    nombre = archivo['nombre_original'].lower()
+    ext = '.' + nombre.rsplit('.', 1)[-1] if '.' in nombre else ''
+    if ext not in MIME_POR_EXTENSION:
+        formatos = ', '.join(MIME_POR_EXTENSION.keys())
+        return respuesta_error('INVALID_FORMAT',
+                               f'Formato no soportado. Use: {formatos}')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='img-to-txt',
+            parametros={
+                'idioma_ocr': opciones.get('idioma_ocr', 'spa'),
+            }
+        )
+
+        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Extracción OCR iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo img-to-txt: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/img-to-txt/check', methods=['POST'])
+def verificar_tika_img():
+    """
+    Verificación sincrona: comprueba si Tika está disponible.
+
+    Body JSON:
+      - file_id: ID del archivo imagen (para validar que existe)
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.img_to_txt import verificar_tika_img as _verificar
+        resultado = _verificar()
+        return respuesta_exitosa(resultado)
+    except Exception as e:
+        logger.error(f'Error verificando Tika para img-to-txt: {e}')
+        return respuesta_error('CHECK_ERROR', str(e), 500)

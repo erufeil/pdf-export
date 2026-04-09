@@ -1,211 +1,295 @@
-# NOTAS-USUARIO.md
-## Comunicación directa de la IA al dueño del proyecto
+# Guía de Usuario — PDF-Export
 
-> Este archivo es para vos, no para el programador.
-> Aquí registro decisiones, advertencias, recomendaciones y el estado actual
-> en lenguaje claro, sin jerga técnica innecesaria.
-> La IA lo actualiza al final de cada sesión productiva.
+> Herramienta interna de conversión y manipulación de archivos PDF.
+> Para uso en red local, sin registro ni contraseña.
 
 ---
 
-## ESTADO ACTUAL DEL PROYECTO
+## ¿Qué es PDF-Export?
 
-**Última actualización:** 27/02/2026
+Una herramienta web que corre en el servidor interno. Podés acceder desde cualquier navegador en la red. Permite convertir, cortar, unir, comprimir y manipular archivos PDF sin instalar nada en tu computadora.
 
-### Etapas implementadas y funcionando
-
-| # | Servicio | Página | Estado |
-|---|---------|--------|--------|
-| 1 | Landing page + estructura base | `index.html` | ✅ Completo |
-| 2 | Cortar PDF | `pdf-split.html` | ✅ Completo |
-| 3 | PDF a TXT | `pdf-to-txt.html` | ✅ Completo |
-| 4 | PDF a DOCX | `pdf-to-docx.html` | ✅ Completo |
-| 5 | PDF a PNG | `pdf-to-png.html` | ✅ Completo |
-| 6 | PDF a JPG | `pdf-to-jpg.html` | ✅ Completo |
-| 7 | Comprimir PDF | `pdf-compress.html` | ✅ Completo |
-| 8 | Extraer imágenes | `pdf-extract-images.html` | ✅ Completo |
-| 9 | Rotar páginas | `pdf-rotate.html` | ✅ Completo |
-| 10 | HTML a PDF | `html-to-pdf.html` | ✅ Completo |
-| 11 | Unir PDFs | `pdf-merge.html` | ✅ Completo |
-| 12 | Extraer páginas específicas | `pdf-extract-pages.html` | ✅ Completo |
-| 13 | Reordenar páginas | `pdf-reorder.html` | ✅ Completo |
-| 14 | Migrar SQL (NDM2) | `ndm-to-tables-seq.html` | ✅ Completo |
-| 15 | PDF a CSV (tablas) | `pdf-to-csv.html` | ⏳ Pendiente |
-| 16 | Web Scraper de contenido | `web-scraper.html` | ⚠️ Ver advertencias |
-| 17 | Imágenes a PDF | `img-to-1pdf.html` | ⏳ Pendiente |
+**Los archivos se eliminan automáticamente después de 4 horas.**
 
 ---
 
-## ADVERTENCIAS ACTIVAS
+## Cómo funciona en general
 
-Cosas que requieren tu atención o que pueden sorprenderte al usar el sistema.
+1. Entrás a la dirección del servidor desde el navegador
+2. Elegís el servicio que necesitás
+3. Subís el archivo (se carga automáticamente al seleccionarlo)
+4. Configurás las opciones si las hay
+5. Hacés clic en el botón de acción
+6. El resultado se descarga automáticamente como archivo ZIP
 
----
-
-### ⚠️ ADV-001 — Viñetas en Web Scraper (Etapa 16)
-**Qué pasa:** En algunos sitios web, los ítems de listas con viñetas (`•`) aparecen
-en el resultado pero sin el título de la viñeta. La explicación está pero el título
-que la precede falta.
-
-**Cuándo ocurre:** Solo en ciertos sitios. Depende de cómo trafilatura (la librería
-de extracción) procesa ese sitio en particular.
-
-**Estado:** Se intentaron tres correcciones diferentes. La última (carácter guardián)
-está en el código pero no fue confirmada por el usuario. **Necesita prueba real.**
-
-**Qué hacer:** Probá el scraper en una página con listas de viñetas y fijate si
-aparecen los títulos. Si no, avisame y continuamos investigando.
+**Si ya subiste un archivo antes y todavía no pasaron 4 horas, el sistema lo reconoce y no lo vuelve a subir.** Basta con que tenga el mismo nombre, fecha y tamaño.
 
 ---
 
-### ⚠️ ADV-002 — Log de debug en Web Scraper
-**Qué pasa:** Hay una línea de log temporaria en `services/web_scraper.py` que
-imprime los primeros 800 caracteres del contenido crudo de trafilatura. Sirve para
-depurar el bug de viñetas (ADV-001).
-
-**Impacto:** Llena los logs del servidor con texto. En producción es ruido.
-
-**Cuándo remover:** Cuando se confirme que las viñetas funcionan correctamente.
-Pedirme que lo quite en esa sesión.
+## Servicios disponibles
 
 ---
 
-### ⚠️ ADV-003 — CLAUDE.md necesita una adición
-**Qué pasa:** Se crearon dos archivos nuevos (`CLAUDE-CODE.md` y `CLAUDE-VAR.md`)
-para mejorar mi rendimiento entre sesiones. Pero CLAUDE.md aún no tiene la
-instrucción de leerlos al inicio de cada sesión.
+### ✂️ Cortar PDF
+**Divide un PDF en partes definiendo rangos de páginas.**
 
-**Impacto:** Si no está la instrucción, voy a seguir cometiendo los mismos errores
-de sesiones anteriores (nombres de campos, firmas de funciones, etc.).
+- Subís el PDF y se muestran vistas previas de cada corte
+- Definís desde qué página hasta qué página va cada parte
+- Podés agregar hasta 20 cortes distintos
+- También podés decirle "dividir en N partes iguales" y lo calcula solo
+- El resultado es un ZIP con un PDF por cada corte
 
-**Qué hacer vos:** Agregar al final de `CLAUDE.md`:
-```
-## Inicio de sesión obligatorio
-Al comenzar, leer SIEMPRE antes de escribir código:
-1. CLAUDE-CODE.md
-2. CLAUDE-VAR.md
-```
+**Útil para:** separar capítulos, distribuir secciones de un manual, extraer una parte de un informe largo.
 
 ---
 
-## DECISIONES TOMADAS
+### 📝 PDF a TXT
+**Extrae el texto de un PDF como archivo de texto plano.**
 
-Registro de decisiones que tomamos durante el desarrollo. Útil si alguien pregunta
-"por qué está hecho así".
+Opciones disponibles:
+- Remover números de página
+- Remover encabezados repetidos (detecta texto que aparece en todas las páginas arriba)
+- Remover pies de página repetidos
+- Preservar saltos de párrafo
+- Detectar columnas (para PDFs con diseño en dos columnas)
 
-| Fecha | Decisión | Motivo |
-|-------|---------|--------|
-| 27/02/2026 | Drag & drop de páginas en Reordenar con API nativa del navegador, sin librerías JS | Cumplir la regla de "sin frameworks JS". La API Drag & Drop de HTML5 es suficiente para este caso. |
-| 27/02/2026 | Creados `CLAUDE-CODE.md` y `CLAUDE-VAR.md` en la raíz del proyecto | Tres bugs de la sesión tuvieron la misma causa: la IA asumió valores sin verificarlos. Estos archivos eliminan esa necesidad. |
-| 27/02/2026 | Sistema de contexto IA documentado en `ContextIA/SISTEMA-CONTEXTO-IA.md` | Para que proyectos futuros arranquen con mejor organización de información. |
-| Sesión anterior | Opción "Sin enlaces" en Web Scraper elimina `[texto](url)` → `texto` y `[[3]](url)` → nada | Pedido explícito para lectura sin interrupciones en el resultado del scraper. |
-| Sesión anterior | Guardian character `\x02` en procesamiento Markdown del Scraper | Protege los marcadores de lista (`* item`) de ser colapsados por el pipeline de limpieza de párrafos. |
+**Útil para:** copiar texto de un PDF para editar, procesar con IA, buscar dentro del contenido.
 
----
-
-## RECOMENDACIONES FUTURAS
-
-Cosas que no son urgentes pero conviene tener en cuenta.
+**Limitación:** PDFs escaneados (fotos de documentos) no tienen texto extraíble. El resultado saldrá vacío o con basura.
 
 ---
 
-### REC-001 — Sesiones más cortas, una feature por vez
-**Por qué:** A medida que la conversación crece, los detalles finos se comprimen y
-pierdo precisión. Las sesiones donde implementé 1-2 features con las herramientas
-correctas (CLAUDE-CODE.md, CLAUDE-VAR.md) tuvieron cero bugs de "nombre de campo
-incorrecto". Las sesiones largas tuvieron más errores tontos.
+### 📄 PDF a DOCX
+**Convierte un PDF a documento Word (.docx) intentando preservar el formato.**
 
-**Sugerencia:** Empezar nueva conversación para cada etapa nueva. Mencionar al inicio
-"implementar Etapa X" para que lea los archivos de contexto correctos.
+Opciones:
+- Preservar imágenes incrustadas
+- Preservar tablas
+- Preservar estilos de texto (negrita, cursiva, tamaños)
+- Calidad de imágenes: Baja / Media / Alta / Original
 
----
+**Útil para:** editar el contenido de un PDF en Word.
 
-### REC-002 — Mantener CLAUDE-CODE.md cuando cambien patrones
-**Por qué:** Si en el futuro cambiás la firma de `respuesta_exitosa` o el nombre
-del campo de upload, actualizá `CLAUDE-CODE.md` en la misma sesión. Si no, en la
-próxima sesión voy a usar el valor viejo que tengo documentado.
-
-**Cómo:** Decirme "actualizá CLAUDE-CODE.md con este cambio" al final de la sesión.
+**Limitaciones conocidas:**
+- PDFs escaneados generan un DOCX con imágenes, no con texto editable
+- Diseños muy complejos (columnas, cajas de texto superpuestas) pueden no preservarse exactamente
+- Tablas con celdas combinadas pueden no detectarse bien
 
 ---
 
-### REC-003 — Etapa 15 (PDF a CSV) requiere una librería nueva
-**Por qué:** `pdfplumber` no está en `requirements.txt` todavía. Al implementar
-la Etapa 15, antes de escribir código, hay que agregar `pdfplumber` al requirements
-y reconstruir la imagen Docker.
+### 🖼️ PDF a PNG
+**Convierte cada página del PDF en una imagen PNG.**
 
-**Impacto:** Primer deploy con Etapa 15 va a requerir `docker build`, no solo
-`git pull + restart`.
+Opciones:
+- Calidad (DPI): 72 / 150 / 300 / 600
+  - 72 DPI → imágenes pequeñas, baja calidad
+  - 300 DPI → calidad de impresión
+  - 600 DPI → altísima calidad, archivos grandes
+- Rango de páginas: todas, un rango (ej: 3 a 10), o páginas específicas (ej: 1, 3, 7-12)
 
----
+El resultado es un ZIP con un PNG por página.
 
-### REC-004 — Revisar comportamiento de reordenamiento con PDF muy grandes
-**Por qué:** El servicio de reordenar carga todas las páginas en memoria. Para
-documentos de 300+ páginas con imágenes pesadas, esto puede ser lento o consumir
-mucha RAM.
-
-**Cuándo preocuparse:** Si los usuarios empiezan a reportar lentitud o errores de
-memoria en PDFs grandes con imágenes. Por ahora no es prioridad.
+**Útil para:** insertar páginas de un PDF en presentaciones, compartir páginas como imágenes, hacer capturas de alta calidad.
 
 ---
 
-### REC-005 — El Web Scraper no funciona con páginas que requieren JavaScript
-**Por qué:** La librería `trafilatura` descarga el HTML estático. Sitios que cargan
-contenido dinámicamente con React/Vue/Angular devuelven páginas casi vacías.
+### 🖼️ PDF a JPG
+**Igual que PDF a PNG pero en formato JPG (archivos más pequeños).**
 
-**Alternativa futura:** Si necesitás scraping de sitios dinámicos, habría que agregar
-`playwright` o `selenium`. Es un cambio significativo. Por ahora el scraper sirve
-para artículos, noticias y documentación (que generalmente son estáticos).
+Opciones adicionales respecto a PNG:
+- Calidad JPG: 60% / 75% / 85% / 95%
+  - Menor calidad → archivo más pequeño
+  - Mayor calidad → mejor imagen pero más pesado
 
----
-
-## ACLARACIONES SOBRE EL CÓDIGO
-
-Explicaciones de partes del código que pueden parecer raras o arbitrarias.
+**Útil para:** cuando necesitás imágenes más livianas para enviar por mail o subir a sistemas con límite de tamaño.
 
 ---
 
-### ACL-001 — ¿Por qué hay un carácter invisible en el Web Scraper?
+### 📦 Comprimir PDF
+**Reduce el tamaño del PDF sin cambiar su contenido.**
 
-En `services/web_scraper.py` vas a ver el carácter `\x02` (STX, un carácter de
-control invisible). No es un error tipográfico.
+Niveles de compresión:
+- **Baja:** mejor calidad, menor reducción (imágenes a 150 DPI)
+- **Media:** equilibrado (120 DPI) — recomendado para la mayoría de los casos
+- **Alta:** máxima reducción, calidad visiblemente menor (96 DPI)
+- **Personalizada:** definís vos el DPI y el porcentaje de calidad
 
-**Para qué sirve:** El pipeline de limpieza de Markdown tiene una regla que junta
-líneas separadas por doble salto. Eso es necesario para los párrafos normales, pero
-rompe las listas con viñetas. El `\x02` se inserta **antes** de cada ítem de lista
-para "protegerlo" de esa regla, y luego se elimina al final. Es un marcador temporal
-que no aparece en el resultado final.
+Opciones adicionales:
+- Eliminar metadatos (autor, programa que lo creó, fechas de edición)
+- Eliminar anotaciones (comentarios, marcas)
+- Eliminar bookmarks (índice/marcadores del PDF)
+- Convertir a escala de grises (elimina el color → reduce bastante el tamaño)
 
----
-
-### ACL-002 — ¿Por qué el campo del formulario de upload se llama 'archivo' y no 'file'?
-
-Porque el proyecto usa nombres en español para todo. El endpoint de upload en
-`api/routes_files.py` lee `request.files['archivo']`. Si el frontend envía el
-campo con cualquier otro nombre (`'file'`, `'pdf'`, `'document'`), el backend
-devuelve error 400. Este fue uno de los bugs de la sesión del 27/02/2026.
-Está documentado en `CLAUDE-CODE.md` para evitar que se repita.
+**Útil para:** reducir PDFs pesados antes de enviarlos por mail, subirlos a portales que tienen límite de tamaño.
 
 ---
 
-### ACL-003 — ¿Por qué `respuesta_exitosa()` siempre devuelve HTTP 200?
+### 🔍 Extraer imágenes de PDF
+**Extrae todas las imágenes incrustadas en el PDF como archivos individuales.**
 
-Por diseño del proyecto. El código HTTP indica si la *comunicación* fue exitosa.
-El campo `success: true/false` del JSON indica si la *operación* fue exitosa.
-Intentar pasar un tercer parámetro `202` a esa función causa un `TypeError` interno
-que Flask convierte en una página HTML de error (y el frontend no puede parsearla).
-Este fue otro bug de la sesión del 27/02/2026.
+- Muestra cuántas imágenes encontró antes de descargar
+- Podés elegir el formato de salida: Original / PNG / JPG
+- Filtro de tamaño mínimo: ignorar imágenes menores a X píxeles (para no incluir iconos o decoraciones diminutas)
+
+**Útil para:** recuperar fotos, gráficos o ilustraciones que están dentro de un PDF.
+
+**Limitación:** solo extrae imágenes incrustadas como objetos independientes. No puede extraer imágenes que son parte de un PDF escaneado (que es una sola imagen grande de toda la página).
 
 ---
 
-## HISTORIAL DE BUGS RESUELTOS
+### 🔄 Rotar páginas
+**Rota páginas individuales del PDF.**
 
-Para referencia futura. Si algo vuelve a fallar, buscar acá primero.
+- Muestra miniaturas de las páginas
+- Hacés clic en una miniatura → rota 90° en sentido horario
+- Seguís haciendo clic para seguir rotando (90° → 180° → 270° → 0°)
+- Botones rápidos: rotar todas 90°, todas 180°, restaurar todo
+- Funciona con PDFs de cualquier tamaño (para más de 20 páginas muestra paginación)
 
-| Fecha | Bug | Causa | Solución |
-|-------|-----|-------|---------|
-| 27/02/2026 | "No se envió ningún archivo" en Reordenar | `formData.append('file', ...)` en lugar de `'archivo'` | Corregido el nombre del campo en `pdf-reorder.html` |
-| 27/02/2026 | "JSON.parse: unexpected character" al aplicar reordenamiento | `respuesta_exitosa(data, msg, 202)` — 3 parámetros cuando acepta 2 | Eliminado el tercer parámetro en `routes_convert.py` |
-| 27/02/2026 | "No hace nada" después de subir archivo en Reordenar | `resp.data.archivo` no existe; los datos están en `resp.data` directamente | Corregido acceso en `pdf-reorder.html` |
-| Sesión anterior | Saltos de línea forzados en Web Scraper al eliminar referencias `[N]` | El paso de limpieza de referencias dejaba espacios vacíos que se convertían en saltos | Agregados pasos de limpieza de espacios y colapso de líneas vacías múltiples |
-| Sesión anterior | Viñetas desaparecen en output Markdown | El regex de unión de párrafos colapsaba los marcadores `* item` | Implementado guardian character `\x02` (ver ADV-001) |
+**Útil para:** corregir páginas que quedaron de costado al escanear.
+
+---
+
+### 🌐 HTML a PDF
+**Convierte una página web a PDF.**
+
+- Pegás la URL de la página
+- Opciones de página: A4, Letter, Legal, A3
+- Orientación: vertical u horizontal
+- Márgenes: sin márgenes, normales, amplios
+- Opción de incluir o no el fondo/colores de la página
+- Opción de extraer solo el contenido principal (intenta eliminar menú, publicidades, footer)
+
+**Útil para:** guardar artículos, documentación online, páginas web como PDF.
+
+**Limitaciones:**
+- Páginas que requieren estar logueado no van a funcionar
+- Sitios con mucho JavaScript dinámico pueden no renderizarse bien
+- Algunas páginas bloquean el acceso a bots
+
+---
+
+### 🔗 Unir PDFs
+**Combina múltiples archivos PDF en uno solo.**
+
+- Subís varios PDFs a la vez (drag & drop o selección múltiple)
+- Los podés reordenar arrastrando antes de unir
+- Opción de agregar marcadores (bookmarks) con el nombre de cada archivo original
+
+**Útil para:** juntar partes de un informe, combinar formularios, armar un expediente.
+
+---
+
+### 📑 Extraer páginas específicas
+**Extrae páginas puntuales de un PDF.**
+
+Métodos de selección:
+- Hacés clic en las miniaturas de las páginas que querés
+- Escribís el rango: `1, 3, 5-10, 15`
+- Botones de selección rápida: todas, ninguna, invertir, pares, impares
+
+Formato de salida:
+- Un único PDF con todas las páginas seleccionadas
+- Un PDF separado por cada página
+
+**Útil para:** sacar páginas específicas de un informe, separar anexos, armar un subconjunto de un documento.
+
+---
+
+### 🔀 Reordenar páginas
+**Cambia el orden de las páginas con drag & drop.**
+
+- Arrastrás las miniaturas para cambiar el orden
+- Acciones rápidas: invertir orden, restaurar el original
+- Para documentos grandes: vista de lista más compacta + campo para mover página X a posición Y
+
+**Útil para:** corregir el orden de páginas escaneadas, reorganizar secciones.
+
+---
+
+### 📊 Migrar SQL (NDM2)
+**Genera el orden correcto de migración de tablas de una base de datos.**
+
+- Subís un archivo `.ndm2` (Navicat Data Modeler)
+- El sistema analiza las claves foráneas (FK) y determina en qué orden hay que exportar/importar las tablas para respetar las dependencias
+- El resultado es un archivo `.txt` con la lista ordenada
+
+**Útil para:** migraciones de bases de datos donde el orden importa (tabla A antes que tabla B porque B depende de A).
+
+---
+
+### 📋 PDF a CSV (tablas)
+**Extrae tablas de un PDF y las convierte a archivos CSV.**
+
+- Detecta automáticamente cuántas tablas hay en el documento
+- Opción de unificar tablas con la misma estructura en un solo archivo
+- Configuración de separador: `;` (decimales con coma) o `,` (decimales con punto)
+- Configuración de saltos de línea: CRLF (Windows) o LF (Unix)
+
+**Útil para:** recuperar datos numéricos o tabulares de informes PDF para trabajarlos en Excel.
+
+**Limitación:** no funciona con PDFs escaneados (las tablas tienen que ser texto real, no imagen).
+
+---
+
+### 🌐 Scraper Web
+**Extrae el contenido de una página web en formato limpio para usar con IA.**
+
+- Pegás la URL
+- El sistema descarga la página y extrae solo el contenido relevante (elimina menú, publicidades, footer)
+- El resultado incluye: metadatos (título, autor, fecha), contenido principal en Markdown o texto plano, información de contacto del footer, lista de links
+
+**Útil para:** preparar contenido para procesar con ChatGPT u otra IA, guardar artículos limpios.
+
+**Limitación:** no funciona con páginas que requieren login o que son 100% dinámicas (SPAs sin servidor).
+
+---
+
+### 🖼️ Imágenes a PDF
+**Junta múltiples imágenes en un único PDF.**
+
+- Subís imágenes de cualquier tipo (JPG, PNG, BMP, TIFF, WebP, etc.)
+- Las podés reordenar antes de convertir
+- El resultado es un PDF con una imagen por página
+
+**Útil para:** convertir fotos de un documento escaneado en un solo PDF.
+
+---
+
+### 🔄 WEBP a PNG
+**Convierte imágenes en formato WebP a PNG.**
+
+WebP es el formato moderno de imágenes en la web que algunos programas todavía no abren. Este servicio las convierte a PNG estándar.
+
+---
+
+## Límites y consideraciones
+
+| Límite | Valor |
+|--------|-------|
+| Tamaño máximo de archivo | 2 GB |
+| Tiempo de retención de archivos | 4 horas |
+| Máximo de cortes en "Cortar PDF" | 20 |
+| Máximo de páginas mostradas en rotación/reordenado | 20 por pantalla (paginado) |
+
+---
+
+## Preguntas frecuentes
+
+**¿Tengo que instalar algo?**
+No. Solo necesitás un navegador web y acceso a la red interna.
+
+**¿Es seguro subir mis archivos?**
+Los archivos se guardan temporalmente en el servidor interno y se eliminan automáticamente a las 4 horas. No salen de la red interna.
+
+**El archivo tardó mucho en procesarse, ¿qué hago?**
+Los archivos grandes pueden tardar. Podés volver a la página de inicio (botón "Tengo un PDF...") y ver el progreso del trabajo en la sección de trabajos activos.
+
+**Convertí a DOCX pero el formato quedó mal, ¿qué hago?**
+La conversión PDF → DOCX es imperfecta por naturaleza. El PDF es un formato de "presentación fija" y Word es de "flujo de texto". Cuanto más complejo el diseño original (columnas, cuadros, tablas), más diferencias vas a ver.
+
+**El scraper no trae nada de la página que quiero.**
+Puede ser que el sitio requiera login, que use JavaScript dinámico, o que bloquee los scrapers. En esos casos no hay solución desde esta herramienta.
+
+**¿Puedo usar esto desde una aplicación propia?**
+Sí, todos los servicios tienen endpoints de API. Consultá con el administrador del sistema para el acceso programático.

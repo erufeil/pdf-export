@@ -1,7 +1,7 @@
 He instalado un programa que funciona con tesseract y tika:
 
 programa: nlm-ingestor
-IP: 172.21.0.19
+IP: tika
 PORT: 5001
 github: https://github.com/nlmatics/nlm-ingestor
 
@@ -14,9 +14,9 @@ Contenedor levantado con docker-compose:
       - "9020:5001"  # Puerto para la API REST
     networks:
       front-net:
-        ipv4_address: 172.21.0.19  
+        ipv4_address: 172.ip.local.docker  
     environment:
-      - TIKA_ENDPOINT=http://172.21.0.17:9998  # Apunta a tu contenedor Tika
+      - TIKA_ENDPOINT=http://tika:9998  # Apunta a tu contenedor Tika
       - OCR_ENGINE=tesseract  # Usa Tesseract (ya disponible en Tika)
     volumes:
       # Para persistir caché y mejorar rendimiento
@@ -58,8 +58,8 @@ from llmsherpa.readers import LayoutPDFReader
 from pathlib import Path
 
 # Configuración - ¡USA LA IP DEL CONTENEDOR nlm-ingestor!
-# En tu docker-compose, nlm-ingestor tiene IP 172.17.0.3 y puerto 8080
-NLM_INGESTOR_URL = "http://172.17.0.3:8080/api/parseDocument?renderFormat=all"
+# En tu docker-compose, nlm-ingestor tiene IP ingestor y puerto 8080
+NLM_INGESTOR_URL = "http://ingestor:8080/api/parseDocument?renderFormat=all"
 
 class PDFTableExtractor:
     def __init__(self, service_url=NLM_INGESTOR_URL):

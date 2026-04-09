@@ -937,7 +937,49 @@ Utiliza el archivo ./doc/pdf-to-txt-redesign.html para rediseñar el pdf-to-txt 
 Utiliza el el front de "DF TO TXT" modificar todos los servicios y que dueden con la misma estetica.
 - Que todos los "Home" tengan como enlace "Tengo un PDF..."
 ---
+### Etapa 22. De PDF a CSV-II
 
+## Nombre del boton para index.html
+<div class="card-icon">PDF a CSV-II</div>
+<h3>PDF a CSV-II</h3>
+<p>Convierte tabla PDF en CSV</p>
+
+**Página:** `static/pdf-to-csv2.html`
+
+**Endpoint:** `POST /api/v1/convert/pdf-to-csv2`
+
+## Objetivo
+Extraer tablas de PDF y transformarlas en archivos CSV.
+---
+### Etapa 23. De SVG a PNG
+
+## Nombre del boton para index.html
+<div class="card-icon">SVG</div>
+<h3>SVG a PNG</h3>
+<p>Convierte imagen SVG</p>
+
+**Página:** `static/svg-to-png.html`
+
+**Endpoint:** `POST /api/v1/convert/svg-to-png`
+
+## Objetivo
+Convertir imagenes SVG a imagenes PNG.
+---
+### Etapa 24. De IMG a TXT
+
+## Nombre del boton para index.html
+<div class="card-icon">OCR</div>
+<h3>IMG a TXT</h3>
+<p>OCR Convierte Imagen a TXT</p>
+
+**Página:** `static/img-to-txt.html`
+
+**Endpoint:** `POST /api/v1/convert/img-to-txt`
+
+## Objetivo
+Convertir imagenes a TXT con OCR de Tesseract- Tika.
+
+---
 ## Estructura de Carpetas Propuesta
 
 ```

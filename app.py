@@ -17,7 +17,7 @@ from api import routes_files, routes_jobs, routes_convert
 from utils import job_manager, file_manager
 
 # Importar servicios para registrar procesadores
-from services import pdf_split, pdf_to_txt, pdf_to_docx, pdf_to_images, pdf_extract_images, pdf_compress, pdf_rotate, html_to_pdf, ndm_to_tables_seq, pdf_merge, pdf_extract_pages, pdf_reorder, web_scraper, pdf_to_csv, img_to_1pdf, webp_to_png
+from services import pdf_split, pdf_to_txt, pdf_to_docx, pdf_to_images, pdf_extract_images, pdf_compress, pdf_rotate, html_to_pdf, ndm_to_tables_seq, pdf_merge, pdf_extract_pages, pdf_reorder, web_scraper, pdf_to_csv, img_to_1pdf, webp_to_png, pdf_scanned_to_csv, svg_to_png, img_to_txt
 
 # Configurar logging
 logging.basicConfig(
@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 logger.info(f"=== PDFexport v{config.VERSION} iniciando ===")
 logger.info(f"[config] NLM_INGESTOR_URL = '{config.NLM_INGESTOR_URL}' "
             f"({'habilitado' if config.NLM_INGESTOR_URL else 'DESHABILITADO'})")
+logger.info(f"[config] TIKA_URL = '{config.TIKA_URL}' "
+            f"({'habilitado' if config.TIKA_URL else 'DESHABILITADO'})")
 
 # Silenciar loggers extremadamente verbosos que generan miles de lineas por pagina
 # pdfminer registra cada token, caracter y operacion de bajo nivel en DEBUG
