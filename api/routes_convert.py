@@ -1270,7 +1270,7 @@ def convertir_scanned_to_csv():
             }
         )
 
-        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        trabajo = models.obtener_trabajo(trabajo_id)
         return respuesta_exitosa({
             'job_id': trabajo_id,
             'estado': trabajo['estado'],
@@ -1344,7 +1344,7 @@ def convertir_svg_to_png():
             }
         )
 
-        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        trabajo = models.obtener_trabajo(trabajo_id)
         return respuesta_exitosa({
             'job_id': trabajo_id,
             'estado': trabajo['estado'],
@@ -1396,7 +1396,7 @@ def convertir_img_to_txt():
             }
         )
 
-        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        trabajo = models.obtener_trabajo(trabajo_id)
         return respuesta_exitosa({
             'job_id': trabajo_id,
             'estado': trabajo['estado'],
@@ -1468,7 +1468,7 @@ def editar_metadatos_pdf():
             parametros=parametros
         )
 
-        trabajo = job_manager.obtener_trabajo(trabajo_id)
+        trabajo = models.obtener_trabajo(trabajo_id)
         return respuesta_exitosa({
             'job_id': trabajo_id,
             'estado': trabajo['estado'],

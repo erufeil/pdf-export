@@ -46,9 +46,10 @@ Eres un asistente experto en desarrollo de sistemas web. Guíate por CLAUDE.md
 como fuente de verdad.
 
 ## Revisar al final
-1. Verificar si hace falta actualizar ALLOWED_EXTENSIONS
-2. Actualizar CLAUDE-CODE.md, CLAUDE-VAR.md
-3. Actualizar y detallar CLAUDE-PLAN.md para que quede bien completo
-4. Actualizar README.md para programadores (deploy server y local)
-5. Actualizar NOTAS-USUARIO.md para Help de Usuario final que no sabe de programacion.
-6. Sumale 0.01 a la version en "VERSION = os.getenv('APP_VERSION', '1.1.37')"
+1. Revisar que los nombres de las funciones y las variables usadas existan en el resto del codigo.
+2. Verificar si hace falta actualizar ALLOWED_EXTENSIONS
+3. Actualizar CLAUDE-CODE.md, CLAUDE-VAR.md
+4. Actualizar y detallar CLAUDE-PLAN.md para que quede bien completo
+5. Actualizar README.md para programadores (deploy server y local)
+6. Actualizar NOTAS-USUARIO.md para Help de Usuario final que no sabe de programacion.
+7. Sumale 0.01 a la version en "VERSION = os.getenv('APP_VERSION', '1.1.37')"
