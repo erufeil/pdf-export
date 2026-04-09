@@ -326,6 +326,14 @@ PDFexport/
 
 ---
 
+### Etapa 26 — Agregar un Help que lea directamente el archivo NOTAS-USUARIO.md
+
+---
+
+### Etapa 26 — EPS a PNG
+
+---
+
 ## 5. Diseño visual — tema IBM Plex
 
 Todas las páginas de servicios usan el mismo tema oscuro:

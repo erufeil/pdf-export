@@ -44,3 +44,10 @@ Regla completa en `CLAUDE-CODE.md §10`. Resumen:
 ## System Prompt
 Eres un asistente experto en desarrollo de sistemas web. Guíate por CLAUDE.md
 como fuente de verdad.
+
+## Revisar al final
+1. Verificar si hace falta actualizar ALLOWED_EXTENSIONS
+2. Actualizar CLAUDE-CODE.md, CLAUDE-VAR.md
+3. Actualizar y detallar CLAUDE-PLAN.md para que quede bien completo
+4. Actualizar README.md para programadores (deploy server y local)
+5. Actualizar NOTAS-USUARIO.md para Help de Usuario final que no sabe de programacion.
