@@ -147,6 +147,7 @@ PDFexport/
 | 23 | SVG→PNG | svg_to_png.py | /svg-to-png | PNG directo |
 | 24 | IMG→TXT (OCR) | img_to_txt.py | /img-to-txt | TXT directo |
 | 25 | Metadatos PDF | pdf_metadata.py | /metadata/extract + /metadata/edit | JSON (sync) + PDF directo (edit) |
+| 26 | Help — Ayuda de usuario | routes_files.py | GET /help | JSON con contenido MD |
 
 ---
 
@@ -326,12 +327,158 @@ PDFexport/
 
 ---
 
-### Etapa 26 — Agregar un Help que lea directamente el archivo NOTAS-USUARIO.md
+### Etapa 26 — Help / Ayuda de usuario
+
+**Página:** `static/help.html`
+**Endpoint:** `GET /api/v1/help` — lee `NOTAS-USUARIO.md` del servidor y retorna su contenido como texto plano.
+**UI:** Layout de dos columnas: TOC fijo a la izquierda (resalta la sección visible) + contenido renderizado a la derecha. Barra de búsqueda en el topbar que resalta coincidencias y hace scroll al primer resultado.
+**Acceso:** Botón ❓ Ayuda en el sidebar de `index.html` (abre en nueva pestaña).
+**Renderizado:** Parser Markdown vanilla JS (sin dependencias externas): h1/h2/h3, bold, italic, código inline, bloques de código, tablas, blockquotes, listas, hr.
+**Nota:** Al actualizar `NOTAS-USUARIO.md` en el servidor los cambios se reflejan automáticamente sin tocar el frontend.
 
 ---
 
-### Etapa 26 — EPS a PNG
+### Etapa 27 — EPS a PNG
 
+---
+
+### Etapa 28 — Metadatos IMG (Forense)
+
+**Página:** `static/img-metadata.html`
+**Servicio:** `services/img_metadata.py`
+**Endpoint:** `POST /api/v1/convert/img-metadata/extract` (síncrono, sin job)
+**Formatos:** JPG, JPEG, PNG, TIFF, TIF, BMP, GIF, WEBP
+**Acento UI:** verde `#3FB950`
+
+#### Objetivo
+Extraer la huella digital completa de una imagen: metadatos técnicos, EXIF de cámara, GPS, autoría IPTC/XMP, historial de edición Photoshop, análisis de colores dominantes y hashes de integridad. Todo en un único campo de texto copiable.
+
+#### Fuentes de datos
+
+| Fuente | Qué extrae | Disponibilidad |
+|--------|-----------|----------------|
+| `hashlib` | SHA-256 + MD5 del archivo en disco | Siempre |
+| `Pillow` (Image, getexif, ImageStat) | Formato, modo, dims, DPI, ICC, EXIF nativo, GPS, análisis de colores | Siempre |
+| `Apache Tika` PUT /meta (Accept: application/json) | IPTC, XMP, Photoshop, Dublin Core, todos los namespaces | Solo si Tika disponible |
+
+Si Tika no está disponible, bloques 7, 8 y 10 muestran `"Tika no disponible"` y el resto funciona igual con Pillow.
+
+#### Arquitectura del servicio
+
+```python
+extraer_metadatos_imagen(archivo_id) -> dict
+  _calcular_hashes(ruta)            # MD5 + SHA-256
+  _extraer_tecnico(img)             # formato, modo, dims, DPI, ICC profile
+  _extraer_exif(img)                # getexif() -> IFD0 + ExifIFD(0x8769) + GPSIFD(0x8825)
+  _decodificar_gps(gps_ifd)         # IFDRational -> decimal + link OpenStreetMap
+  _extraer_tika(ruta, mime_type)    # PUT /meta Accept:application/json -> dict raw
+  _parsear_iptc_xmp(tika_dict)      # filtra namespaces tiff/exif/xmp/dc/photoshop
+  _analizar_colores(img)            # colores deterministas (sin random, MEDIANCUT)
+```
+
+#### Determinismo en el análisis de colores (REGLA IMPORTANTE)
+El análisis de colores NO usa `random`. Usa `img.resize((100,100), Image.LANCZOS).quantize(colors=8, method=Image.Quantize.MEDIANCUT)`. MEDIANCUT es determinista: la misma imagen siempre produce los mismos colores. No pasar parámetro `random_seed` ni usar `random` en ninguna parte de este servicio ni de ningún análisis forense. Si un algoritmo requiere seed, usar `random.seed(43)` fijo, pero preferir algoritmos deterministas sin seed.
+
+#### 10 bloques de información
+
+**Bloque 1 — ARCHIVO**
+`nombre`, `tamaño` formateado, `SHA-256`, `MD5`
+
+**Bloque 2 — TÉCNICO** (Pillow)
+Formato (JPEG/PNG/TIFF/WEBP/BMP/GIF), modo de color (RGB/RGBA/CMYK/L/P/YCbCr),
+dimensiones `ancho x alto px` + megapixeles calculados, resolución DPI X/Y,
+bits por muestra, numero de canales, frames (GIF animado / TIFF multi / WEBP animado),
+transparencia (si/no), perfil ICC (nombre desde bytes 36-68 del bloque),
+JPEG progresivo, tipo de compresión.
+
+**Bloque 3 — CAMARA / DISPOSITIVO** (EXIF IFD0, Pillow tag IDs)
+`Make`(271), `Model`(272), `Software`(305), `Artist`(315), `Copyright`(33432),
+`ImageDescription`(270), `Orientation`(274) con texto legible, `DateTime`(306),
+`XResolution`/`YResolution`/`ResolutionUnit`.
+
+**Bloque 4 — CONFIGURACION DE CAPTURA** (ExifIFD via `getexif().get_ifd(0x8769)`)
+`DateTimeOriginal`(36867), `DateTimeDigitized`(36868), `SubSecTimeOriginal`(37521),
+`ExposureTime`(33434) como fraccion (ej: 1/250s), `FNumber`(33437) como f/N,
+`ISOSpeedRatings`(34855), `ShutterSpeedValue`(37377), `ApertureValue`(37378),
+`ExposureBiasValue`(37380) en EV, `MeteringMode`(37383) con texto,
+`Flash`(37385) legible, `FocalLength`(37386) en mm,
+`FocalLengthIn35mmFilm`(41989), `ColorSpace`(40961),
+`WhiteBalance`(41987), `ExposureMode`(41986), `ExposureProgram`(34850),
+`SceneCaptureType`(41990), `Contrast`(41992)/`Saturation`(41993)/`Sharpness`(41994).
+
+**Bloque 5 — LENTE Y SERIALES** (ExifIFD)
+`LensMake`(42035), `LensModel`(42036), `LensSpecification`(42034),
+`BodySerialNumber`(42033), `LensSerialNumber`(42037).
+
+**Bloque 6 — GPS** (GPS IFD via `getexif().get_ifd(0x8825)`)
+Latitud decimal, longitud decimal, altitud en metros, velocidad, direccion de camara,
+fecha/hora GPS, link a OpenStreetMap.
+Advertencia de privacidad visible si hay GPS presente.
+
+Conversion de coordenadas (determinista, sin random):
+```python
+def _gps_a_decimal(val, ref):
+    d = val[0][0]/val[0][1]
+    m = val[1][0]/val[1][1]
+    s = val[2][0]/val[2][1]
+    dec = d + m/60 + s/3600
+    return -dec if ref in ('S', 'W') else dec
+```
+
+**Bloque 7 — CONTENIDO / AUTORIA** (Tika: `dc:`, `photoshop:`, `Iptc4xmpCore:`)
+`dc:title`, `dc:creator`, `dc:description`, `dc:subject`, `dc:rights`,
+`photoshop:Credit`, `photoshop:City`, `photoshop:Country`, `photoshop:State`,
+`photoshop:Category`, `photoshop:ICCProfile`, `photoshop:ColorMode`,
+`Iptc4xmpCore:Location`, `Iptc4xmpCore:IntellectualGenre`.
+
+**Bloque 8 — HISTORIAL DE EDICION** (Tika: `xmp:`, `xmpMM:`)
+`xmp:CreatorTool`, `xmp:CreateDate`, `xmp:ModifyDate`, `xmp:MetadataDate`,
+`xmpMM:DocumentID`, `xmpMM:OriginalDocumentID`, `xmpMM:InstanceID`,
+`xmpMM:History`, `xmpMM:DerivedFrom`.
+Indicador forense: `fue_editado = (InstanceID != DocumentID)` → badge de advertencia.
+
+**Bloque 9 — ANALISIS DE COLORES** (Pillow, 100% determinista)
+- Top 8 colores dominantes via `img.resize((100,100), LANCZOS).quantize(8, MEDIANCUT)` + frecuencia
+- Cada color: hex + RGB + porcentaje de presencia
+- Color promedio de la imagen: hex de `ImageStat.mean` (R, G, B)
+- Brillo promedio: ImageStat sobre canal L (0=negro, 255=blanco)
+- StdDev por canal R/G/B (contraste y riqueza)
+- En la UI: cuadraditos de color visual encima del textarea (no van en el texto copiable)
+
+**Bloque 10 — TIKA RAW** (dump completo JSON de Tika, si disponible)
+Todos los campos devueltos por `/meta` sin filtrar. Captura namespaces no previstos.
+
+#### Endpoint Tika /meta
+
+```python
+def _extraer_tika(ruta: Path, mime_type: str) -> dict:
+    url = config.TIKA_URL
+    if not url:
+        return {}
+    headers = {'Content-Type': mime_type, 'Accept': 'application/json'}
+    with open(ruta, 'rb') as f:
+        r = requests.put(f'{url}/meta', headers=headers, data=f, timeout=60)
+    return r.json() if r.status_code == 200 else {}
+```
+
+#### Frontend `static/img-metadata.html`
+- Mismo patron que Etapa 25: sidebar con drop zone + campo texto unico + boton "Copiar todo"
+- Acepta: `.jpg .jpeg .png .tiff .tif .bmp .gif .webp`
+- Sobre el textarea: fila de cuadraditos de colores dominantes con hex y porcentaje (solo visual)
+- Badge rojo si hay GPS: "Esta imagen contiene coordenadas GPS"
+- Badge amarillo si fue editado: "Modificado (InstanceID difiere de DocumentID)"
+- Nota al pie si Tika no disponible
+- Sin boton de edicion
+
+#### En app.py y routes_convert.py
+- `from services import img_metadata` en `app.py`
+- Endpoint `POST /api/v1/convert/img-metadata/extract` en `routes_convert.py`
+- Llamada sincrona directa: `img_metadata.extraer_metadatos_imagen(archivo_id)`
+
+---
+### Errores pendientes de correccion:
+revisar todos los html para homogeneizarlos con el mismo marco y el mismo home
+Falta Etapa 26 y 27
 ---
 
 ## 5. Diseño visual — tema IBM Plex

@@ -1504,3 +1504,40 @@ def verificar_tika_img():
     except Exception as e:
         logger.error(f'Error verificando Tika para img-to-txt: {e}')
         return respuesta_error('CHECK_ERROR', str(e), 500)
+
+
+@bp.route('/img-metadata/extract', methods=['POST'])
+def extraer_metadatos_imagen():
+    """
+    Extrae metadatos forenses completos de una imagen (Etapa 28).
+    Respuesta sincrona — no crea job.
+
+    Body JSON:
+      - file_id: ID del archivo imagen subido
+
+    Retorna:
+      - hashes, tecnico, exif_camara, exif_captura, gps, contenido, historial, colores, tika_raw
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    from services.img_metadata import MIME_POR_EXTENSION
+    nombre = archivo['nombre_original'].lower()
+    ext = ('.' + nombre.rsplit('.', 1)[-1]) if '.' in nombre else ''
+    if ext not in MIME_POR_EXTENSION:
+        extensiones = ', '.join(MIME_POR_EXTENSION.keys())
+        return respuesta_error('INVALID_FORMAT', f'Formato no soportado. Use: {extensiones}')
+
+    try:
+        from services.img_metadata import extraer_metadatos_imagen as _extraer
+        resultado = _extraer(archivo_id)
+        return respuesta_exitosa(resultado, 'Metadatos extraidos')
+    except Exception as e:
+        logger.error(f'Error extrayendo metadatos imagen: {e}')
+        return respuesta_error('EXTRACT_ERROR', str(e), 500)

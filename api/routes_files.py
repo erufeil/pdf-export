@@ -259,3 +259,17 @@ def verificar_duplicado():
         }, 'Archivo encontrado en el servidor')
     else:
         return respuesta_exitosa({'exists': False}, 'Archivo no encontrado')
+
+
+@bp.route('/help', methods=['GET'])
+def obtener_ayuda():
+    """
+    Retorna el contenido del archivo NOTAS-USUARIO.md como texto plano.
+    Usado por la página de ayuda para renderizar la documentación.
+    """
+    ruta_md = Path(__file__).parent.parent / 'NOTAS-USUARIO.md'
+    try:
+        contenido = ruta_md.read_text(encoding='utf-8')
+        return respuesta_exitosa({'contenido': contenido}, 'Ayuda cargada')
+    except FileNotFoundError:
+        return respuesta_exitosa({'contenido': '# Ayuda\n\nDocumentación no disponible.'}, 'Sin documentación')

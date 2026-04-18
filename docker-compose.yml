@@ -66,6 +66,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks: 
+      ${NETWORK}:
+        ipv4_address: ${NETWORK_IP}
 
 # Volumenes nombrados
 volumes:
@@ -76,3 +79,7 @@ volumes:
   pdfexport_outputs:
     name: pdfexport_outputs
 
+
+networks:
+  ${NETWORK}:
+    external: true

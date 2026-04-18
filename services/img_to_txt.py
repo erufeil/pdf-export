@@ -53,10 +53,10 @@ def verificar_tika_img() -> dict:
     try:
         r = _req.get(f'{url}/', timeout=5)
         if r.status_code == 200:
-            return {'tika_disponible': True, 'mensaje': f'Apache Tika disponible en {url}'}
+            return {'tika_disponible': True, 'mensaje': 'Apache Tika disponible'}
         return {'tika_disponible': False, 'mensaje': f'Tika respondió HTTP {r.status_code}'}
-    except Exception as exc:
-        return {'tika_disponible': False, 'mensaje': f'Tika no alcanzable ({url}): {exc}'}
+    except Exception:
+        return {'tika_disponible': False, 'mensaje': 'Tika no alcanzable — verificar que el servicio esté activo'}
 
 
 def _enviar_imagen_tika(ruta_imagen: Path, mime_type: str, idioma_ocr: str) -> str:

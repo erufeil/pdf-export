@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metadatos PDF — PDFexport</title>
+    <title>Metadatos Imagen — PDFexport</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
             --red:     #E63946;
             --text:    #E6EDF3;
             --muted:   #8B949E;
-            --accent:  #58A6FF;
+            --accent:  #3FB950;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -85,7 +85,7 @@
         }
         .drop-zone:hover, .drop-zone.drag-over {
             border-color: var(--accent);
-            background: rgba(88,166,255,.06);
+            background: rgba(63,185,80,.06);
         }
         .drop-icon { font-size: 30px; margin-bottom: 8px; }
         .drop-text { font-size: 13px; color: var(--muted); }
@@ -126,8 +126,6 @@
         .btn:not(:disabled):hover { opacity: .85; }
         .btn:not(:disabled):active { transform: scale(.98); }
         .btn-primary { background: var(--accent); color: #000; width: 100%; justify-content: center; margin-top: 12px; }
-        .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-        .btn-green { background: var(--green); color: #000; }
 
         .alerta {
             display: none;
@@ -137,17 +135,10 @@
             margin-top: 10px;
         }
         .alerta-error { background: rgba(230,57,70,.12); border: 1px solid rgba(230,57,70,.4); color: #ff8088; }
-        .alerta-ok    { background: rgba(63,185,80,.12);  border: 1px solid rgba(63,185,80,.4);  color: var(--green); }
-
-        .job-progress { display: none; margin-top: 14px; }
-        .job-bar-track { background: var(--border); border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 5px; }
-        .job-bar-fill { height: 100%; background: var(--green); border-radius: 4px; width: 0%; transition: width .4s; }
-        .job-msg { font-size: 11px; color: var(--muted); }
 
         /* ── Panel resultado ── */
         #panel-inicial { padding-top: 80px; text-align: center; color: var(--muted); }
-
-        #panel-resultado { display: none; max-width: 860px; }
+        #panel-resultado { display: none; max-width: 900px; }
 
         .result-header {
             display: flex;
@@ -159,6 +150,54 @@
         }
         .result-filename { font-size: 16px; font-weight: 600; word-break: break-all; }
         .result-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        /* Tira de colores */
+        .color-strip-wrap {
+            display: none;
+            margin-bottom: 16px;
+        }
+        .color-strip-label {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 6px;
+        }
+        .color-strip {
+            display: flex;
+            height: 36px;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .color-swatch {
+            flex: 1;
+            position: relative;
+            cursor: default;
+        }
+        .color-swatch:hover::after {
+            content: attr(data-hex);
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            font-family: 'IBM Plex Mono', monospace;
+            background: rgba(0,0,0,.7);
+            color: #fff;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        .tika-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-top: 4px;
+        }
+        .tika-ok  { background: rgba(63,185,80,.15);  color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+        .tika-off { background: rgba(139,148,158,.1); color: var(--muted); border: 1px solid var(--border); }
 
         /* Campo único de texto */
         .meta-field-wrap {
@@ -193,7 +232,7 @@
             transition: opacity .2s;
         }
         .copy-all-btn:hover { opacity: .85; }
-        .copy-all-btn.copied { background: var(--green); }
+        .copy-all-btn.copied { background: #58A6FF; }
 
         .meta-textarea {
             width: 100%;
@@ -205,59 +244,23 @@
             line-height: 1.7;
             padding: 18px 20px;
             resize: vertical;
-            min-height: 520px;
+            min-height: 560px;
             outline: none;
         }
-
-        /* Sección de edición */
-        .edit-section { display: none; margin-top: 20px; }
-        .edit-section.visible { display: block; }
-        .edit-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .edit-card-header {
-            padding: 12px 18px;
-            border-bottom: 1px solid var(--border);
-            background: var(--sidebar);
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--accent);
-        }
-        .edit-card-body { padding: 18px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group { margin-bottom: 12px; }
-        .form-label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; }
-        .form-input {
-            width: 100%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 12px;
-            padding: 7px 11px;
-            font-family: 'IBM Plex Mono', monospace;
-            outline: none;
-            transition: border-color .15s;
-        }
-        .form-input:focus { border-color: var(--accent); }
 
         @media (max-width: 768px) {
             .layout { grid-template-columns: 1fr; }
             .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
             .main { padding: 20px 16px; }
-            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
 <div class="topbar">
-    <a href="/">Tengo un PDF...</a>
+    <a href="/">Misceláneos</a>
     <span class="sep">›</span>
-    <span class="current">Metadatos PDF</span>
+    <span class="current">Metadatos Imagen</span>
 </div>
 
 <div class="layout">
@@ -266,18 +269,18 @@
     <aside class="sidebar">
         <div class="service-label">
             <span class="service-badge">META</span>
-            <span class="service-title">Metadatos PDF</span>
+            <span class="service-title">Metadatos Imagen</span>
         </div>
 
         <div class="drop-zone" id="dropZone">
-            <div class="drop-icon">🔍</div>
+            <div class="drop-icon">🖼️</div>
             <div class="drop-text">
-                Arrastrá tu PDF aquí<br>
+                Arrastrá tu imagen aquí<br>
                 o <strong id="btnSeleccionar">seleccioná un archivo</strong>
             </div>
-            <div class="drop-hint">Solo archivos .pdf</div>
+            <div class="drop-hint">JPG, PNG, TIFF, BMP, GIF, WEBP</div>
         </div>
-        <input type="file" id="inputArchivo" accept=".pdf" style="display:none">
+        <input type="file" id="inputArchivo" accept=".jpg,.jpeg,.png,.tiff,.tif,.bmp,.gif,.webp" style="display:none">
 
         <div class="upload-bar-wrap" id="uploadWrap">
             <div class="upload-bar-track"><div class="upload-bar-fill" id="uploadFill"></div></div>
@@ -294,22 +297,15 @@
         <button class="btn btn-primary" id="btnExtraer" disabled>
             🔍 Extraer Metadatos
         </button>
-
-        <div class="job-progress" id="jobProgress">
-            <div class="job-bar-track"><div class="job-bar-fill" id="jobFill"></div></div>
-            <div class="job-msg" id="jobMsg">Procesando…</div>
-        </div>
-
-        <div class="alerta alerta-ok" id="alertaOk"></div>
     </aside>
 
     <!-- Main -->
     <main class="main">
 
         <div id="panel-inicial">
-            <div style="font-size:44px;margin-bottom:10px">📄</div>
-            <div style="font-size:15px">Cargá un PDF para ver sus metadatos</div>
-            <div style="font-size:12px;margin-top:6px">Tamaño, hashes SHA-256/MD5, huella digital, permisos y más</div>
+            <div style="font-size:44px;margin-bottom:10px">🖼️</div>
+            <div style="font-size:15px">Cargá una imagen para ver sus metadatos</div>
+            <div style="font-size:12px;margin-top:6px">EXIF, GPS, IPTC/XMP vía Tika, hashes SHA-256/MD5, colores dominantes y más</div>
         </div>
 
         <div id="panel-resultado">
@@ -318,12 +314,14 @@
                 <div>
                     <div class="result-filename" id="resFilename"></div>
                     <div class="result-meta" id="resMeta"></div>
+                    <span id="tikaBadge" class="tika-badge" style="display:none"></span>
                 </div>
-                <div>
-                    <button class="btn btn-secondary" id="btnToggleEdit" style="display:none">
-                        ✏️ Editar metadatos
-                    </button>
-                </div>
+            </div>
+
+            <!-- Tira de colores dominantes -->
+            <div class="color-strip-wrap" id="colorStripWrap">
+                <div class="color-strip-label">Colores dominantes (análisis determinista)</div>
+                <div class="color-strip" id="colorStrip"></div>
             </div>
 
             <!-- Campo único copiable -->
@@ -333,48 +331,6 @@
                     <button class="copy-all-btn" id="btnCopiarTodo">📋 Copiar todo</button>
                 </div>
                 <textarea class="meta-textarea" id="metaTexto" readonly spellcheck="false"></textarea>
-            </div>
-
-            <!-- Edición -->
-            <div class="edit-section" id="editSection">
-                <div class="edit-card">
-                    <div class="edit-card-header">✏️ Editar metadatos básicos</div>
-                    <div class="edit-card-body">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">titulo</label>
-                                <input class="form-input" id="edit-titulo" type="text" placeholder="Título del documento">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">autor</label>
-                                <input class="form-input" id="edit-autor" type="text" placeholder="Autor o autores">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">tema</label>
-                                <input class="form-input" id="edit-tema" type="text" placeholder="Tema o asunto">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">creador</label>
-                                <input class="form-input" id="edit-creador" type="text" placeholder="Aplicación que creó el PDF">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">palabras_clave</label>
-                                <input class="form-input" id="edit-palabras" type="text" placeholder="Palabras clave separadas por coma">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">productor</label>
-                                <input class="form-input" id="edit-productor" type="text" placeholder="Librería que generó el PDF">
-                            </div>
-                        </div>
-                        <button class="btn btn-green" id="btnGuardar" style="margin-top:4px">
-                            💾 Guardar y descargar PDF
-                        </button>
-                    </div>
-                </div>
             </div>
 
         </div>
@@ -407,8 +363,14 @@ dropZone.addEventListener('drop', e => {
 });
 inputArch.addEventListener('change', () => { if (inputArch.files[0]) manejarArchivo(inputArch.files[0]); });
 
+const EXTENSIONES_VALIDAS = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.webp'];
+
 function manejarArchivo(file) {
-    if (!file.name.toLowerCase().endsWith('.pdf')) { mostrarError('Solo se admiten archivos .pdf'); return; }
+    const ext = '.' + file.name.toLowerCase().split('.').pop();
+    if (!EXTENSIONES_VALIDAS.includes(ext)) {
+        mostrarError('Formato no soportado. Use: ' + EXTENSIONES_VALIDAS.join(', '));
+        return;
+    }
     ocultarError();
     subirArchivo(file);
 }
@@ -468,7 +430,7 @@ document.getElementById('btnExtraer').addEventListener('click', async () => {
     document.getElementById('panel-resultado').style.display = 'none';
 
     try {
-        const r = await fetch(`${API}/convert/metadata/extract`, {
+        const r = await fetch(`${API}/convert/img-metadata/extract`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ file_id: archivoId })
@@ -496,6 +458,32 @@ function renderizarResultado(d) {
     document.getElementById('resMeta').textContent =
         `${formatBytes(d.tamano_bytes)}  ·  SHA-256: ${d.hashes?.sha256 || '—'}`;
 
+    // Badge Tika
+    const tikaBadge = document.getElementById('tikaBadge');
+    if (d.tika_disponible) {
+        tikaBadge.textContent = 'Tika disponible';
+        tikaBadge.className = 'tika-badge tika-ok';
+    } else {
+        tikaBadge.textContent = 'Tika no disponible — metadatos IPTC/XMP omitidos';
+        tikaBadge.className = 'tika-badge tika-off';
+    }
+    tikaBadge.style.display = 'inline-block';
+
+    // Tira de colores
+    const colores = d.colores;
+    const strip = document.getElementById('colorStrip');
+    strip.innerHTML = '';
+    if (colores && colores.dominantes && colores.dominantes.length > 0) {
+        colores.dominantes.forEach(c => {
+            const sw = document.createElement('div');
+            sw.className = 'color-swatch';
+            sw.style.backgroundColor = c.hex;
+            sw.setAttribute('data-hex', c.hex + ' ' + Math.round(c.porcentaje) + '%');
+            strip.appendChild(sw);
+        });
+        document.getElementById('colorStripWrap').style.display = 'block';
+    }
+
     const lineas = [];
 
     const sep = titulo => {
@@ -503,96 +491,116 @@ function renderizarResultado(d) {
         lineas.push('── ' + titulo + ' ' + '─'.repeat(Math.max(0, 54 - titulo.length)));
     };
     const f = (clave, val) => {
-        const k = (clave + ':').padEnd(22);
-        lineas.push(`${k}${val || '—'}`);
+        const k = (clave + ':').padEnd(26);
+        lineas.push(`${k}${val != null ? val : '—'}`);
+    };
+    const fsi = (clave, val) => {
+        if (val != null && val !== '' && val !== '—') f(clave, val);
     };
 
     sep('ARCHIVO');
-    f('Nombre',         d.nombre_archivo);
-    f('Tamaño',         formatBytes(d.tamano_bytes));
+    f('Nombre',          d.nombre_archivo);
+    f('Tamaño',          formatBytes(d.tamano_bytes));
 
     sep('HASHES');
-    f('SHA-256',        d.hashes?.sha256 || '—');
-    f('MD5',            d.hashes?.md5    || '—');
+    f('SHA-256',         d.hashes?.sha256 || '—');
+    f('MD5',             d.hashes?.md5    || '—');
 
-    sep('METADATOS BÁSICOS');
-    f('Título',         d.basicos.titulo);
-    f('Autor',          d.basicos.autor);
-    f('Tema',           d.basicos.tema);
-    f('Palabras clave', d.basicos.palabras_clave);
-    f('Creador',        d.basicos.creador);
-    f('Productor',      d.basicos.productor);
-    if (d.basicos.trapped) f('Trapped', d.basicos.trapped);
+    // Técnico
+    const t = d.tecnico || {};
+    sep('PROPIEDADES TÉCNICAS');
+    fsi('Formato',       t.formato);
+    fsi('Modo color',    t.modo);
+    fsi('Dimensiones',   t.dimensiones);
+    fsi('DPI',           t.dpi);
+    fsi('Bits por canal',t.bits_por_canal);
+    fsi('Frames',        t.frames != null ? String(t.frames) : null);
+    fsi('Transparencia', t.transparencia ? 'Sí' : (t.transparencia === false ? 'No' : null));
+    fsi('Perfil ICC',    t.perfil_icc);
+    fsi('MIME',          t.mime);
 
-    sep('FECHAS Y VERSIÓN');
-    f('Creación',       d.fechas.creacion);
-    f('Modificación',   d.fechas.modificacion);
-    f('Formato PDF',    d.fechas.formato_pdf);
-
-    sep('IDENTIDAD DEL DOCUMENTO');
-    f('Versión PDF',    d.identidad.version_pdf);
-    f('ID original',    d.identidad.id_original);
-    f('ID actual',      d.identidad.id_actual);
-    f('Fue modificado', d.identidad.fue_modificado === true
-        ? 'SÍ (IDs difieren — modificado externamente)'
-        : d.identidad.fue_modificado === false ? 'No' : 'Desconocido');
-    f('Encriptado',     d.identidad.encriptado ? 'Sí' : 'No');
-    if (d.identidad.cifrado_detalle) f('Cifrado detalle', d.identidad.cifrado_detalle);
-    f('Linealizado',    d.identidad.linealizado ? 'Sí (optimizado para web)' : 'No');
-    f('Entradas xref',  String(d.identidad.num_revisiones));
-
-    sep('ESTRUCTURA INTERNA');
-    f('Páginas',        String(d.estructura.num_paginas));
-    f('Tamaño página',  d.estructura.tamano_pagina);
-    f('Fuentes',        String(d.estructura.num_fuentes));
-    if (d.estructura.fuentes && d.estructura.fuentes.length > 0) {
-        d.estructura.fuentes.forEach(fu => {
-            const embed = fu.incrustada ? '[incrustada]' : '[no incrustada]';
-            lineas.push(`${''.padEnd(22)}${fu.nombre} ${fu.tipo} ${embed}`);
+    // EXIF cámara
+    const ec = d.exif_camara || {};
+    if (Object.keys(ec).length > 0) {
+        sep('EXIF · CÁMARA');
+        fsi('Fabricante',    ec.Make);
+        fsi('Modelo',        ec.Model);
+        fsi('Software',      ec.Software);
+        fsi('Orientación',   ec.Orientation);
+        fsi('Fecha original',ec.DateTimeOriginal);
+        fsi('Fecha foto',    ec.DateTime);
+        Object.keys(ec).forEach(k => {
+            if (!['Make','Model','Software','Orientation','DateTimeOriginal','DateTime'].includes(k))
+                fsi(k, ec[k]);
         });
     }
-    f('Imágenes',       String(d.estructura.num_imagenes));
-    f('Anotaciones',    String(d.estructura.num_anotaciones));
-    f('Marcadores',     String(d.estructura.num_marcadores));
-    f('Formularios',    String(d.estructura.num_formularios));
-    f('Adjuntos',       String(d.estructura.num_adjuntos));
-    f('JavaScript',     d.estructura.tiene_javascript ? 'SÍ (⚠ presente)' : 'No');
-    f('Firmas digitales', String(d.estructura.num_firmas));
-    f('Capas OCG',      d.estructura.capas && d.estructura.capas.length > 0
-        ? d.estructura.capas.join(', ') : 'Sin capas');
 
-    sep('PERMISOS');
-    if (d.permisos.sin_restricciones) {
-        lineas.push('Sin restricciones (documento no encriptado)');
-    } else {
-        const ps = v => v ? 'Permitido' : 'RESTRINGIDO';
-        f('Imprimir',           ps(d.permisos.imprimir));
-        f('Imprimir alta cal.', ps(d.permisos.imprimir_alta_cal));
-        f('Modificar',          ps(d.permisos.modificar));
-        f('Copiar',             ps(d.permisos.copiar));
-        f('Anotar',             ps(d.permisos.anotar));
-        f('Rellenar formulario', ps(d.permisos.rellenar_formulario));
-        f('Accesibilidad',      ps(d.permisos.accesibilidad));
-        f('Ensamblar',          ps(d.permisos.ensamblar));
-        f('Valor raw (bitmask)', String(d.permisos.valor_raw));
+    // EXIF captura
+    const cap = d.exif_captura || {};
+    if (Object.keys(cap).length > 0) {
+        sep('EXIF · CONFIGURACIÓN DE CAPTURA');
+        const orden = ['ExposureTime','FNumber','ISOSpeedRatings','Flash','FocalLength',
+                       'ExposureProgram','ExposureMode','MeteringMode','WhiteBalance',
+                       'SceneCaptureType','DigitalZoomRatio','SubjectDistance'];
+        orden.forEach(k => { if (cap[k] != null) fsi(k, String(cap[k])); });
+        Object.keys(cap).forEach(k => {
+            if (!orden.includes(k)) fsi(k, String(cap[k]));
+        });
     }
 
-    if (d.xmp_xml && d.xmp_xml.trim()) {
-        sep('XMP (METADATOS XML)');
-        lineas.push(d.xmp_xml.trim());
+    // GPS
+    const gps = d.gps || {};
+    if (Object.keys(gps).length > 0) {
+        sep('GPS');
+        fsi('Latitud',       gps.latitud   != null ? String(gps.latitud)   : null);
+        fsi('Longitud',      gps.longitud  != null ? String(gps.longitud)  : null);
+        fsi('Altitud (m)',   gps.altitud   != null ? String(gps.altitud)   : null);
+        fsi('Velocidad',     gps.velocidad != null ? String(gps.velocidad) + ' km/h' : null);
+        fsi('Dirección',     gps.direccion != null ? String(gps.direccion) + '°'     : null);
+        fsi('OpenStreetMap', gps.link_osm);
+        Object.keys(gps).forEach(k => {
+            if (!['latitud','longitud','altitud','velocidad','direccion','link_osm'].includes(k))
+                fsi(k, String(gps[k]));
+        });
+    }
+
+    // Contenido IPTC/XMP
+    const cont = d.contenido || {};
+    if (Object.keys(cont).length > 0) {
+        sep('CONTENIDO · IPTC / XMP');
+        Object.keys(cont).forEach(k => fsi(k, String(cont[k])));
+    }
+
+    // Historial edición
+    const hist = d.historial || {};
+    if (Object.keys(hist).length > 0) {
+        sep('HISTORIAL DE EDICIÓN (XMP)');
+        if (hist.fue_editado === true) {
+            lineas.push('⚠  SÍ fue editado externamente (InstanceID ≠ DocumentID)');
+        } else if (hist.fue_editado === false) {
+            lineas.push('   No se detectaron ediciones externas');
+        }
+        Object.keys(hist).forEach(k => {
+            if (k !== 'fue_editado') fsi(k, String(hist[k]));
+        });
+    }
+
+    // Colores
+    if (colores) {
+        sep('ANÁLISIS DE COLORES');
+        fsi('Brillo promedio',  colores.brillo   != null ? colores.brillo.toFixed(1) + ' / 255'   : null);
+        fsi('Color promedio',   colores.promedio);
+        if (colores.dominantes && colores.dominantes.length > 0) {
+            lineas.push('');
+            lineas.push('Colores dominantes:');
+            colores.dominantes.forEach((c, i) => {
+                lineas.push(`  ${String(i+1).padStart(2)}.  ${c.hex}   ${c.rgb}   ${Math.round(c.porcentaje)}%`);
+            });
+        }
     }
 
     lineas.push('');
     document.getElementById('metaTexto').value = lineas.join('\n');
-
-    // Prellenar formulario de edición
-    document.getElementById('edit-titulo').value    = d.basicos.titulo         || '';
-    document.getElementById('edit-autor').value     = d.basicos.autor          || '';
-    document.getElementById('edit-tema').value      = d.basicos.tema           || '';
-    document.getElementById('edit-creador').value   = d.basicos.creador        || '';
-    document.getElementById('edit-palabras').value  = d.basicos.palabras_clave || '';
-    document.getElementById('edit-productor').value = d.basicos.productor      || '';
-    document.getElementById('btnToggleEdit').style.display = 'inline-flex';
 }
 
 // ─── Copiar todo ──────────────────────────────────────────────────────────────
@@ -606,84 +614,6 @@ document.getElementById('btnCopiarTodo').addEventListener('click', function() {
     });
 });
 
-// ─── Edición ──────────────────────────────────────────────────────────────────
-document.getElementById('btnToggleEdit').addEventListener('click', () => {
-    const sec = document.getElementById('editSection');
-    const visible = sec.classList.toggle('visible');
-    document.getElementById('btnToggleEdit').textContent = visible ? '✏️ Cerrar edición' : '✏️ Editar metadatos';
-    if (visible) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-
-document.getElementById('btnGuardar').addEventListener('click', async () => {
-    if (!archivoId) return;
-    ocultarError();
-    const btn = document.getElementById('btnGuardar');
-    btn.disabled = true;
-    btn.textContent = '⏳ Procesando…';
-
-    const body = {
-        file_id:        archivoId,
-        titulo:         document.getElementById('edit-titulo').value.trim(),
-        autor:          document.getElementById('edit-autor').value.trim(),
-        tema:           document.getElementById('edit-tema').value.trim(),
-        palabras_clave: document.getElementById('edit-palabras').value.trim(),
-        creador:        document.getElementById('edit-creador').value.trim(),
-        productor:      document.getElementById('edit-productor').value.trim(),
-    };
-
-    try {
-        const r = await fetch(`${API}/convert/metadata/edit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const resp = await r.json();
-        if (resp.success) {
-            esperarJob(resp.data.job_id);
-        } else {
-            mostrarError(resp.error?.message || 'Error al guardar');
-            btn.disabled = false;
-            btn.textContent = '💾 Guardar y descargar PDF';
-        }
-    } catch(e) {
-        mostrarError('Error de conexión');
-        btn.disabled = false;
-        btn.textContent = '💾 Guardar y descargar PDF';
-    }
-});
-
-function esperarJob(jobId) {
-    const progDiv = document.getElementById('jobProgress');
-    const fill    = document.getElementById('jobFill');
-    const msgEl   = document.getElementById('jobMsg');
-    progDiv.style.display = 'block';
-
-    const iv = setInterval(async () => {
-        try {
-            const r   = await fetch(`${API}/jobs/${jobId}`);
-            const d   = await r.json();
-            const job = d.data;
-            fill.style.width  = (job.progreso || 0) + '%';
-            msgEl.textContent = job.mensaje || 'Procesando…';
-            if (job.estado === 'completado') {
-                clearInterval(iv);
-                progDiv.style.display = 'none';
-                window.location.href = `${API}/download/${jobId}`;
-                mostrarOk('PDF descargado con metadatos actualizados.');
-                btn.disabled = false;
-                btn.textContent = '💾 Guardar y descargar PDF';
-            } else if (job.estado === 'error') {
-                clearInterval(iv);
-                progDiv.style.display = 'none';
-                mostrarError('Error: ' + job.mensaje);
-                const btn = document.getElementById('btnGuardar');
-                btn.disabled = false;
-                btn.textContent = '💾 Guardar y descargar PDF';
-            }
-        } catch(e) { /* reintentará */ }
-    }, 1200);
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatBytes(b) {
     if (!b) return '—';
@@ -694,14 +624,8 @@ function formatBytes(b) {
 function mostrarError(msg) {
     const el = document.getElementById('alertaError');
     el.textContent = msg; el.style.display = 'block';
-    document.getElementById('alertaOk').style.display = 'none';
 }
 function ocultarError() { document.getElementById('alertaError').style.display = 'none'; }
-function mostrarOk(msg) {
-    const el = document.getElementById('alertaOk');
-    el.textContent = msg; el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 4000);
-}
 </script>
 </body>
 </html>

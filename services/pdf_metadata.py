@@ -5,6 +5,7 @@ Extrae huella digital completa: metadatos estandar, IDs de documento,
 permisos, estructura interna, fuentes, JavaScript, firmas digitales, XMP.
 """
 
+import hashlib
 import logging
 import re
 from datetime import datetime, timezone
@@ -154,6 +155,20 @@ def _detectar_firmas(doc: fitz.Document) -> int:
         return sum(1 for f in campos if f.get('field_type') == 4)  # 4 = firma
     except Exception:
         return 0
+
+
+def _calcular_hashes(ruta: Path) -> dict:
+    """Calcula MD5 y SHA-256 del archivo en disco."""
+    md5    = hashlib.md5()
+    sha256 = hashlib.sha256()
+    with open(ruta, 'rb') as f:
+        for bloque in iter(lambda: f.read(65536), b''):
+            md5.update(bloque)
+            sha256.update(bloque)
+    return {
+        'sha256': sha256.hexdigest().upper(),
+        'md5':    md5.hexdigest().upper(),
+    }
 
 
 def _detectar_capas(doc: fitz.Document) -> list:
@@ -345,6 +360,9 @@ def extraer_metadatos(archivo_id: str) -> dict:
         except Exception:
             xmp_xml = ''
 
+        # ── Hashes del archivo ────────────────────────────────────────────────
+        hashes = _calcular_hashes(ruta_pdf)
+
         return {
             'basicos':    basicos,
             'fechas':     fechas,
@@ -352,6 +370,7 @@ def extraer_metadatos(archivo_id: str) -> dict:
             'estructura': estructura,
             'permisos':   permisos,
             'xmp_xml':    xmp_xml,
+            'hashes':     hashes,
             'nombre_archivo': archivo['nombre_original'],
             'tamano_bytes':   archivo['tamano_bytes'],
         }

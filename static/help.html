@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayuda — PDFexport</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:      #0D1117;
+            --sidebar: #161B22;
+            --card:    #1C2128;
+            --border:  #30363D;
+            --blue:    #58A6FF;
+            --green:   #3FB950;
+            --red:     #E63946;
+            --orange:  #F4A261;
+            --purple:  #A371F7;
+            --yellow:  #E3B341;
+            --text:    #E6EDF3;
+            --muted:   #8B949E;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--sidebar);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .2s; }
+        .topbar a:hover { color: var(--text); }
+        .topbar .sep { color: var(--border); }
+        .topbar .current { color: var(--blue); font-weight: 500; }
+        .topbar-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 5px 12px;
+            width: 260px;
+            transition: border-color .15s;
+        }
+        .topbar-search:focus-within { border-color: var(--blue); }
+        .topbar-search input {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+        }
+        .topbar-search input::placeholder { color: var(--muted); }
+
+        /* ── Layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: calc(100vh - 52px);
+        }
+
+        /* ── TOC Sidebar ── */
+        .toc-sidebar {
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: sticky;
+            top: 52px;
+            height: calc(100vh - 52px);
+            overflow-y: auto;
+        }
+        .toc-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            padding: 0 16px 10px;
+        }
+        .toc-list { list-style: none; }
+        .toc-item a {
+            display: block;
+            padding: 5px 16px;
+            font-size: 13px;
+            color: var(--muted);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: all .15s;
+        }
+        .toc-item a:hover { color: var(--text); background: rgba(255,255,255,.03); }
+        .toc-item.active a { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,.06); }
+        .toc-item.h3 a { padding-left: 28px; font-size: 12px; }
+
+        /* ── Contenido ── */
+        .content {
+            padding: 40px 56px;
+            max-width: 860px;
+        }
+
+        /* Markdown renderizado */
+        .md-body h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .md-body h1 + p { color: var(--muted); margin-top: 0; margin-bottom: 24px; }
+        .md-body h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .md-body h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 28px;
+            margin-bottom: 10px;
+            color: var(--blue);
+        }
+        .md-body p {
+            font-size: 14px;
+            line-height: 1.75;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .md-body ul, .md-body ol {
+            padding-left: 20px;
+            margin-bottom: 12px;
+        }
+        .md-body li {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 4px;
+        }
+        .md-body strong { color: var(--text); font-weight: 600; }
+        .md-body em { color: var(--muted); font-style: italic; }
+        .md-body code {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            background: rgba(88,166,255,.1);
+            color: var(--blue);
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+        .md-body pre {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        .md-body pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+            font-size: 12px;
+        }
+        .md-body hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 28px 0;
+        }
+        .md-body blockquote {
+            border-left: 3px solid var(--blue);
+            padding: 8px 16px;
+            background: rgba(88,166,255,.05);
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .md-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .md-body th {
+            background: var(--card);
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text);
+        }
+        .md-body td {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .md-body tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+        /* Highlight de búsqueda */
+        mark {
+            background: rgba(227,179,65,.35);
+            color: var(--text);
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 80px 0;
+            color: var(--muted);
+        }
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Resultado de búsqueda vacío */
+        .no-results {
+            display: none;
+            padding: 40px 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .toc-sidebar { display: none; }
+            .content { padding: 24px 16px; }
+            .topbar-search { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+    <div class="topbar-left">
+        <a href="/">← Inicio</a>
+        <span class="sep">›</span>
+        <span class="current">Ayuda</span>
+    </div>
+    <div class="topbar-search">
+        <span style="color:var(--muted);font-size:14px">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar en la ayuda…" oninput="buscarEnAyuda(this.value)">
+    </div>
+</div>
+
+<div class="layout">
+
+    <!-- TOC -->
+    <nav class="toc-sidebar">
+        <div class="toc-title">Contenido</div>
+        <ul class="toc-list" id="tocList"></ul>
+    </nav>
+
+    <!-- Contenido -->
+    <main class="content">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <span>Cargando ayuda…</span>
+        </div>
+        <div class="md-body" id="mdBody" style="display:none"></div>
+        <div class="no-results" id="noResults">Sin resultados para "<span id="noResultsTerm"></span>"</div>
+    </main>
+
+</div>
+
+<script src="/config.js"></script>
+<script>
+let API = '';
+let contenidoOriginal = '';  // HTML renderizado original sin filtro
+
+window.addEventListener('load', () => {
+    API = (window.AppConfig && window.AppConfig.API_BASE_URL)
+        ? window.AppConfig.API_BASE_URL
+        : `${location.protocol}//${location.hostname}:${location.port || (location.protocol === 'https:' ? '443' : '80')}/api/v1`;
+    cargarAyuda();
+});
+
+// ─── Carga ────────────────────────────────────────────────────────────────────
+async function cargarAyuda() {
+    try {
+        const r    = await fetch(`${API}/help`);
+        const resp = await r.json();
+        const md   = resp.data?.contenido || '';
+        const html = renderizarMarkdown(md);
+        document.getElementById('loading').style.display  = 'none';
+        document.getElementById('mdBody').style.display   = 'block';
+        document.getElementById('mdBody').innerHTML = html;
+        contenidoOriginal = html;
+        construirTOC();
+        observarSecciones();
+    } catch(e) {
+        document.getElementById('loading').innerHTML =
+            `<span style="color:var(--red)">Error al cargar la ayuda: ${e.message}</span>`;
+    }
+}
+
+// ─── Markdown renderer (vanilla JS) ──────────────────────────────────────────
+function renderizarMarkdown(md) {
+    const lineas = md.split('\n');
+    let html = '';
+    let enLista = false;
+    let enTabla = false;
+    let enBloque = false;
+    let bufBloque = [];
+
+    const cerrarLista  = () => { if (enLista)  { html += '</ul>\n'; enLista = false; } };
+    const cerrarTabla  = () => { if (enTabla)  { html += '</tbody></table>\n'; enTabla = false; } };
+    const cerrarBloque = () => {
+        if (enBloque) {
+            html += `<pre><code>${esc(bufBloque.join('\n'))}</code></pre>\n`;
+            bufBloque = []; enBloque = false;
+        }
+    };
+
+    for (let i = 0; i < lineas.length; i++) {
+        const l = lineas[i];
+
+        // Bloque de código
+        if (l.startsWith('```')) {
+            if (!enBloque) { cerrarLista(); cerrarTabla(); enBloque = true; }
+            else cerrarBloque();
+            continue;
+        }
+        if (enBloque) { bufBloque.push(l); continue; }
+
+        // HR
+        if (/^---+$/.test(l.trim())) {
+            cerrarLista(); cerrarTabla();
+            html += '<hr>\n'; continue;
+        }
+
+        // Encabezados
+        const h1 = l.match(/^# (.+)/);
+        const h2 = l.match(/^## (.+)/);
+        const h3 = l.match(/^### (.+)/);
+        if (h1) { cerrarLista(); cerrarTabla(); html += `<h1 id="${slug(h1[1])}">${inline(h1[1])}</h1>\n`; continue; }
+        if (h2) { cerrarLista(); cerrarTabla(); html += `<h2 id="${slug(h2[1])}">${inline(h2[1])}</h2>\n`; continue; }
+        if (h3) { cerrarLista(); cerrarTabla(); html += `<h3 id="${slug(h3[1])}">${inline(h3[1])}</h3>\n`; continue; }
+
+        // Tabla
+        if (l.startsWith('|')) {
+            cerrarLista();
+            if (!enTabla) {
+                html += '<table>\n';
+                // Primera fila = cabecera
+                const celdas = l.split('|').filter((_, idx, a) => idx > 0 && idx < a.length - 1);
+                html += '<thead><tr>' + celdas.map(c => `<th>${inline(c.trim())}</th>`).join('') + '</tr></thead>\n<tbody>\n';
+                enTabla = true;
+                i++; // saltar fila de separadores
+                continue;
+            } else {
+                const celdas = l.split('|').filter((_, idx, a) => idx > 0 && idx < a.length - 1);
+                html += '<tr>' + celdas.map(c => `<td>${inline(c.trim())}</td>`).join('') + '</tr>\n';
+                continue;
+            }
+        } else { cerrarTabla(); }
+
+        // Blockquote
+        if (l.startsWith('> ')) {
+            cerrarLista();
+            html += `<blockquote>${inline(l.slice(2))}</blockquote>\n`;
+            continue;
+        }
+
+        // Lista
+        if (/^[-*] /.test(l)) {
+            if (!enLista) { html += '<ul>\n'; enLista = true; }
+            html += `<li>${inline(l.slice(2))}</li>\n`;
+            continue;
+        } else { cerrarLista(); }
+
+        // Línea vacía
+        if (l.trim() === '') { html += '\n'; continue; }
+
+        // Párrafo
+        html += `<p>${inline(l)}</p>\n`;
+    }
+
+    cerrarLista(); cerrarTabla(); cerrarBloque();
+    return html;
+}
+
+function inline(t) {
+    // Escapar HTML primero
+    t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Bold+italic
+    t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Inline code
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Links
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:var(--blue)">$1</a>');
+    return t;
+}
+
+function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function slug(s) {
+    return s.toLowerCase().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-');
+}
+
+// ─── TOC ──────────────────────────────────────────────────────────────────────
+function construirTOC() {
+    const body = document.getElementById('mdBody');
+    const hdrs = body.querySelectorAll('h2, h3');
+    const list = document.getElementById('tocList');
+    list.innerHTML = '';
+    hdrs.forEach(h => {
+        const li  = document.createElement('li');
+        li.className = 'toc-item' + (h.tagName === 'H3' ? ' h3' : '');
+        li.dataset.id = h.id;
+        const a   = document.createElement('a');
+        a.href    = '#' + h.id;
+        a.textContent = h.textContent;
+        a.addEventListener('click', e => {
+            e.preventDefault();
+            document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        li.appendChild(a);
+        list.appendChild(li);
+    });
+}
+
+function observarSecciones() {
+    const hdrs = document.querySelectorAll('#mdBody h2, #mdBody h3');
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                document.querySelectorAll('.toc-item').forEach(li => li.classList.remove('active'));
+                const li = document.querySelector(`.toc-item[data-id="${e.target.id}"]`);
+                if (li) li.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-10% 0px -80% 0px' });
+    hdrs.forEach(h => obs.observe(h));
+}
+
+// ─── Búsqueda ─────────────────────────────────────────────────────────────────
+let buscarTimer = null;
+function buscarEnAyuda(termino) {
+    clearTimeout(buscarTimer);
+    buscarTimer = setTimeout(() => aplicarBusqueda(termino.trim()), 180);
+}
+
+function aplicarBusqueda(termino) {
+    const body     = document.getElementById('mdBody');
+    const noResult = document.getElementById('noResults');
+
+    if (!termino) {
+        body.innerHTML = contenidoOriginal;
+        body.style.display   = 'block';
+        noResult.style.display = 'none';
+        construirTOC();
+        return;
+    }
+
+    // Crear versión con highlights
+    const re   = new RegExp(`(${escaparRE(termino)})`, 'gi');
+    const html = contenidoOriginal.replace(re, '<mark>$1</mark>');
+
+    // Contar coincidencias reales (solo en texto, no en atributos/tags)
+    const tmp  = document.createElement('div');
+    tmp.innerHTML = html;
+    const texto  = tmp.textContent;
+    const cuenta = (texto.match(re) || []).length;
+
+    if (cuenta === 0) {
+        body.style.display     = 'none';
+        noResult.style.display = 'block';
+        document.getElementById('noResultsTerm').textContent = termino;
+    } else {
+        body.innerHTML       = html;
+        body.style.display   = 'block';
+        noResult.style.display = 'none';
+        // Scroll al primer match
+        const primer = body.querySelector('mark');
+        if (primer) primer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function escaparRE(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+</script>
+</body>
+</html>

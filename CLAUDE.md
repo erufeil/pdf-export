@@ -52,4 +52,4 @@ como fuente de verdad.
 4. Actualizar y detallar CLAUDE-PLAN.md para que quede bien completo
 5. Actualizar README.md para programadores (deploy server y local)
 6. Actualizar NOTAS-USUARIO.md para Help de Usuario final que no sabe de programacion.
-7. Sumale 0.01 a la version en "VERSION = os.getenv('APP_VERSION', '1.1.37')"
+7. Sumale 0.01 a la version en "VERSION = os.getenv('APP_VERSION', '1.1.XX')"
