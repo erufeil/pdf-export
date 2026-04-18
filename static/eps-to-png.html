@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPS a PNG — PDF Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --sidebar:  #161B22;
+      --card:     #1C2128;
+      --border:   #30363D;
+      --red:      #E63946;
+      --orange:   #F4A261;
+      --blue:     #58A6FF;
+      --green:    #3FB950;
+      --purple:   #A371F7;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --accent:   #F4A261;
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; font-size: 14px; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      transition: width 0.2s ease; overflow: hidden;
+    }
+    #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 14px;
+      border-bottom: 1px solid var(--border); min-height: 56px; white-space: nowrap;
+    }
+    .sidebar-logo {
+      width: 28px; height: 28px; background: var(--red); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
+      color: #fff; flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    #sidebar.collapsed .sidebar-title { display: none; }
+    .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 10px 16px 4px; white-space: nowrap;
+    }
+    #sidebar.collapsed .nav-section-label { opacity: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      color: var(--muted); text-decoration: none; font-size: 12.5px;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(244,162,97,0.12); color: var(--orange); }
+    .nav-badge {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--card);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
+    }
+    .nav-item.active .nav-badge { background: rgba(244,162,97,0.15); border-color: var(--orange); color: var(--orange); }
+    #sidebar.collapsed .nav-item span:last-child { display: none; }
+    .sidebar-toggle {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      color: var(--muted); font-size: 12px; transition: color 0.15s; white-space: nowrap;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+    .toggle-icon { font-size: 16px; flex-shrink: 0; }
+    #sidebar.collapsed .toggle-label { display: none; }
+
+    /* ── Main ── */
+    #main {
+      margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+      min-height: 100vh; transition: margin-left 0.2s ease;
+    }
+    #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; background: var(--sidebar); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 8px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 500; }
+    .topbar-badge {
+      margin-left: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
+
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; max-width: 900px; width: 100%; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: 13px; }
+
+    /* ── Two-col layout ── */
+    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
+
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--orange); background: rgba(244,162,97,0.04); }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .dropzone-text strong { color: var(--orange); }
+    .hidden { display: none; }
+
+    /* ── Upload progress ── */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--orange); border-radius: 2px; transition: width 0.3s; }
+    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* ── Server files ── */
+    .server-toggle {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .server-toggle:hover { border-color: var(--orange); color: var(--text); }
+    .server-files-list { display: none; margin-top: 8px; }
+    .server-files-list.open { display: block; }
+    .server-file-btn {
+      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
+      color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .server-file-btn:hover { border-color: var(--orange); background: rgba(244,162,97,0.05); }
+    .server-file-btn .sf-name { font-weight: 500; }
+    .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
+
+    /* ── File info ── */
+    .file-info-card { display: none; }
+    .file-info-card.visible { display: flex; align-items: center; gap: 12px; }
+    .file-icon {
+      width: 40px; height: 40px; background: rgba(244,162,97,0.12); border: 1px solid rgba(244,162,97,0.25);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--orange); flex-shrink: 0;
+    }
+    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .file-meta p { font-size: 11.5px; color: var(--muted); }
+
+    /* ── Processing panel ── */
+    .processing-panel { display: none; }
+    .processing-panel.visible { display: block; }
+    .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--orange); border-radius: 3px; transition: width 0.4s; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+    /* ── Status message ── */
+    .status-message { display: none; padding: 10px 14px; border-radius: 7px; font-size: 12.5px; margin-top: 12px; }
+    .status-message.visible { display: block; }
+    .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
+
+    /* ── Right col ── */
+    .options-col { display: none; position: sticky; top: 80px; }
+    .options-col.visible { display: block; }
+
+    /* ── Scale selector ── */
+    .scale-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+    .scale-btn {
+      padding: 10px 8px; border: 1px solid var(--border); border-radius: 8px;
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 12px;
+      font-family: 'IBM Plex Sans', sans-serif; transition: all 0.15s; text-align: center;
+    }
+    .scale-btn:hover { border-color: var(--orange); color: var(--text); }
+    .scale-btn.active { background: rgba(244,162,97,0.12); border-color: var(--orange); color: var(--orange); }
+    .scale-btn .scale-val { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; display: block; }
+    .scale-btn .scale-desc { font-size: 10px; color: inherit; opacity: 0.8; margin-top: 2px; display: block; }
+
+    /* ── Action button ── */
+    .btn-action {
+      width: 100%; padding: 12px; background: var(--orange); color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; margin-top: 4px;
+    }
+    .btn-action:hover:not(:disabled) { opacity: 0.85; }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+    /* ── Info strip ── */
+    .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(244,162,97,0.05); border: 1px solid rgba(244,162,97,0.15); border-radius: 7px; }
+    .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+    .info-strip p + p { margin-top: 4px; }
+
+    /* ── Footer ── */
+    footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">PDF</div>
+    <span class="sidebar-title">PDF Export</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Tengo un PDF…</div>
+    <a class="nav-item" href="/static/pdf-to-txt.html"><span class="nav-badge">TXT</span><span>PDF a Texto</span></a>
+    <a class="nav-item" href="/static/pdf-to-docx.html"><span class="nav-badge">DOC</span><span>PDF a DOCX</span></a>
+    <a class="nav-item" href="/static/pdf-to-png.html"><span class="nav-badge">PNG</span><span>PDF a PNG</span></a>
+    <a class="nav-item" href="/static/pdf-to-jpg.html"><span class="nav-badge">JPG</span><span>PDF a JPG</span></a>
+    <a class="nav-item" href="/static/pdf-compress.html"><span class="nav-badge">ZIP</span><span>Comprimir PDF</span></a>
+    <a class="nav-item" href="/static/pdf-extract-images.html"><span class="nav-badge">IMG</span><span>Extraer Imágenes</span></a>
+    <a class="nav-item" href="/static/pdf-split.html"><span class="nav-badge">CUT</span><span>Cortar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-rotate.html"><span class="nav-badge">ROT</span><span>Rotar PDF</span></a>
+    <a class="nav-item" href="/static/pdf-merge.html"><span class="nav-badge">MRG</span><span>Unir PDFs</span></a>
+    <a class="nav-item" href="/static/pdf-extract-pages.html"><span class="nav-badge">EXT</span><span>Extraer Páginas</span></a>
+    <a class="nav-item" href="/static/pdf-reorder.html"><span class="nav-badge">ORD</span><span>Reordenar</span></a>
+    <a class="nav-item" href="/static/pdf-to-csv.html"><span class="nav-badge">CSV</span><span>PDF a CSV</span></a>
+    <a class="nav-item" href="/static/pdf-scanned-to-csv.html"><span class="nav-badge">OCR</span><span>Escaneado a CSV</span></a>
+    <div class="nav-section-label">Quiero un PDF…</div>
+    <a class="nav-item" href="/static/html-to-pdf.html"><span class="nav-badge">HTM</span><span>HTML a PDF</span></a>
+    <a class="nav-item" href="/static/img-to-1pdf.html"><span class="nav-badge">IMG</span><span>IMG a PDF</span></a>
+    <div class="nav-section-label">Utilidades</div>
+    <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
+    <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
+    <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+    <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item active" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+  </div>
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
+    <span class="toggle-icon">⇤</span>
+    <span class="toggle-label">Contraer</span>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span>Utilidades</span>
+      <span class="sep">›</span>
+      <span class="current">EPS a PNG</span>
+    </div>
+    <span class="topbar-badge">EPS</span>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>EPS a PNG</h1>
+      <p>Rasteriza archivos EPS (Encapsulated PostScript) a PNG con escala configurable. Requiere Ghostscript en el servidor.</p>
+    </div>
+
+    <div class="layout">
+      <!-- ── Columna izquierda ── -->
+      <div>
+        <!-- Drop zone -->
+        <div class="card">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">🖼️</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un archivo EPS aquí<br>
+              <small>Solo archivos .eps</small>
+            </div>
+            <input type="file" id="file-input" accept=".eps,application/postscript" class="hidden">
+          </div>
+
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
+
+          <button type="button" class="server-toggle" onclick="toggleServerFiles()">
+            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
+          </button>
+          <div class="server-files-list" id="server-files">
+            <div id="server-files-contenido"></div>
+          </div>
+        </div>
+
+        <!-- File info -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-icon">EPS</div>
+          <div class="file-meta">
+            <h3 id="nombre-archivo">—</h3>
+            <p id="info-archivo">—</p>
+          </div>
+        </div>
+
+        <!-- Processing -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Convirtiendo</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-message" id="mensaje-estado"></div>
+
+        <div class="info-strip">
+          <p>La conversión usa <strong>Pillow + Ghostscript</strong> — rasterizado fiel al PostScript, incluyendo curvas y tipografías vectoriales.</p>
+          <p>El resultado se descarga directamente como <strong>.png</strong> (sin ZIP).</p>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Escala de salida</div>
+
+          <div class="scale-grid">
+            <button type="button" class="scale-btn" data-escala="1" onclick="setEscala(this, 1)">
+              <span class="scale-val">1×</span>
+              <span class="scale-desc">Original</span>
+            </button>
+            <button type="button" class="scale-btn active" data-escala="2" onclick="setEscala(this, 2)">
+              <span class="scale-val">2×</span>
+              <span class="scale-desc">Recomendado</span>
+            </button>
+            <button type="button" class="scale-btn" data-escala="3" onclick="setEscala(this, 3)">
+              <span class="scale-val">3×</span>
+              <span class="scale-desc">Alta calidad</span>
+            </button>
+            <button type="button" class="scale-btn" data-escala="4" onclick="setEscala(this, 4)">
+              <span class="scale-val">4×</span>
+              <span class="scale-desc">Máxima</span>
+            </button>
+          </div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:14px; margin-top:6px;">
+            Escala seleccionada: <span id="lbl-escala" style="color:var(--orange); font-family:'IBM Plex Mono',monospace;">2×</span>
+          </div>
+
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Convertir a PNG
+          </button>
+          <div class="action-note">Descarga directa · sin ZIP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>PDF Export — EPS a PNG (Etapa 27 · Pillow + Ghostscript)</footer>
+</div>
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+  const estado = {
+    archivoId: null,
+    escala:    2,
+    trabajoId: null,
+  };
+
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
+
+  // ── Drop zone ──
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) subirArchivo(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) subirArchivo(fileInput.files[0]); });
+
+  // ── Server files (solo EPS) ──
+  let serverOpen = false;
+  function toggleServerFiles() {
+    serverOpen = !serverOpen;
+    document.getElementById('server-files').classList.toggle('open', serverOpen);
+    document.getElementById('server-arrow').textContent = serverOpen ? '▾' : '▸';
+    if (serverOpen) cargarArchivosServidor();
+  }
+
+  async function cargarArchivosServidor() {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (!d.success || !d.data.length) return;
+      const cont = document.getElementById('server-files-contenido');
+      cont.innerHTML = '';
+      d.data
+        .filter(a => a.nombre_original.toLowerCase().endsWith('.eps'))
+        .forEach(a => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'server-file-btn';
+          btn.innerHTML = `<span class="sf-name">${escHtml(a.nombre_original)}</span><span class="sf-meta">${formatBytes(a.tamano_bytes)}</span>`;
+          btn.onclick = () => inicializarConArchivo(a);
+          cont.appendChild(btn);
+        });
+      if (!cont.children.length) cont.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--muted)">No hay archivos EPS en servidor</div>';
+    } catch(e) { console.warn('Error archivos servidor:', e); }
+  }
+
+  // ── Upload ──
+  async function subirArchivo(archivo) {
+    try {
+      const r = await fetch(`${API}/files`);
+      const d = await r.json();
+      if (d.success) {
+        const dup = d.data.find(f => f.nombre_original === archivo.name && f.tamano_bytes === archivo.size);
+        if (dup) { inicializarConArchivo(dup); return; }
+      }
+    } catch(e) {}
+
+    const progDiv = document.getElementById('progreso-carga');
+    const barra   = document.getElementById('barra-carga');
+    const texto   = document.getElementById('texto-carga');
+    progDiv.style.display = 'block';
+
+    const fd = new FormData();
+    fd.append('archivo', archivo);
+    fd.append('nombre', archivo.name);
+    fd.append('tamano', archivo.size);
+    fd.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        barra.style.width = pct + '%';
+        texto.textContent = `Subiendo... ${pct}%`;
+      }
+    };
+    xhr.onload = () => {
+      progDiv.style.display = 'none';
+      try {
+        const d = JSON.parse(xhr.responseText);
+        if (d.success) inicializarConArchivo(d.data);
+        else mostrarMensaje('error', 'Error al subir: ' + (d.error?.message || 'Error'));
+      } catch(e) { mostrarMensaje('error', 'Error al procesar respuesta'); }
+    };
+    xhr.onerror = () => { progDiv.style.display = 'none'; mostrarMensaje('error', 'Error de conexión'); };
+    xhr.send(fd);
+  }
+
+  function inicializarConArchivo(arch) {
+    estado.archivoId = arch.id;
+    document.getElementById('nombre-archivo').textContent = arch.nombre_original;
+    document.getElementById('info-archivo').textContent   = formatBytes(arch.tamano_bytes);
+    document.getElementById('file-info-card').classList.add('visible');
+    document.getElementById('options-col').classList.add('visible');
+    document.getElementById('btn-ejecutar').disabled = false;
+    ocultarMensaje();
+  }
+
+  // ── Escala ──
+  function setEscala(btn, valor) {
+    estado.escala = valor;
+    document.querySelectorAll('[data-escala]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('lbl-escala').textContent = valor + '×';
+  }
+
+  // ── Ejecutar ──
+  async function ejecutar() {
+    if (!estado.archivoId) return;
+    const btn = document.getElementById('btn-ejecutar');
+    btn.disabled = true;
+    btn.textContent = 'Convirtiendo...';
+    ocultarMensaje();
+    mostrarProcesando(5, 'Enviando solicitud...');
+
+    try {
+      const r = await fetch(`${API}/convert/eps-to-png`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: estado.archivoId,
+          opciones: { escala: estado.escala }
+        })
+      });
+      const d = await r.json();
+
+      if (!d.success) {
+        mostrarMensaje('error', d.error?.message || 'Error al iniciar la conversión');
+        ocultarProcesando(); resetBoton(); return;
+      }
+
+      estado.trabajoId = d.data.job_id;
+      monitorearProgreso(estado.trabajoId);
+
+    } catch(e) {
+      mostrarMensaje('error', 'Error de conexión: ' + e.message);
+      ocultarProcesando(); resetBoton();
+    }
+  }
+
+  // ── SSE + fallback polling ──
+  function monitorearProgreso(jobId) {
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+    sse.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        mostrarProcesando(d.progreso || 0, d.mensaje || '...');
+        if (d.estado === 'completado') { sse.close(); finalizarExito(jobId); }
+        else if (d.estado === 'error') { sse.close(); finalizarConError(d.mensaje || 'Error'); }
+      } catch(_) {}
+    };
+    sse.onerror = () => { sse.close(); verificarEstadoFinal(jobId); };
+  }
+
+  async function verificarEstadoFinal(jobId) {
+    try {
+      const r = await fetch(`${API}/jobs/${jobId}`);
+      const d = await r.json();
+      if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
+      const job = d.data;
+      mostrarProcesando(job.progreso || 0, job.mensaje || '...');
+      if (job.estado === 'completado') finalizarExito(jobId);
+      else if (job.estado === 'error') finalizarConError(job.mensaje || 'Error');
+      else setTimeout(() => verificarEstadoFinal(jobId), 2000);
+    } catch(e) { setTimeout(() => verificarEstadoFinal(jobId), 2000); }
+  }
+
+  function finalizarExito(jobId) {
+    mostrarProcesando(100, 'Completado');
+    setTimeout(() => {
+      window.PDFExport.descargarResultado(jobId);
+      ocultarProcesando();
+      resetBoton();
+      mostrarMensaje('success', 'Conversión completada. Descarga iniciada.');
+    }, 600);
+  }
+
+  function finalizarConError(msg) {
+    ocultarProcesando(); resetBoton();
+    mostrarMensaje('error', 'Error: ' + msg);
+  }
+
+  // ── Helpers UI ──
+  function mostrarProcesando(pct, msg) {
+    document.getElementById('processing-panel').classList.add('visible');
+    document.getElementById('barra-proceso').style.width = pct + '%';
+    document.getElementById('texto-proceso').textContent = msg;
+    document.getElementById('porcentaje-proceso').textContent = pct + '%';
+  }
+  function ocultarProcesando() { document.getElementById('processing-panel').classList.remove('visible'); }
+
+  function mostrarMensaje(tipo, msg) {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message visible ' + tipo;
+    el.textContent = msg;
+  }
+  function ocultarMensaje() {
+    const el = document.getElementById('mensaje-estado');
+    el.className = 'status-message'; el.textContent = '';
+  }
+
+  function resetBoton() {
+    const btn = document.getElementById('btn-ejecutar');
+    btn.disabled = !estado.archivoId;
+    btn.textContent = 'Convertir a PNG';
+  }
+
+  function formatBytes(b) {
+    if (!b) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

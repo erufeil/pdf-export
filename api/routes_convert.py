@@ -1356,6 +1356,52 @@ def convertir_svg_to_png():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/eps-to-png', methods=['POST'])
+def convertir_eps_to_png():
+    """
+    Convierte un archivo EPS a PNG usando Pillow + Ghostscript (Etapa 27).
+    Retorna PNG directamente (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo EPS subido
+      - opciones: { escala: 1|2|3|4 }
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not nombre.endswith('.eps'):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser un EPS')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='eps-to-png',
+            parametros={
+                'escala': opciones.get('escala', 2),
+            }
+        )
+
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion EPS a PNG iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo eps-to-png: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/img-to-txt', methods=['POST'])
 def convertir_img_to_txt():
     """

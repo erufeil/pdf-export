@@ -260,10 +260,28 @@ img.src = `${API}/files/${archivoId}/thumbnail/${totalPaginas - 1}`;
 | `'to-csv-ocr'`        | pdf_scanned_to_csv         | ZIP         |
 | `'svg-to-png'`        | svg_to_png                 | PNG directo |
 | `'img-to-txt'`        | img_to_txt                 | TXT directo |
+| `'eps-to-png'`        | eps_to_png                 | PNG directo |
 
 ---
 
-## 10. Convención de nombres de archivos de salida
+## 10. Patrón: valores EXIF de Pillow (IFDRational)
+
+`PIL.Image.getexif()` puede devolver valores `IFDRational` (subclase de `Fraction`) para tags de tipo *rational* (FocalLength, XResolution, DigitalZoomRatio, dpi, etc.).  
+`round(IFDRational, 1)` devuelve `Fraction` → **no serializable a JSON**.
+
+```python
+# MAL — devuelve Fraction, no serializable
+dpi_x = round(dpi[0], 1)
+
+# BIEN — float primero, siempre
+dpi_x = round(float(dpi[0]), 1)
+```
+
+Regla: cualquier valor proveniente de `img.info`, `img.getexif()` o `exif.get_ifd()` debe pasar por `float()` antes de `round()` o de incluirse en un dict que se va a serializar.
+
+---
+
+## 11. Convención de nombres de archivos de salida
 
 ```
 # Archivo individual:

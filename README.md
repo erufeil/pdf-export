@@ -20,6 +20,9 @@ Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autoconten
 - **Web Scraper**: Extrae contenido estructurado de una URL (titulo, cuerpo, footer, links) en TXT o Markdown
 - **IMG a PDF**: Convierte multiples imagenes (JPG, PNG, WEBP, etc.) en un unico PDF
 - **WEBP a PNG**: Convierte imagenes WEBP a PNG sin perdida de calidad
+- **EPS a PNG**: Rasteriza archivos EPS a PNG con escala configurable (requiere Ghostscript)
+- **Metadatos PDF**: Extrae huella forense completa del PDF (estructura, permisos, XMP, fuentes, IDs)
+- **Metadatos Imagen**: Extrae EXIF, GPS, IPTC/XMP, hashes y colores dominantes de imagenes
 
 ## Requisitos
 
@@ -209,7 +212,7 @@ PDFexport/
 - Tamanio maximo de archivo: **1 GB**
 - Retencion de archivos: **4 horas** (configurable con `FILE_RETENTION_HOURS`)
 - Formatos de entrada PDF: `.pdf`, `.ndm2`, `.json`
-- Formatos de entrada imagenes: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`
+- Formatos de entrada imagenes: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`, `.eps` (EPS requiere Ghostscript)
 - Maximo de cortes en "Cortar PDF": **20**
 
 ---
@@ -978,7 +981,8 @@ fi
 - **Frontend**: HTML5, CSS3, JavaScript vanilla (sin frameworks)
 - **PDF**: PyMuPDF (fitz), pdf2image, pdfminer.six, python-docx, pdfplumber
 - **HTML a PDF**: WeasyPrint
-- **Imagenes**: pdf2image + poppler, Pillow
+- **Imagenes**: pdf2image + poppler, Pillow, cairosvg
+- **EPS**: Pillow + Ghostscript (ghostscript en el contenedor)
 - **Web scraping**: beautifulsoup4 + lxml, trafilatura, markdownify
 - **Contenedor**: Docker (imagen multi-stage para menor tamanio)
 

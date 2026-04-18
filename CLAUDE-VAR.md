@@ -352,6 +352,16 @@ fecha_modificacion: string  ← ISO format (para detección de duplicados)
 - `idioma_ocr`: código Tesseract — `"spa"`, `"eng"`, `"spa+eng"`, `"por"`, `"fra"`, `"deu"`, `"ita"`
 - Verificación Tika sync: `POST /api/v1/convert/to-csv-ocr/analyze` → `{ "tika_disponible": bool, "mensaje": "..." }`
 
+### `POST /api/v1/convert/eps-to-png`  *(Etapa 27 — pendiente)*
+
+```json
+{ "file_id": "uuid", "opciones": { "escala": 2 } }
+```
+
+- `escala`: `1` | `2` | `3` | `4` (default `2`)
+- Requiere `ghostscript` instalado en el contenedor
+- Retorna PNG directo (sin ZIP)
+
 ### `POST /api/v1/convert/svg-to-png`  *(Etapa 23)*
 ```json
 {
@@ -376,6 +386,41 @@ fecha_modificacion: string  ← ISO format (para detección de duplicados)
 - Formatos soportados: `.jpg`, `.jpeg`, `.png`, `.tiff`, `.tif`, `.bmp`, `.gif`, `.webp`
 - Verificación Tika sync: `POST /api/v1/convert/img-to-txt/check` → `{ "tika_disponible": bool, "mensaje": "..." }`
 - Retorna TXT directo (sin ZIP), utf-8-bom
+
+### `POST /api/v1/convert/img-metadata/extract`  *(Etapa 28 — sync)*
+
+```json
+{ "file_id": "uuid" }
+```
+
+- Formatos soportados: `.jpg`, `.jpeg`, `.png`, `.tiff`, `.tif`, `.bmp`, `.gif`, `.webp`
+- **Retorna JSON directamente** (no job, no ZIP). Respuesta en `resp.data`:
+
+```json
+{
+  "nombre_archivo": "foto.jpg",
+  "tamano_bytes": 4200000,
+  "hashes": { "sha256": "...", "md5": "..." },
+  "tecnico": { "formato": "JPEG", "modo": "RGB", "ancho": 4000, "alto": 3000,
+               "megapixeles": 12.0, "dpi_x": 72.0, "dpi_y": 72.0,
+               "bits_muestra": 8, "canales": 3, "frames": 1,
+               "transparencia": false, "icc_perfil": "", "progresivo": false, "compresion": "" },
+  "exif_camara": { "Make": "Apple", "Model": "iPhone 14", "Orientation": "Normal (0)", ... },
+  "exif_captura": { "fecha_original": "2024:01:15 10:30:00", "exposicion": "1/500 s",
+                    "apertura": "f/1.8", "iso": "64", "focal_mm": "5.7 mm", ... },
+  "gps": { "latitud": -31.4, "longitud": -64.2, "link_osm": "https://...", "altitud": "750.0 m sobre el nivel del mar" },
+  "contenido": { "titulo": "...", "autor": "..." },
+  "historial": { "herramienta_creadora": "Photoshop", "fue_editado": true },
+  "colores": { "colores_dominantes": [{"hex": "#A1B2C3", "r": 161, "g": 178, "b": 195, "pct": 32.5}],
+               "color_promedio": {"hex": "#...", "r": 0, "g": 0, "b": 0},
+               "brillo": 128.0, "brillo_desc": "media" },
+  "tika_raw": { ... },
+  "tika_disponible": true
+}
+```
+
+- `exif_camara`, `exif_captura`, `gps`, `contenido`, `historial`, `tika_raw` pueden ser `{}` si no hay datos.
+- Usa Apache Tika para IPTC/XMP si `TIKA_URL` está configurado.
 
 ---
 

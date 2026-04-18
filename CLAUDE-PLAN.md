@@ -30,7 +30,7 @@ Un solo contenedor sirve:
 | Tamaño máximo de archivo | 1 GB |
 | Detección de duplicados | Coincidencia exacta: nombre + tamaño + fecha_modificacion |
 | Retorno por defecto | ZIP con máxima compresión |
-| Sin ZIP (retorno directo) | webp-to-png, svg-to-png, img-to-1pdf, img-to-txt |
+| Sin ZIP (retorno directo) | webp-to-png, svg-to-png, img-to-1pdf, img-to-txt, eps-to-png |
 | Control de acceso | Sin auth en la app — Nginx Proxy Manager en el exterior |
 
 ### Servicios externos opcionales
@@ -80,7 +80,10 @@ PDFexport/
 │   ├── webp_to_png.py        # Etapa 18
 │   ├── pdf_scanned_to_csv.py # Etapa 22
 │   ├── svg_to_png.py         # Etapa 23
-│   └── img_to_txt.py         # Etapa 24
+│   ├── img_to_txt.py         # Etapa 24
+│   ├── pdf_metadata.py       # Etapa 25
+│   ├── eps_to_png.py         # Etapa 27 (pendiente)
+│   └── img_metadata.py       # Etapa 28
 │
 ├── utils/
 │   ├── file_manager.py       # Subida, ZIP, miniaturas, limpieza
@@ -108,7 +111,11 @@ PDFexport/
 │   ├── webp-to-png.html
 │   ├── pdf-scanned-to-csv.html
 │   ├── svg-to-png.html
-│   └── img-to-txt.html
+│   ├── img-to-txt.html
+│   ├── pdf-metadata.html     # Etapa 25
+│   ├── eps-to-png.html       # Etapa 27 (pendiente)
+│   ├── img-metadata.html     # Etapa 28
+│   └── help.html             # Etapa 26
 │
 ├── uploads/                  # Archivos subidos (limpieza automática 4h)
 ├── outputs/                  # Archivos procesados (limpieza automática 4h)
@@ -148,6 +155,8 @@ PDFexport/
 | 24 | IMG→TXT (OCR) | img_to_txt.py | /img-to-txt | TXT directo |
 | 25 | Metadatos PDF | pdf_metadata.py | /metadata/extract + /metadata/edit | JSON (sync) + PDF directo (edit) |
 | 26 | Help — Ayuda de usuario | routes_files.py | GET /help | JSON con contenido MD |
+| 27 | EPS→PNG | eps_to_png.py | /eps-to-png | PNG directo |
+| 28 | Metadatos Imagen | img_metadata.py | /img-metadata/extract | JSON (sync) |
 
 ---
 
@@ -339,6 +348,46 @@ PDFexport/
 ---
 
 ### Etapa 27 — EPS a PNG
+
+**Página:** `static/eps-to-png.html`
+**Servicio:** `services/eps_to_png.py`
+**Endpoint:** `POST /api/v1/convert/eps-to-png` (async job)
+**Librería:** Pillow — lee EPS via Ghostscript interno (`Image.open()` sobre `.eps` requiere `gs` instalado en el contenedor).
+**Retorna:** PNG directo (sin ZIP) — un único archivo de salida.
+**Formatos entrada:** `.eps`
+**ALLOWED_EXTENSIONS:** agregar `'eps'`
+**Dockerfile:** agregar `ghostscript` al `apt-get install` de la etapa runtime.
+
+**UI:**
+Drop zone `.eps` → escala [1×|2×|3×|4×] (default 2×) → convertir → PNG directo.
+Acento de color: naranja `#F4A261`.
+
+**Lógica del servicio:**
+
+```python
+from PIL import Image
+
+img = Image.open(str(ruta_eps))
+img.load(scale=escala)          # Pillow pasa scale a Ghostscript internamente
+ancho  = img.width  * escala
+alto   = img.height * escala
+img = img.resize((ancho, alto), Image.Resampling.LANCZOS).convert('RGBA')
+img.save(str(ruta_png), 'PNG')
+```
+
+**Endpoint en `routes_convert.py`:**
+
+```json
+POST /api/v1/convert/eps-to-png
+{ "file_id": "uuid", "opciones": { "escala": 2 } }
+```
+
+- `escala`: `1` | `2` | `3` | `4` (default `2`)
+- Registrar procesador: `job_manager.registrar_procesador('eps-to-png', procesar_eps_to_png)`
+
+**Nota técnica:** Pillow delega el rasterizado EPS a Ghostscript mediante un proceso externo. Si `gs` no está en el PATH el `Image.open()` lanza `OSError`. Verificar con `which gs` en el contenedor.
+
+**Tabla de etapas:** `Sin ZIP (retorno directo)` — igual que svg-to-png.
 
 ---
 

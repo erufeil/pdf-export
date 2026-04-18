@@ -153,6 +153,9 @@
         overflow: hidden;
       }
       .nav-item:hover .nav-label { color: var(--text); }
+      a.nav-item { text-decoration: none; color: inherit; border-bottom: none; outline: none; }
+      .nav-item.forensis { border-left-color: #000; }
+      .nav-item.forensis:hover { border-left-color: #000; }
       #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
 
       .nav-badge {
@@ -707,6 +710,20 @@
     </div>
 
     <div class="nav-section">
+        <div class="nav-section-label">Forensis</div>
+
+        <a class="nav-item forensis" href="/pdf-metadata.html" data-tooltip="Metadatos PDF">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Metadatos PDF</span>
+        </a>
+
+        <a class="nav-item forensis" href="/img-metadata.html" data-tooltip="Metadatos Imagen">
+            <span class="nav-icon">🖼️</span>
+            <span class="nav-label">Metadatos Imagen</span>
+        </a>
+    </div>
+
+    <div class="nav-section">
         <div class="nav-section-label">Sistema</div>
 
         <div class="nav-item" data-tooltip="Archivos en Cache" id="nav-cache" onclick="mostrarVista('cache')">
@@ -895,6 +912,12 @@
                     <div class="card-icon">SVG</div>
                     <div class="card-title">SVG a PNG</div>
                     <div class="card-desc">Convierte vector SVG a imagen</div>
+                </a>
+                <a href="/eps-to-png.html" class="card cat-misc">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">EPS</div>
+                    <div class="card-title">EPS a PNG</div>
+                    <div class="card-desc">Rasteriza vectores EPS a imagen</div>
                 </a>
                 <a href="/img-to-txt.html" class="card cat-misc">
                     <span class="card-badge badge-new">Nuevo</span>
@@ -1299,6 +1322,7 @@
             'img-to-1pdf': 'IMG a PDF',
             'webp-to-png': 'WEBP a PNG',
             'svg-to-png':  'SVG a PNG',
+            'eps-to-png':  'EPS a PNG',
             'img-to-txt':  'IMG a TXT (OCR)',
             'metadata-edit': 'Editar Metadatos',
             'extract-pages': 'Extraer Paginas',

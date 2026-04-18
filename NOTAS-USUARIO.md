@@ -263,6 +263,34 @@ WebP es el formato moderno de imágenes en la web que algunos programas todavía
 
 ---
 
+## Herramientas forenses
+
+### 🔍 Metadatos PDF
+
+**Extrae la información oculta de un archivo PDF.**
+
+Muestra datos que no se ven al abrir el PDF normalmente: quién lo creó, con qué programa, cuándo fue modificado, si fue alterado desde su creación original, qué fuentes usa, si tiene formularios o firmas digitales, y sus permisos de impresión/copia.
+
+- Detecta si el PDF fue modificado externamente (los IDs de documento difieren)
+- Permite editar los metadatos básicos (título, autor, tema) y guardar un nuevo PDF
+
+**Útil para:** verificar la autenticidad de documentos, auditorías, análisis forense.
+
+---
+
+### 🖼️ Metadatos Imagen
+
+**Extrae toda la información técnica y forense de una imagen.**
+
+Muestra datos EXIF de la cámara (modelo, apertura, velocidad, ISO), coordenadas GPS si las tiene, fecha y hora de captura, si fue editada en Photoshop (historial XMP), colores dominantes, hashes de integridad (SHA-256 y MD5), perfil de color ICC y más.
+
+- Detecta si la imagen fue editada comparando el ID de documento con el ID de instancia
+- Muestra el enlace de OpenStreetMap si la imagen tiene coordenadas GPS
+
+**Útil para:** verificar dónde y cuándo se sacó una foto, detectar ediciones, análisis forense de imágenes.
+
+---
+
 ## Límites y consideraciones
 
 | Límite | Valor |

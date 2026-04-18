@@ -92,7 +92,7 @@ def _enviar_imagen_tika(ruta_imagen: Path, mime_type: str, idioma_ocr: str) -> s
 
     logger.info(f'[img-txt] Tika respuesta: HTTP {resp.status_code}, {len(resp.content)} bytes')
     resp.raise_for_status()
-    return resp.text
+    return resp.content.decode('utf-8')
 
 
 def procesar_img_to_txt(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:

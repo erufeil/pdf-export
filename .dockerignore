@@ -19,6 +19,7 @@ data/
 
 # Documentacion y planificacion
 *.md
+!NOTAS-USUARIO.md
 CLAUDE.md
 planificacion*.md
 LICENSE

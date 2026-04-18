@@ -114,7 +114,7 @@ def _enviar_pdf_tika(ruta_pdf: Path, idioma_ocr: str = 'spa') -> Optional[str]:
         logger.info(f'[scanned-csv] Tika respuesta: HTTP {resp.status_code}, '
                     f'{len(resp.content)} bytes')
         resp.raise_for_status()
-        return resp.text
+        return resp.content.decode('utf-8')
     except Exception as exc:
         logger.warning(f'[scanned-csv] Error enviando PDF a Tika: {exc}')
         return None
