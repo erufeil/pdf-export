@@ -133,7 +133,7 @@ def _extraer_tecnico(img: Image.Image) -> dict:
     dpi_x = dpi_y = None
     dpi = info.get('dpi')
     if dpi:
-        dpi_x, dpi_y = round(dpi[0], 1), round(dpi[1], 1)
+        dpi_x, dpi_y = round(float(dpi[0]), 1), round(float(dpi[1]), 1)
 
     icc_nombre = ''
     if 'icc_profile' in info:
