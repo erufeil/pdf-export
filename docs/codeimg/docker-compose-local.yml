@@ -3,7 +3,7 @@
 services:
   pdfexport:
     build:
-      context: .
+      context: ../..
       dockerfile: Dockerfile
     container_name: pdfexport
     restart: unless-stopped
