@@ -59,6 +59,10 @@
         cursor: pointer; text-decoration: none; color: var(--text);
         height: var(--header-h); flex-shrink: 0;
       }
+      .sidebar-logo-link {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; color: inherit;
+      }
       .logo-icon {
         width: 32px; height: 32px; background: var(--red); border-radius: 8px;
         display: flex; align-items: center; justify-content: center;
@@ -347,6 +351,8 @@
 
       /* ─── FOOTER ─── */
       .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
+      .footer-home-link { color: #aaa; text-decoration: none; }
+      .footer-home-link:hover { color: var(--text); }
       .site-footer {
         border-top: 1px solid var(--border);
         background: var(--sidebar);
@@ -415,8 +421,10 @@
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-icon">PDF</div>
-        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+        <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+            <div class="logo-icon">PDF</div>
+            <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+        </a>
     </div>
 
     <div class="nav-section">
@@ -469,7 +477,6 @@
         </div>
         <div class="header-right">
             <div class="stat-chip"><span class="dot"></span>Online</div>
-            <a class="home-btn" href="/">🏠 Inicio</a>
         </div>
     </header>
 
@@ -617,32 +624,12 @@
 
         </div>
     </main>
-    <div class="footer">PDF Export — PDF a Texto (Etapa 3 · pdfminer.six)</div>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-top">
-                <div class="footer-brand">
-                    <div class="footer-brand-icon">PDF</div>
-                    <span><strong>PDF-Export &amp; Import</strong> — Herramientas de conversion PDF para la Soberania Digital Empresarial</span>
-                </div>
-                <a href="/" class="footer-home-btn">🏠 Volver al inicio</a>
-            </div>
-
-            <div class="footer-divider"></div>
-            <div class="footer-version" id="app-version"></div>
-
-            <details class="footer-legal">
-                <summary>⚖️ Aviso de uso y alcance</summary>
-                <div class="footer-legal-body">
-                    <p>Esta aplicacion y su API estan destinadas a uso privado. No se implementan claves de acceso a nivel de aplicacion con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-                    <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ). En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticacion.</p>
-                    <p>Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberania digital sobre los recursos informaticos utilizados para el procesamiento de documentos. El codigo y la aplicacion se distribuyen bajo una licencia de uso publico y amplio.</p>
-                </div>
-            </details>
-        </div>
-    </footer>
+    <div class="footer">
+        PDF-Export &amp; Import · ERF
+        &nbsp;|&nbsp; PDF Export — PDF a Texto (Etapa 3 · pdfminer.six)
+        &nbsp;|&nbsp; <span id="app-version"></span>
+        &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+    </div>
 
 </div>
 

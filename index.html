@@ -703,24 +703,15 @@
             <span class="nav-label">Quiero un PDF</span>
         </div>
 
+        <div class="nav-item" data-tooltip="Forensis" onclick="mostrarVista('forensis')">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Forensis</span>
+        </div>
+
         <div class="nav-item" data-tooltip="Miscelaneos" onclick="mostrarVista('misc')">
             <span class="nav-icon">🔧</span>
             <span class="nav-label">Miscelaneos</span>
         </div>
-    </div>
-
-    <div class="nav-section">
-        <div class="nav-section-label">Forensis</div>
-
-        <a class="nav-item forensis" href="/pdf-metadata.html" data-tooltip="Metadatos PDF">
-            <span class="nav-icon">🔍</span>
-            <span class="nav-label">Metadatos PDF</span>
-        </a>
-
-        <a class="nav-item forensis" href="/img-metadata.html" data-tooltip="Metadatos Imagen">
-            <span class="nav-icon">🖼️</span>
-            <span class="nav-label">Metadatos Imagen</span>
-        </a>
     </div>
 
     <div class="nav-section">
@@ -925,7 +916,20 @@
                     <div class="card-title">IMG a TXT</div>
                     <div class="card-desc">OCR: extrae texto de imágenes</div>
                 </a>
-                <a href="/pdf-metadata.html" class="card cat-pdf">
+            </div>
+        </div>
+
+        <div class="view" id="view-forensis">
+            <div class="section-header">
+                <div class="section-icon">🔍</div>
+                <div>
+                    <div class="section-title">Forensis</div>
+                    <div class="section-desc">Análisis forense de documentos e imágenes</div>
+                </div>
+                <div class="section-count">2 herramientas</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/pdf-metadata.html" class="card cat-misc">
                     <span class="card-badge badge-new">Nuevo</span>
                     <div class="card-icon">META</div>
                     <div class="card-title">Metadatos PDF</div>
@@ -1062,12 +1066,13 @@
 <script>
     // Mapa de vistas con sus etiquetas para el breadcrumb
     const VISTAS = {
-        export: { label: 'Tengo un PDF...',    navIdx: 0 },
-        create: { label: 'Quiero un PDF',      navIdx: 1 },
-        misc:   { label: 'Miscelaneos',        navIdx: 2 },
-        cache:  { label: 'Archivos en Cache',  navIdx: 3 },
-        about:  { label: 'Acerca de',          navIdx: 4 },
-        search: { label: 'Busqueda',           navIdx: -1 },
+        export:   { label: 'Tengo un PDF...',    navIdx: 0 },
+        create:   { label: 'Quiero un PDF',      navIdx: 1 },
+        forensis: { label: 'Forensis',           navIdx: 2 },
+        misc:     { label: 'Miscelaneos',        navIdx: 3 },
+        cache:    { label: 'Archivos en Cache',  navIdx: 4 },
+        about:    { label: 'Acerca de',          navIdx: 5 },
+        search:   { label: 'Busqueda',           navIdx: -1 },
     };
 
     // Copia de todas las cards para busqueda
