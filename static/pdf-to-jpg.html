@@ -172,7 +172,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
 
       /* DROP ZONE */
       .dropzone {
@@ -492,55 +492,7 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
-            <div>
-                <div class="dropzone" id="zona-carga">
-                    <span class="dropzone-icon">📄</span>
-                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
-                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
-                </div>
-
-                <!-- Progreso de carga -->
-                <div id="progreso-carga">
-                    <div class="progress-info-row">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                </div>
-
-                <!-- Info archivo -->
-                <div class="file-info-card" id="info-archivo">
-                    <div class="file-info-header">
-                        <div class="file-icon-box">PDF</div>
-                        <div>
-                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
-                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado -->
-                <div class="status-message" id="mensaje-estado"></div>
-
-                <!-- Preview -->
-                <div class="preview-panel" id="seccion-preview">
-                    <div class="preview-panel-header">
-                        <span class="preview-panel-title">Vista Previa — Pagina 1</span>
-                    </div>
-                    <div class="preview-body" id="preview-container">
-                        <div class="preview-placeholder">Cargando vista previa...</div>
-                    </div>
-                </div>
-
-                <div class="info-strip">
-                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
             <div id="panel-opciones">
 
                 <!-- DPI -->
@@ -642,6 +594,54 @@
                     <div class="progress-bar-wrap">
                         <div class="progress-fill" id="barra-proceso"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div>
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📄</span>
+                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
+                </div>
+
+                <!-- Progreso de carga -->
+                <div id="progreso-carga">
+                    <div class="progress-info-row">
+                        <span id="texto-progreso">Subiendo...</span>
+                        <span id="porcentaje-progreso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-progreso"></div>
+                    </div>
+                </div>
+
+                <!-- Info archivo -->
+                <div class="file-info-card" id="info-archivo">
+                    <div class="file-info-header">
+                        <div class="file-icon-box">PDF</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
+
+                <!-- Preview -->
+                <div class="preview-panel" id="seccion-preview">
+                    <div class="preview-panel-header">
+                        <span class="preview-panel-title">Vista Previa — Pagina 1</span>
+                    </div>
+                    <div class="preview-body" id="preview-container">
+                        <div class="preview-placeholder">Cargando vista previa...</div>
+                    </div>
+                </div>
+
+                <div class="info-strip">
+                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
                 </div>
             </div>
 

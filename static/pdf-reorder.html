@@ -109,7 +109,7 @@
     .page-header p { color: var(--muted); font-size: 13px; }
 
     /* ── Two-col layout ── */
-    .layout { display: grid; grid-template-columns: 1fr 250px; gap: 16px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 250px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
@@ -375,7 +375,26 @@
     </div>
 
     <div class="layout">
-      <!-- ── Columna izquierda ── -->
+      <!-- ── Columna izquierda — opciones ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Estado</div>
+          <div class="summary-box">
+            <span class="sel-count" id="resumen-sel">0</span> páginas seleccionadas<br>
+            Orden: <span class="summary-state" id="resumen-cambios">sin cambios</span>
+          </div>
+          <button type="button" class="btn-action" id="btn-aplicar" disabled onclick="aplicarNuevoOrden()">
+            Aplicar Nuevo Orden
+          </button>
+          <div class="action-note">Descarga automática al terminar</div>
+        </div>
+
+        <div class="card">
+          <button type="button" class="btn-secondary" onclick="cambiarArchivo()">Cambiar archivo</button>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — drop zone + contenido ── -->
       <div>
         <!-- Upload card -->
         <div class="card" id="card-upload">
@@ -468,25 +487,6 @@
 
         <div class="info-strip">
           <p>Arrastra las páginas para reorganizarlas. Haz clic para seleccionar/deseleccionar.</p>
-        </div>
-      </div>
-
-      <!-- ── Columna derecha — opciones ── -->
-      <div class="options-col" id="options-col">
-        <div class="card">
-          <div class="card-title">Estado</div>
-          <div class="summary-box">
-            <span class="sel-count" id="resumen-sel">0</span> páginas seleccionadas<br>
-            Orden: <span class="summary-state" id="resumen-cambios">sin cambios</span>
-          </div>
-          <button type="button" class="btn-action" id="btn-aplicar" disabled onclick="aplicarNuevoOrden()">
-            Aplicar Nuevo Orden
-          </button>
-          <div class="action-note">Descarga automática al terminar</div>
-        </div>
-
-        <div class="card">
-          <button type="button" class="btn-secondary" onclick="cambiarArchivo()">Cambiar archivo</button>
         </div>
       </div>
     </div>

@@ -159,7 +159,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
 
       /* URL INPUT */
       .url-panel {
@@ -454,45 +454,7 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
-            <div>
-                <!-- URL Input -->
-                <div class="url-panel">
-                    <div class="url-panel-header">URL de la Pagina Web</div>
-                    <div class="url-panel-body">
-                        <div class="warning-strip">
-                            <strong>Compatibilidad:</strong> Funciona bien con Wikipedia, documentacion tecnica, blogs y articulos. Portales con muchos anuncios o scripts pesados pueden superar el tiempo limite. Para esos sitios usar "Solo contenido principal".
-                        </div>
-                        <div class="url-input-row">
-                            <input type="url" id="url-input" placeholder="https://ejemplo.com/pagina" autocomplete="off">
-                            <button type="button" id="btn-preview" class="btn-preview" disabled>Vista Previa</button>
-                        </div>
-                        <div id="url-info" class="url-info">
-                            Sitio: <span class="url-domain" id="url-domain">ejemplo.com</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preview section -->
-                <div class="preview-panel" id="preview-section">
-                    <div class="preview-panel-header">
-                        <span class="preview-panel-title">Vista Previa — Primera Pagina</span>
-                    </div>
-                    <div class="preview-body" id="preview-container">
-                        <div class="preview-placeholder" id="preview-placeholder">La vista previa aparecera aqui</div>
-                        <div class="preview-loading" id="preview-loading" style="display: none;">
-                            <div class="spinner"></div>
-                            <p>Generando vista previa...</p>
-                        </div>
-                        <img id="preview-image" src="" alt="Vista previa">
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado -->
-                <div class="status-message" id="mensaje-estado"></div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones (siempre visible) -->
+            <!-- COLUMNA IZQUIERDA: opciones (siempre visible) -->
             <div id="panel-opciones">
 
                 <!-- Tamano de pagina -->
@@ -595,6 +557,44 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div>
+                <!-- URL Input -->
+                <div class="url-panel">
+                    <div class="url-panel-header">URL de la Pagina Web</div>
+                    <div class="url-panel-body">
+                        <div class="warning-strip">
+                            <strong>Compatibilidad:</strong> Funciona bien con Wikipedia, documentacion tecnica, blogs y articulos. Portales con muchos anuncios o scripts pesados pueden superar el tiempo limite. Para esos sitios usar "Solo contenido principal".
+                        </div>
+                        <div class="url-input-row">
+                            <input type="url" id="url-input" placeholder="https://ejemplo.com/pagina" autocomplete="off">
+                            <button type="button" id="btn-preview" class="btn-preview" disabled>Vista Previa</button>
+                        </div>
+                        <div id="url-info" class="url-info">
+                            Sitio: <span class="url-domain" id="url-domain">ejemplo.com</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview section -->
+                <div class="preview-panel" id="preview-section">
+                    <div class="preview-panel-header">
+                        <span class="preview-panel-title">Vista Previa — Primera Pagina</span>
+                    </div>
+                    <div class="preview-body" id="preview-container">
+                        <div class="preview-placeholder" id="preview-placeholder">La vista previa aparecera aqui</div>
+                        <div class="preview-loading" id="preview-loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Generando vista previa...</p>
+                        </div>
+                        <img id="preview-image" src="" alt="Vista previa">
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
             </div>
 
         </div>

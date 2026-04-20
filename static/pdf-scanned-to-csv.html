@@ -109,7 +109,7 @@
     .page-header p { color: var(--muted); font-size: 13px; }
 
     /* ── Two-col layout ── */
-    .layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
@@ -244,6 +244,7 @@
 
     /* ── Info strip ── */
     .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(244,162,97,0.05); border: 1px solid rgba(244,162,97,0.15); border-radius: 7px; }
+    .info-strip a { color: var(--accent); }
     .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
     .info-strip p + p { margin-top: 5px; }
 
@@ -320,87 +321,7 @@
     </div>
 
     <div class="layout">
-      <!-- ── Columna izquierda ── -->
-      <div>
-        <!-- Drop zone -->
-        <div class="card">
-          <div class="dropzone" id="drop-zone">
-            <div class="dropzone-icon">🔍</div>
-            <div class="dropzone-text">
-              <strong>Haz clic</strong> o arrastra un PDF escaneado aquí<br>
-              <small>Máximo 1 GB · PDFs con imágenes (escaneados)</small>
-            </div>
-            <input type="file" id="file-input" accept=".pdf" class="hidden">
-          </div>
-
-          <div class="upload-progress" id="progreso-carga">
-            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
-            <div class="upload-label" id="texto-carga">Subiendo...</div>
-          </div>
-
-          <button type="button" class="server-toggle" onclick="toggleServerFiles()">
-            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
-          </button>
-          <div class="server-files-list" id="server-files">
-            <div id="server-files-contenido"></div>
-          </div>
-        </div>
-
-        <!-- File info -->
-        <div class="card file-info-card" id="file-info-card">
-          <div class="file-icon">PDF</div>
-          <div class="file-meta">
-            <h3 id="nombre-archivo">—</h3>
-            <p id="info-archivo">—</p>
-          </div>
-        </div>
-
-        <!-- Analysis panel (verifica disponibilidad de Tika) -->
-        <div class="card analysis-panel" id="analysis-panel">
-          <div class="card-title">Estado del servicio OCR</div>
-
-          <div class="analyzing-row" id="analisis-cargando">
-            <div class="spinner"></div>
-            <span>Verificando servicio Apache Tika...</span>
-          </div>
-
-          <div id="analisis-resultados" class="hidden">
-            <div class="analysis-item" id="resultado-tika">
-              <span class="analysis-icon" id="icono-tika">?</span>
-              <span id="texto-tika">Verificando...</span>
-            </div>
-            <div class="analysis-item info" id="resultado-ocr-info">
-              <span class="analysis-icon">ℹ</span>
-              <span>El OCR puede tardar varios minutos para PDFs con muchas páginas.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Processing -->
-        <div class="card processing-panel" id="processing-panel">
-          <div class="card-title">Procesando OCR</div>
-          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
-          <div class="progress-meta">
-            <span id="texto-proceso">Iniciando...</span>
-            <span id="porcentaje-proceso">0%</span>
-          </div>
-        </div>
-
-        <!-- Status -->
-        <div class="status-message" id="mensaje-estado"></div>
-
-        <div class="info-strip">
-          <p>Utiliza <strong>Apache Tika (apache/tika:latest-full)</strong> con Tesseract OCR para leer PDFs escaneados.</p>
-          <p>Para PDFs con texto real incrustado, usar <a href="/static/pdf-to-csv.html" style="color:var(--accent)">PDF a CSV</a> (más rápido).</p>
-          <p>Los CSV resultantes usan <strong>utf-8-bom</strong>, compatible con Excel.</p>
-        </div>
-
-        <div class="ocr-note">
-          ⚠ El procesamiento OCR puede tardar entre 1 y 10 minutos según el tamaño del PDF. No cerrar la pestaña durante el proceso.
-        </div>
-      </div>
-
-      <!-- ── Columna derecha ── -->
+      <!-- ── Columna izquierda — opciones ── -->
       <div class="options-col" id="options-col">
         <div class="card">
           <div class="card-title">Opciones</div>
@@ -459,6 +380,86 @@
             Extraer Tablas con OCR
           </button>
           <div class="action-note">Puede tardar varios minutos · resultado en ZIP</div>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — drop zone + contenido ── -->
+      <div>
+        <!-- Drop zone -->
+        <div class="card">
+          <div class="dropzone" id="drop-zone">
+            <div class="dropzone-icon">🔍</div>
+            <div class="dropzone-text">
+              <strong>Haz clic</strong> o arrastra un PDF escaneado aquí<br>
+              <small>Máximo 1 GB · PDFs con imágenes (escaneados)</small>
+            </div>
+            <input type="file" id="file-input" accept=".pdf" class="hidden">
+          </div>
+
+          <div class="upload-progress" id="progreso-carga">
+            <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
+            <div class="upload-label" id="texto-carga">Subiendo...</div>
+          </div>
+
+          <button type="button" class="server-toggle" onclick="toggleServerFiles()">
+            <span>Archivos en servidor</span><span id="server-arrow">▸</span>
+          </button>
+          <div class="server-files-list" id="server-files">
+            <div id="server-files-contenido"></div>
+          </div>
+        </div>
+
+        <!-- File info -->
+        <div class="card file-info-card" id="file-info-card">
+          <div class="file-icon">PDF</div>
+          <div class="file-meta">
+            <h3 id="nombre-archivo">—</h3>
+            <p id="info-archivo">—</p>
+          </div>
+        </div>
+
+        <!-- Analysis panel -->
+        <div class="card analysis-panel" id="analysis-panel">
+          <div class="card-title">Estado del servicio OCR</div>
+
+          <div class="analyzing-row" id="analisis-cargando">
+            <div class="spinner"></div>
+            <span>Verificando servicio Apache Tika...</span>
+          </div>
+
+          <div id="analisis-resultados" class="hidden">
+            <div class="analysis-item" id="resultado-tika">
+              <span class="analysis-icon" id="icono-tika">?</span>
+              <span id="texto-tika">Verificando...</span>
+            </div>
+            <div class="analysis-item info" id="resultado-ocr-info">
+              <span class="analysis-icon">ℹ</span>
+              <span>El OCR puede tardar varios minutos para PDFs con muchas páginas.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Processing -->
+        <div class="card processing-panel" id="processing-panel">
+          <div class="card-title">Procesando OCR</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
+          <div class="progress-meta">
+            <span id="texto-proceso">Iniciando...</span>
+            <span id="porcentaje-proceso">0%</span>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-message" id="mensaje-estado"></div>
+
+        <div class="info-strip">
+          <p>Utiliza <strong>Apache Tika (apache/tika:latest-full)</strong> con Tesseract OCR para leer PDFs escaneados.</p>
+          <p>Para PDFs con texto real incrustado, usar <a href="/static/pdf-to-csv.html">PDF a CSV</a> (más rápido).</p>
+          <p>Los CSV resultantes usan <strong>utf-8-bom</strong>, compatible con Excel.</p>
+        </div>
+
+        <div class="ocr-note">
+          ⚠ El procesamiento OCR puede tardar entre 1 y 10 minutos según el tamaño del PDF. No cerrar la pestaña durante el proceso.
         </div>
       </div>
     </div>

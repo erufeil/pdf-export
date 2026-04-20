@@ -178,7 +178,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
 
       /* ─── CARD ─── */
       .card {
@@ -401,7 +401,29 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
+            <div class="options-col">
+                <div class="card">
+                    <div class="card-title">Conversion</div>
+                    <div class="info-box">
+                        <p>Conversion directa WEBP → PNG sin perdida de calidad.</p>
+                        <p>La transparencia (canal alpha) se preserva.</p>
+                        <p>Si el WEBP es animado se extrae solo el primer frame.</p>
+                    </div>
+
+                    <button type="button" class="btn-action" id="btn-convertir" disabled>
+                        Convertir a PNG
+                    </button>
+
+                    <a id="btn-descarga" class="btn-download" href="#">
+                        ⬇ Descargar PNG
+                    </a>
+
+                    <a class="btn-secondary" href="/">Tengo un PDF...</a>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
             <div>
                 <!-- Drop zone -->
                 <div class="dropzone" id="drop-zone">
@@ -456,28 +478,6 @@
 
                 <!-- Mensaje de estado -->
                 <div class="status-message" id="mensaje-estado"></div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
-            <div class="options-col">
-                <div class="card">
-                    <div class="card-title">Conversion</div>
-                    <div class="info-box">
-                        <p>Conversion directa WEBP → PNG sin perdida de calidad.</p>
-                        <p>La transparencia (canal alpha) se preserva.</p>
-                        <p>Si el WEBP es animado se extrae solo el primer frame.</p>
-                    </div>
-
-                    <button type="button" class="btn-action" id="btn-convertir" disabled>
-                        Convertir a PNG
-                    </button>
-
-                    <a id="btn-descarga" class="btn-download" href="#">
-                        ⬇ Descargar PNG
-                    </a>
-
-                    <a class="btn-secondary" href="/">Tengo un PDF...</a>
-                </div>
             </div>
 
         </div>

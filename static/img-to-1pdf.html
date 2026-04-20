@@ -178,7 +178,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
 
       /* ─── CARD ─── */
       .card {
@@ -465,7 +465,46 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
+            <div class="options-col">
+                <div class="card">
+                    <div class="card-title">Opciones</div>
+
+                    <label class="opt-label" for="opt-tamano">Tamano de pagina</label>
+                    <select class="opt-select" id="opt-tamano">
+                        <option value="A4">A4 — Vertical (595 × 842 pt)</option>
+                        <option value="A4H">A4 — Apaisado (842 × 595 pt)</option>
+                        <option value="A3">A3 — Vertical</option>
+                        <option value="letter">Letter — Vertical</option>
+                        <option value="natural">Natural — tamano de la imagen</option>
+                    </select>
+
+                    <label class="opt-label" for="opt-margen">Margen</label>
+                    <select class="opt-select" id="opt-margen">
+                        <option value="0">Sin margen — imagen a sangre</option>
+                        <option value="15">Pequeno — 15 pt (~5 mm)</option>
+                        <option value="30">Normal — 30 pt (~11 mm)</option>
+                    </select>
+
+                    <button type="button" class="btn-action" id="btn-convertir" disabled>
+                        Crear PDF
+                    </button>
+
+                    <a id="btn-descarga" class="btn-download" href="#">
+                        ⬇ Descargar PDF
+                    </a>
+
+                    <a class="btn-secondary" href="/">Tengo un PDF...</a>
+
+                    <div class="hint-text">
+                        <p>Cada imagen ocupa una pagina del PDF.</p>
+                        <p>Arrastra los items de la lista para reordenarlos.</p>
+                        <p>Con <em>Tamano natural</em> la imagen no se escala.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
             <div>
                 <!-- Drop zone multi-archivo -->
                 <div class="dropzone" id="drop-zone">
@@ -515,45 +554,6 @@
 
                 <!-- Mensaje de estado -->
                 <div class="status-message" id="mensaje-estado"></div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
-            <div class="options-col">
-                <div class="card">
-                    <div class="card-title">Opciones</div>
-
-                    <label class="opt-label" for="opt-tamano">Tamano de pagina</label>
-                    <select class="opt-select" id="opt-tamano">
-                        <option value="A4">A4 — Vertical (595 × 842 pt)</option>
-                        <option value="A4H">A4 — Apaisado (842 × 595 pt)</option>
-                        <option value="A3">A3 — Vertical</option>
-                        <option value="letter">Letter — Vertical</option>
-                        <option value="natural">Natural — tamano de la imagen</option>
-                    </select>
-
-                    <label class="opt-label" for="opt-margen">Margen</label>
-                    <select class="opt-select" id="opt-margen">
-                        <option value="0">Sin margen — imagen a sangre</option>
-                        <option value="15">Pequeno — 15 pt (~5 mm)</option>
-                        <option value="30">Normal — 30 pt (~11 mm)</option>
-                    </select>
-
-                    <button type="button" class="btn-action" id="btn-convertir" disabled>
-                        Crear PDF
-                    </button>
-
-                    <a id="btn-descarga" class="btn-download" href="#">
-                        ⬇ Descargar PDF
-                    </a>
-
-                    <a class="btn-secondary" href="/">Tengo un PDF...</a>
-
-                    <div class="hint-text">
-                        <p>Cada imagen ocupa una pagina del PDF.</p>
-                        <p>Arrastra los items de la lista para reordenarlos.</p>
-                        <p>Con <em>Tamano natural</em> la imagen no se escala.</p>
-                    </div>
-                </div>
             </div>
 
         </div>

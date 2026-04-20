@@ -356,16 +356,61 @@ const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 Los módulos con JS externo (pdf-compress.js, pdf-rotate.js, etc.) usan
 `window.AppConfig.API_BASE_URL` directamente en sus archivos JS.
 
-### Footer de módulo
+### Logo con enlace externo
 
-Todos los módulos tienen un footer con nombre y etapa:
+```html
+<div class="sidebar-logo">
+    <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+        <div class="logo-icon">PDF</div>
+        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+    </a>
+</div>
+```
 
-- **Estilo B**: `<footer>PDF Export — Nombre (Etapa N · lib)</footer>`
-- **Estilo A**: `<div class="footer">PDF Export — Nombre (Etapa N · lib)</div>`
+CSS: `.sidebar-logo-link { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }`
 
-CSS Estilo A: `.footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }`
+### Sidebar de módulo (igual a home)
 
-### Breadcrumbs
+Operaciones: `Tengo un PDF...` / `Quiero un PDF` / `Forensis` / `Misceláneos` (todos `href="/"`)  
+Sistema: `Archivos en Cache` / `Acerca de` (ambos `href="/"`) + `Ayuda` (`href="/help.html" target="_blank"`)  
+El ítem de la categoría activa lleva `class="nav-item active"`.
 
-Todos los módulos tienen breadcrumb. img-metadata y pdf-metadata usan
-`<div class="topbar breadcrumb">` con categoría **Forensis**.
+### Header de módulo
+
+```html
+<header class="header">
+    <div class="breadcrumb">
+        <a href="/" title="Inicio">🏠</a>
+        <span class="sep">/</span>
+        <a href="/">Categoría</a>
+        <span class="sep">/</span>
+        <span class="current">Nombre del módulo</span>
+    </div>
+    <div class="header-right">
+        <div class="stat-chip"><span class="dot"></span>Online</div>
+    </div>
+</header>
+```
+
+Sin `home-btn`. Solo breadcrumb + chip Online.
+
+### Footer de módulo (una línea)
+
+```html
+<div class="footer">
+    PDF-Export &amp; Import · ERF
+    &nbsp;|&nbsp; PDF Export — Nombre (Etapa N · lib)
+    &nbsp;|&nbsp; <span id="app-version"></span>
+    &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+</div>
+```
+
+CSS:
+
+```css
+.footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
+.footer-home-link { color: #aaa; text-decoration: none; }
+.footer-home-link:hover { color: var(--text); }
+```
+
+Referencia canónica: `pdf-to-txt.html`.

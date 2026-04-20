@@ -181,7 +181,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
 
       /* DROP ZONE */
       .dropzone {
@@ -497,69 +497,7 @@
         <!-- Layout de dos columnas -->
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA: carga + preview -->
-            <div>
-                <!-- Zona de carga (ID requerido por pdf-to-txt.js) -->
-                <div class="dropzone" id="zona-carga">
-                    <span class="dropzone-icon">📄</span>
-                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
-                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
-                </div>
-
-                <!-- Progreso de carga (IDs requeridos por pdf-to-txt.js) -->
-                <div id="progreso-carga">
-                    <div class="progress-info-row">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                </div>
-
-                <!-- Info del archivo cargado (IDs requeridos por pdf-to-txt.js) -->
-                <div class="file-info-card" id="info-archivo">
-                    <div class="file-info-header">
-                        <div class="file-icon-box">PDF</div>
-                        <div>
-                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
-                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
-                        </div>
-                        <button type="button" class="file-remove-btn" id="btn-quitar-archivo">✕ Quitar</button>
-                    </div>
-                </div>
-
-                <!-- Progreso de procesamiento (IDs requeridos por pdf-to-txt.js) -->
-                <div class="processing-panel" id="progreso-proceso">
-                    <div class="progress-info-row">
-                        <span id="texto-proceso">Procesando...</span>
-                        <span id="porcentaje-proceso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-proceso"></div>
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado (ID requerido por pdf-to-txt.js) -->
-                <div class="status-message" id="mensaje-estado"></div>
-
-                <!-- Vista previa (IDs requeridos por pdf-to-txt.js) -->
-                <div class="preview-panel" id="seccion-preview">
-                    <div class="preview-panel-header">
-                        <span class="preview-panel-title">Vista Previa</span>
-                        <span class="preview-lines-badge"><span id="preview-lineas">0</span> lineas</span>
-                    </div>
-                    <div class="preview-body" id="preview-container">
-                        <div class="preview-placeholder">Carga un PDF para ver la vista previa del texto extraido...</div>
-                    </div>
-                </div>
-
-                <div class="info-strip">
-                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones + botones (ID requerido por pdf-to-txt.js) -->
+            <!-- COLUMNA IZQUIERDA: opciones + botones (ID requerido por pdf-to-txt.js) -->
             <div id="panel-opciones">
                 <div class="options-panel">
                     <div class="options-header">Opciones de Extraccion</div>
@@ -622,11 +560,73 @@
                 </div>
             </div>
 
+            <!-- COLUMNA DERECHA: carga + preview -->
+            <div>
+                <!-- Zona de carga (ID requerido por pdf-to-txt.js) -->
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📄</span>
+                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
+                </div>
+
+                <!-- Progreso de carga (IDs requeridos por pdf-to-txt.js) -->
+                <div id="progreso-carga">
+                    <div class="progress-info-row">
+                        <span id="texto-progreso">Subiendo...</span>
+                        <span id="porcentaje-progreso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-progreso"></div>
+                    </div>
+                </div>
+
+                <!-- Info del archivo cargado (IDs requeridos por pdf-to-txt.js) -->
+                <div class="file-info-card" id="info-archivo">
+                    <div class="file-info-header">
+                        <div class="file-icon-box">PDF</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
+                        </div>
+                        <button type="button" class="file-remove-btn" id="btn-quitar-archivo">✕ Quitar</button>
+                    </div>
+                </div>
+
+                <!-- Progreso de procesamiento (IDs requeridos por pdf-to-txt.js) -->
+                <div class="processing-panel" id="progreso-proceso">
+                    <div class="progress-info-row">
+                        <span id="texto-proceso">Procesando...</span>
+                        <span id="porcentaje-proceso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-proceso"></div>
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado (ID requerido por pdf-to-txt.js) -->
+                <div class="status-message" id="mensaje-estado"></div>
+
+                <!-- Vista previa (IDs requeridos por pdf-to-txt.js) -->
+                <div class="preview-panel" id="seccion-preview">
+                    <div class="preview-panel-header">
+                        <span class="preview-panel-title">Vista Previa</span>
+                        <span class="preview-lines-badge"><span id="preview-lineas">0</span> lineas</span>
+                    </div>
+                    <div class="preview-body" id="preview-container">
+                        <div class="preview-placeholder">Carga un PDF para ver la vista previa del texto extraido...</div>
+                    </div>
+                </div>
+
+                <div class="info-strip">
+                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
+                </div>
+            </div>
+
         </div>
     </main>
     <div class="footer">
         PDF-Export &amp; Import · ERF
-        &nbsp;|&nbsp; PDF Export — PDF a Texto (Etapa 3 · pdfminer.six)
+        &nbsp;|&nbsp; PDF Export — PDF a Texto
         &nbsp;|&nbsp; <span id="app-version"></span>
         &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
     </div>

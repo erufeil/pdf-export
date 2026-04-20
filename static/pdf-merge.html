@@ -159,7 +159,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
 
       /* DROP ZONE MULTI */
       .drop-zone-multi {
@@ -425,7 +425,33 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
+            <div>
+                <div class="options-panel">
+                    <div class="options-header">Opciones</div>
+                    <div class="checkbox-list">
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="opt-marcadores" checked>
+                            <label for="opt-marcadores">Agregar marcadores por archivo</label>
+                        </div>
+                    </div>
+                    <div class="hint-box">El orden de la lista determina el orden final en el PDF.</div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-primary" id="btn-unir" disabled>
+                            📎 Unir PDFs
+                        </button>
+
+                        <div id="resultado-section" style="display:none;">
+                            <a id="link-descarga" class="btn btn-success">
+                                ⬇ Descargar PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
             <div>
                 <!-- Drop zone multi -->
                 <div class="drop-zone-multi" id="drop-zone">
@@ -472,32 +498,6 @@
 
                 <!-- Mensajes de estado -->
                 <div class="status-message" id="mensaje-estado"></div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
-            <div>
-                <div class="options-panel">
-                    <div class="options-header">Opciones</div>
-                    <div class="checkbox-list">
-                        <div class="checkbox-option">
-                            <input type="checkbox" id="opt-marcadores" checked>
-                            <label for="opt-marcadores">Agregar marcadores por archivo</label>
-                        </div>
-                    </div>
-                    <div class="hint-box">El orden de la lista determina el orden final en el PDF.</div>
-
-                    <div class="actions">
-                        <button type="button" class="btn btn-primary" id="btn-unir" disabled>
-                            📎 Unir PDFs
-                        </button>
-
-                        <div id="resultado-section" style="display:none;">
-                            <a id="link-descarga" class="btn btn-success">
-                                ⬇ Descargar PDF
-                            </a>
-                        </div>
-                    </div>
-                </div>
             </div>
 
         </div>

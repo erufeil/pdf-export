@@ -109,7 +109,7 @@
     .page-header p { color: var(--muted); font-size: 13px; }
 
     /* ── Two-col layout ── */
-    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
@@ -310,7 +310,58 @@
     </div>
 
     <div class="layout">
-      <!-- ── Columna izquierda ── -->
+      <!-- ── Columna izquierda — opciones ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Opciones</div>
+
+          <!-- Unificar -->
+          <div class="check-row" style="margin-bottom:14px">
+            <input type="checkbox" id="opt-unificar">
+            <label for="opt-unificar">
+              Unificar tablas iguales
+              <small>Si varias tablas tienen las mismas columnas, unirlas en un solo CSV</small>
+            </label>
+          </div>
+
+          <hr class="opt-divider">
+
+          <!-- Separador -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Separador</div>
+            <div class="pill-group">
+              <button type="button" class="pill-btn active" data-sep=";" onclick="setSeparador(this, ';')">; (coma)</button>
+              <button type="button" class="pill-btn" data-sep="," onclick="setSeparador(this, ',')">, (punto)</button>
+            </div>
+          </div>
+
+          <hr class="opt-divider">
+
+          <!-- Saltos de línea -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Saltos de línea</div>
+            <div class="pill-group">
+              <button type="button" class="pill-btn active" data-sl="CRLF" onclick="setSaltos(this, 'CRLF')">CRLF (Win)</button>
+              <button type="button" class="pill-btn" data-sl="LF" onclick="setSaltos(this, 'LF')">LF (Unix)</button>
+            </div>
+          </div>
+
+          <hr class="opt-divider">
+
+          <!-- Encoding (informativo) -->
+          <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:8px">Encoding</div>
+            <div class="encoding-badge">🔤 utf-8-bom</div>
+          </div>
+
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Extraer Tablas a CSV
+          </button>
+          <div class="action-note">Resultado en ZIP · máxima compresión</div>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — drop zone + contenido ── -->
       <div>
         <!-- Drop zone -->
         <div class="card">
@@ -386,57 +437,6 @@
         <div class="info-strip">
           <p>Los CSV generados usan <strong>utf-8-bom</strong>, compatible con Excel (doble clic para abrir directamente).</p>
           <p>El resultado se descarga como ZIP.</p>
-        </div>
-      </div>
-
-      <!-- ── Columna derecha ── -->
-      <div class="options-col" id="options-col">
-        <div class="card">
-          <div class="card-title">Opciones</div>
-
-          <!-- Unificar -->
-          <div class="check-row" style="margin-bottom:14px">
-            <input type="checkbox" id="opt-unificar">
-            <label for="opt-unificar">
-              Unificar tablas iguales
-              <small>Si varias tablas tienen las mismas columnas, unirlas en un solo CSV</small>
-            </label>
-          </div>
-
-          <hr class="opt-divider">
-
-          <!-- Separador -->
-          <div style="margin-bottom:14px">
-            <div class="card-title" style="margin-bottom:8px">Separador</div>
-            <div class="pill-group">
-              <button type="button" class="pill-btn active" data-sep=";" onclick="setSeparador(this, ';')">; (coma)</button>
-              <button type="button" class="pill-btn" data-sep="," onclick="setSeparador(this, ',')">, (punto)</button>
-            </div>
-          </div>
-
-          <hr class="opt-divider">
-
-          <!-- Saltos de línea -->
-          <div style="margin-bottom:14px">
-            <div class="card-title" style="margin-bottom:8px">Saltos de línea</div>
-            <div class="pill-group">
-              <button type="button" class="pill-btn active" data-sl="CRLF" onclick="setSaltos(this, 'CRLF')">CRLF (Win)</button>
-              <button type="button" class="pill-btn" data-sl="LF" onclick="setSaltos(this, 'LF')">LF (Unix)</button>
-            </div>
-          </div>
-
-          <hr class="opt-divider">
-
-          <!-- Encoding (informativo) -->
-          <div style="margin-bottom:14px">
-            <div class="card-title" style="margin-bottom:8px">Encoding</div>
-            <div class="encoding-badge">🔤 utf-8-bom</div>
-          </div>
-
-          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
-            Extraer Tablas a CSV
-          </button>
-          <div class="action-note">Resultado en ZIP · máxima compresión</div>
         </div>
       </div>
     </div>

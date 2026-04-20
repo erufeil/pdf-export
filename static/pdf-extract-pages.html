@@ -108,7 +108,7 @@
     .page-header p { color: var(--muted); font-size: 13px; }
 
     /* ── Two-col layout ── */
-    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
@@ -348,7 +348,35 @@
     </div>
 
     <div class="layout">
-      <!-- ── Columna izquierda ── -->
+      <!-- ── Columna izquierda — opciones ── -->
+      <div class="options-col hidden" id="panel-opciones">
+        <div class="card format-card">
+          <div class="card-title">Formato de salida</div>
+          <div class="format-option selected" id="opt-unico-wrap" onclick="seleccionarFormato('unico')">
+            <input type="radio" name="formato" id="fmt-unico" value="unico" checked>
+            <label for="fmt-unico">
+              Un único PDF
+              <small>Todas las páginas seleccionadas en un solo archivo</small>
+            </label>
+          </div>
+          <div class="format-option" id="opt-sep-wrap" onclick="seleccionarFormato('separados')">
+            <input type="radio" name="formato" id="fmt-sep" value="separados">
+            <label for="fmt-sep">
+              Archivos separados
+              <small>Un PDF por cada página seleccionada</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Extraer Páginas
+          </button>
+          <div class="action-note">Resultado en ZIP · máxima compresión</div>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha — drop zone + contenido ── -->
       <div>
         <!-- Drop zone -->
         <div class="card" id="card-upload">
@@ -434,34 +462,6 @@
         <div class="info-strip">
           <p>Haz clic en las miniaturas o escribe los números de página para seleccionar.</p>
           <p>El resultado se descargará como un archivo ZIP.</p>
-        </div>
-      </div>
-
-      <!-- ── Columna derecha — opciones ── -->
-      <div class="options-col hidden" id="panel-opciones">
-        <div class="card format-card">
-          <div class="card-title">Formato de salida</div>
-          <div class="format-option selected" id="opt-unico-wrap" onclick="seleccionarFormato('unico')">
-            <input type="radio" name="formato" id="fmt-unico" value="unico" checked>
-            <label for="fmt-unico">
-              Un único PDF
-              <small>Todas las páginas seleccionadas en un solo archivo</small>
-            </label>
-          </div>
-          <div class="format-option" id="opt-sep-wrap" onclick="seleccionarFormato('separados')">
-            <input type="radio" name="formato" id="fmt-sep" value="separados">
-            <label for="fmt-sep">
-              Archivos separados
-              <small>Un PDF por cada página seleccionada</small>
-            </label>
-          </div>
-        </div>
-
-        <div class="card">
-          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
-            Extraer Páginas
-          </button>
-          <div class="action-note">Resultado en ZIP · máxima compresión</div>
         </div>
       </div>
     </div>

@@ -110,7 +110,7 @@
     .page-header p { color: var(--muted); font-size: 13px; }
 
     /* ── Two-col layout ── */
-    .layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
@@ -282,6 +282,40 @@
 
     <div class="layout">
       <!-- ── Columna izquierda ── -->
+      <div class="options-col" id="options-col">
+        <div class="card">
+          <div class="card-title">Escala de salida</div>
+
+          <div class="scale-grid">
+            <button type="button" class="scale-btn" data-escala="1" onclick="setEscala(this, 1)">
+              <span class="scale-val">1×</span>
+              <span class="scale-desc">Original</span>
+            </button>
+            <button type="button" class="scale-btn active" data-escala="2" onclick="setEscala(this, 2)">
+              <span class="scale-val">2×</span>
+              <span class="scale-desc">Recomendado</span>
+            </button>
+            <button type="button" class="scale-btn" data-escala="3" onclick="setEscala(this, 3)">
+              <span class="scale-val">3×</span>
+              <span class="scale-desc">Alta calidad</span>
+            </button>
+            <button type="button" class="scale-btn" data-escala="4" onclick="setEscala(this, 4)">
+              <span class="scale-val">4×</span>
+              <span class="scale-desc">Máxima</span>
+            </button>
+          </div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:14px; margin-top:6px;">
+            Escala seleccionada: <span id="lbl-escala" style="color:var(--accent); font-family:'IBM Plex Mono',monospace;">2×</span>
+          </div>
+
+          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
+            Convertir a PNG
+          </button>
+          <div class="action-note">Descarga directa · sin ZIP</div>
+        </div>
+      </div>
+
+      <!-- ── Columna derecha ── -->
       <div>
         <!-- Drop zone -->
         <div class="card">
@@ -332,40 +366,6 @@
         <div class="info-strip">
           <p>La conversión usa <strong>cairosvg</strong> — renderizado fiel al SVG, incluyendo fuentes, gradientes y transparencia.</p>
           <p>El resultado se descarga directamente como <strong>.png</strong> (sin ZIP).</p>
-        </div>
-      </div>
-
-      <!-- ── Columna derecha ── -->
-      <div class="options-col" id="options-col">
-        <div class="card">
-          <div class="card-title">Escala de salida</div>
-
-          <div class="scale-grid">
-            <button type="button" class="scale-btn" data-escala="1" onclick="setEscala(this, 1)">
-              <span class="scale-val">1×</span>
-              <span class="scale-desc">Original</span>
-            </button>
-            <button type="button" class="scale-btn active" data-escala="2" onclick="setEscala(this, 2)">
-              <span class="scale-val">2×</span>
-              <span class="scale-desc">Recomendado</span>
-            </button>
-            <button type="button" class="scale-btn" data-escala="3" onclick="setEscala(this, 3)">
-              <span class="scale-val">3×</span>
-              <span class="scale-desc">Alta calidad</span>
-            </button>
-            <button type="button" class="scale-btn" data-escala="4" onclick="setEscala(this, 4)">
-              <span class="scale-val">4×</span>
-              <span class="scale-desc">Máxima</span>
-            </button>
-          </div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:14px; margin-top:6px;">
-            Escala seleccionada: <span id="lbl-escala" style="color:var(--accent); font-family:'IBM Plex Mono',monospace;">2×</span>
-          </div>
-
-          <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
-            Convertir a PNG
-          </button>
-          <div class="action-note">Descarga directa · sin ZIP</div>
         </div>
       </div>
     </div>

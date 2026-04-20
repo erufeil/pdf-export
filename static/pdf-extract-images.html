@@ -159,7 +159,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
 
       /* DROP ZONE */
       .dropzone {
@@ -493,67 +493,7 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
-            <div>
-                <div class="dropzone" id="zona-carga">
-                    <span class="dropzone-icon">📄</span>
-                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
-                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
-                </div>
-
-                <!-- Progreso de carga -->
-                <div id="progreso-carga">
-                    <div class="progress-info-row">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                </div>
-
-                <!-- Info archivo -->
-                <div class="file-info-card" id="info-archivo">
-                    <div class="file-info-header">
-                        <div class="file-icon-box">PDF</div>
-                        <div>
-                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
-                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Banner resultado del analisis -->
-                <div class="analysis-banner" id="resultado-analisis">
-                    <div class="analysis-number" id="total-imagenes">0</div>
-                    <div class="analysis-text">imagenes encontradas en el documento</div>
-                </div>
-
-                <!-- Galeria de imagenes -->
-                <div class="gallery-panel" id="galeria-imagenes">
-                    <div class="gallery-panel-header">
-                        <span class="gallery-panel-title">Imagenes encontradas</span>
-                        <div class="gallery-btns">
-                            <button class="gallery-btn" id="btn-seleccionar-todas">Seleccionar todas</button>
-                            <button class="gallery-btn" id="btn-deseleccionar-todas">Deseleccionar</button>
-                        </div>
-                    </div>
-                    <div id="gallery-grid" class="gallery-grid"></div>
-                    <div class="gallery-loading" id="gallery-loading">
-                        <div class="spinner"></div>
-                        <p>Analizando documento...</p>
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado -->
-                <div class="status-message" id="mensaje-estado"></div>
-
-                <div class="info-strip">
-                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
             <div id="panel-opciones">
 
                 <!-- Formato de salida -->
@@ -611,6 +551,66 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div>
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📄</span>
+                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
+                </div>
+
+                <!-- Progreso de carga -->
+                <div id="progreso-carga">
+                    <div class="progress-info-row">
+                        <span id="texto-progreso">Subiendo...</span>
+                        <span id="porcentaje-progreso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-progreso"></div>
+                    </div>
+                </div>
+
+                <!-- Info archivo -->
+                <div class="file-info-card" id="info-archivo">
+                    <div class="file-info-header">
+                        <div class="file-icon-box">PDF</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Banner resultado del analisis -->
+                <div class="analysis-banner" id="resultado-analisis">
+                    <div class="analysis-number" id="total-imagenes">0</div>
+                    <div class="analysis-text">imagenes encontradas en el documento</div>
+                </div>
+
+                <!-- Galeria de imagenes -->
+                <div class="gallery-panel" id="galeria-imagenes">
+                    <div class="gallery-panel-header">
+                        <span class="gallery-panel-title">Imagenes encontradas</span>
+                        <div class="gallery-btns">
+                            <button class="gallery-btn" id="btn-seleccionar-todas">Seleccionar todas</button>
+                            <button class="gallery-btn" id="btn-deseleccionar-todas">Deseleccionar</button>
+                        </div>
+                    </div>
+                    <div id="gallery-grid" class="gallery-grid"></div>
+                    <div class="gallery-loading" id="gallery-loading">
+                        <div class="spinner"></div>
+                        <p>Analizando documento...</p>
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
+
+                <div class="info-strip">
+                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
+                </div>
             </div>
 
         </div>

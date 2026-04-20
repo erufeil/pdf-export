@@ -172,7 +172,7 @@
       .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
       /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+      .two-col { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
 
       /* DROP ZONE */
       .dropzone {
@@ -485,78 +485,7 @@
 
         <div class="two-col">
 
-            <!-- COLUMNA IZQUIERDA -->
-            <div>
-                <div class="dropzone" id="zona-carga">
-                    <span class="dropzone-icon">📄</span>
-                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
-                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
-                </div>
-
-                <!-- Progreso de carga -->
-                <div id="progreso-carga">
-                    <div class="progress-info-row">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                </div>
-
-                <!-- Info archivo -->
-                <div class="file-info-card" id="info-archivo">
-                    <div class="file-info-header">
-                        <div class="file-icon-box">PDF</div>
-                        <div>
-                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
-                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
-                        </div>
-                    </div>
-                    <div class="file-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="tamano-actual">—</div>
-                            <div class="stat-label">Tamano actual</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="num-imagenes">—</div>
-                            <div class="stat-label">Imagenes</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="porcentaje-imagenes">—</div>
-                            <div class="stat-label">Contenido grafico</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Resultado de compresion -->
-                <div class="result-card" id="resultado-card">
-                    <div class="result-card-title">✓ Compresion completada</div>
-                    <div class="result-comparison">
-                        <div class="size-box">
-                            <div class="size-label">Original</div>
-                            <div class="size-value" id="resultado-original">—</div>
-                        </div>
-                        <div class="size-arrow">→</div>
-                        <div class="size-box">
-                            <div class="size-label">Comprimido</div>
-                            <div class="size-value" id="resultado-comprimido">—</div>
-                        </div>
-                    </div>
-                    <div style="text-align:center;">
-                        <span class="reduction-badge" id="resultado-reduccion">-0%</span>
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado -->
-                <div class="status-message" id="mensaje-estado"></div>
-
-                <div class="info-strip">
-                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA: opciones -->
+            <!-- COLUMNA IZQUIERDA: opciones -->
             <div id="panel-opciones">
 
                 <!-- Nivel de compresion -->
@@ -689,6 +618,77 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div>
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📄</span>
+                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
+                </div>
+
+                <!-- Progreso de carga -->
+                <div id="progreso-carga">
+                    <div class="progress-info-row">
+                        <span id="texto-progreso">Subiendo...</span>
+                        <span id="porcentaje-progreso">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-fill" id="barra-progreso"></div>
+                    </div>
+                </div>
+
+                <!-- Info archivo -->
+                <div class="file-info-card" id="info-archivo">
+                    <div class="file-info-header">
+                        <div class="file-icon-box">PDF</div>
+                        <div>
+                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
+                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
+                        </div>
+                    </div>
+                    <div class="file-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="tamano-actual">—</div>
+                            <div class="stat-label">Tamano actual</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="num-imagenes">—</div>
+                            <div class="stat-label">Imagenes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="porcentaje-imagenes">—</div>
+                            <div class="stat-label">Contenido grafico</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultado de compresion -->
+                <div class="result-card" id="resultado-card">
+                    <div class="result-card-title">✓ Compresion completada</div>
+                    <div class="result-comparison">
+                        <div class="size-box">
+                            <div class="size-label">Original</div>
+                            <div class="size-value" id="resultado-original">—</div>
+                        </div>
+                        <div class="size-arrow">→</div>
+                        <div class="size-box">
+                            <div class="size-label">Comprimido</div>
+                            <div class="size-value" id="resultado-comprimido">—</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <span class="reduction-badge" id="resultado-reduccion">-0%</span>
+                    </div>
+                </div>
+
+                <!-- Mensaje de estado -->
+                <div class="status-message" id="mensaje-estado"></div>
+
+                <div class="info-strip">
+                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
+                </div>
             </div>
 
         </div>

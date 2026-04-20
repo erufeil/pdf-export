@@ -541,9 +541,7 @@ def _extraer_tika(ruta: Path, mime_type: str) -> dict:
 - Llamada sincrona directa: `img_metadata.extraer_metadatos_imagen(archivo_id)`
 
 ---
-### Errores pendientes de correccion:
-revisar todos los html para homogeneizarlos con el mismo marco y el mismo home
-Falta Etapa 26 y 27
+
 ---
 
 ## 5. Diseño visual — tema IBM Plex
@@ -581,78 +579,58 @@ Todas las páginas de servicios usan el mismo tema oscuro:
 
 ---
 
-#### A. Doble "home" — eliminar el logo-link
-
-**Problema:** algunos módulos (ej. `pdf-to-txt.html`) tienen el logo del sidebar como `<a href="/">` — un botón home redundante. El breadcrumb ya cumple esa función con `Inicio › Categoría › Módulo`.
+#### A. Logo — enlace externo dentro del div
 
 **Regla definitiva:**
-- Sidebar logo: siempre `<div class="sidebar-logo">PDF</div>` — no es un enlace
-- Breadcrumb: siempre presente, siempre con `<a href="/">Inicio</a> › Categoría › Módulo actual`
-- No existe ningún otro enlace o botón que lleve a home en la página
+
+- El div `sidebar-logo` se mantiene como `<div class="sidebar-logo">` (no reemplazarlo por `<a>`)
+- Dentro del div, el contenido se envuelve en `<a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">`
+- CSS: `.sidebar-logo-link { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }`
+- El breadcrumb sigue siendo la navegación interna: `Inicio › Categoría › Módulo`
 
 ---
 
-#### B. Sidebar — contenido desactualizado
+#### B. Sidebar — igual a home
 
-**Problema:** cada HTML tiene el sidebar hardcodeado y muchos no incluyen los servicios nuevos (eps-to-png, pdf-metadata, img-metadata, help).
-
-**Regla definitiva:** todos los sidebars deben tener exactamente las mismas secciones y links, en el mismo orden:
+**Regla definitiva:** el sidebar de todos los módulos es idéntico al de `index.html`: mismas secciones, mismo orden, mismos ítems. No es una lista detallada de todos los servicios — es el menú de navegación de alto nivel.
 
 ```text
-[Tengo un PDF…]
-  TXT  PDF a Texto
-  DOC  PDF a DOCX
-  PNG  PDF a PNG
-  JPG  PDF a JPG
-  ZIP  Comprimir PDF
-  IMG  Extraer Imágenes
-  CUT  Cortar PDF
-  ROT  Rotar PDF
-  MRG  Unir PDFs
-  EXT  Extraer Páginas
-  ORD  Reordenar
-  CSV  PDF a CSV
-  OCR  Escaneado a CSV
+[Operaciones]
+  📄  Tengo un PDF...   → href="/"
+  ✨  Quiero un PDF     → href="/"
+  🔍  Forensis          → href="/"
+  🔧  Misceláneos       → href="/"
 
-[Quiero un PDF…]
-  HTM  HTML a PDF
-  IMG  IMG a PDF
-
-[Utilidades]
-  SCR  Scraper Web
-  NDM  Migrar SQL
-  WBP  WEBP a PNG
-  SVG  SVG a PNG
-  EPS  EPS a PNG
-  OCR  IMG a TXT
-
-[Forensis]
-  META  Metadatos PDF
-  EXIF  Metadatos Imagen
+[Sistema]
+  🗄️  Archivos en Cache → href="/"
+  ℹ️  Acerca de         → href="/"
+  ❓  Ayuda             → href="/help.html" target="_blank"
 ```
 
-El ítem activo recibe `class="nav-item active"`. El link apunta siempre a `/static/[nombre].html` (sin `/static/` solo en los que están en raíz: `pdf-metadata.html`, `img-metadata.html`, `help.html` → `/pdf-metadata.html`, etc.).
+El ítem que corresponde a la categoría del módulo activo recibe `class="nav-item active"`.
 
 ---
 
-#### C. Topbar / encabezado — formato único
+#### C. Header — formato único
 
-**Estructura obligatoria:**
+**Estructura obligatoria** (igual a `pdf-to-txt.html`):
 
 ```html
-<div class="topbar">
-  <div class="breadcrumb">
-    <a href="/">Inicio</a>
-    <span class="sep">›</span>
-    <span>[Categoría]</span>   <!-- Tengo un PDF / Quiero un PDF / Utilidades / Forensis -->
-    <span class="sep">›</span>
-    <span class="current">[Nombre del módulo]</span>
-  </div>
-  <span class="topbar-badge">[SIGLA 3-4 chars]</span>
-</div>
+<header class="header">
+    <div class="breadcrumb">
+        <a href="/" title="Inicio">🏠</a>
+        <span class="sep">/</span>
+        <a href="/">Categoría</a>   <!-- Tengo un PDF / Quiero un PDF / Forensis / Misceláneos -->
+        <span class="sep">/</span>
+        <span class="current">Nombre del módulo</span>
+    </div>
+    <div class="header-right">
+        <div class="stat-chip"><span class="dot"></span>Online</div>
+    </div>
+</header>
 ```
 
-Sin botones adicionales, sin elementos extra. El badge usa la sigla del módulo (TXT, DOC, PNG, EPS, META, etc.).
+**Sin** botón home (`home-btn`) en el header — ese botón se elimina. Solo breadcrumb + chip Online.
 
 ---
 
@@ -670,19 +648,28 @@ Sin botones adicionales, sin elementos extra. El badge usa la sigla del módulo 
 
 ---
 
-#### E. Footer — formato único
+#### E. Footer — una sola línea con separadores
 
-**Formato obligatorio:**
+**Formato obligatorio** (igual a `pdf-to-txt.html`):
 
-```text
-PDF Export — [Nombre del módulo] (Etapa N · librería principal)
+```html
+<div class="footer">
+    PDF-Export &amp; Import · ERF
+    &nbsp;|&nbsp; PDF Export — [Nombre del módulo] (Etapa N · lib)
+    &nbsp;|&nbsp; <span id="app-version"></span>
+    &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+</div>
 ```
 
-Ejemplos:
+CSS requerido:
 
-- `PDF Export — SVG a PNG (Etapa 23 · cairosvg)`
-- `PDF Export — EPS a PNG (Etapa 27 · Pillow + Ghostscript)`
-- `PDF Export — PDF a Texto (Etapa 3 · PyMuPDF)`
+```css
+.footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
+.footer-home-link { color: #aaa; text-decoration: none; }
+.footer-home-link:hover { color: var(--text); }
+```
+
+Sin `site-footer`, sin `footer-legal`, sin `footer-divider` — solo la línea única. El botón 🏠 Inicio va siempre al final.
 
 ---
 
@@ -719,14 +706,14 @@ Al ejecutar esta etapa, verificar módulo por módulo:
 
 | Check | Descripción | Estado |
 |-------|-------------|--------|
-| ☑ Logo no es link | `<div class="sidebar-logo">PDF</div>` sin `<a>` | Completado — todos los HTML convertidos |
-| ☐ Breadcrumb completo | Inicio › Categoría › Módulo | Pendiente |
-| ☑ Sidebar actualizado | Incluye EPS a PNG + sección Forensis (META + EXIF) | Completado en 9 HTMLs Estilo B |
-| ☐ `--accent` en CSS | Un solo punto de color de acento | Pendiente |
-| ☑ Sin `formatBytes` local | Expuesta como `window.formatBytes` desde common.js | Completado — eliminada de todos los HTMLs |
-| ☑ Sin `escHtml` local | Expuesta como `window.escHtml` desde common.js | Completado — eliminada de todos los HTMLs |
-| ☑ Sin `toggleSidebar` local | Expuesta como `window.toggleSidebar` desde common.js | Completado — eliminada de todos los HTMLs |
-| ☑ Footer formato correcto | `PDF Export — Nombre (Etapa N · lib)` | Completado v1.1.42 |
+| ☑ Logo con link externo | `sidebar-logo-link` → `https://pdf-export.xero-one.com/` | Spec actualizada v1.1.42 |
+| ☑ Sidebar = home | Operaciones (4 ítems) + Sistema — igual a index.html | Spec actualizada v1.1.42 |
+| ☑ Header sin home-btn | Solo breadcrumb + chip Online | pdf-to-txt implementado; resto pendiente |
+| ☑ Footer una línea | `ERF \| módulo \| version \| 🏠 Inicio` | pdf-to-txt implementado; resto pendiente |
+| ☑ `--accent` en CSS | Un solo punto de color de acento | Completado v1.1.42 |
+| ☑ Sin `formatBytes` local | Expuesta como `window.formatBytes` desde common.js | Completado v1.1.42 |
+| ☑ Sin `escHtml` local | Expuesta como `window.escHtml` desde common.js | Completado v1.1.42 |
+| ☑ Sin `toggleSidebar` local | Expuesta como `window.toggleSidebar` desde common.js | Completado v1.1.42 |
 | ☑ API URL patrón único | `window.AppConfig?.API_BASE_URL \|\| '/api/v1'` | Completado v1.1.42 |
 
-> **Etapa 29 — Completada en v1.1.42.** Todos los ítems A–G implementados: logo-link, sidebar Forensis+EPS, breadcrumbs, funciones comunes en common.js, footers estandarizados, `--accent` CSS unificado, API URL con optional chaining y fallback.
+> **Etapa 29 — Spec actualizada en v1.1.42.** `pdf-to-txt.html` es la referencia canónica para sidebar, logo, header y footer. Los demás módulos se migrarán gradualmente al mismo patrón.
