@@ -264,6 +264,11 @@
     <a class="nav-item active" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
     <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+    <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -439,19 +444,14 @@
     </div>
   </div>
 
-  <footer>PDF Export — Scraper Web</footer>
+  <footer>PDF Export — Web Scraper (Etapa 16 · trafilatura)</footer>
 </div>
 
+<script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
   const estado = { url: '', trabajoId: null };
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
-
-  // ── Sidebar ──
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-  }
 
   // ── URL input ──
   const urlInput   = document.getElementById('url-input');
@@ -649,9 +649,6 @@
     btnEjecutar.textContent = 'Extraer y Descargar ZIP';
   }
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 </script>
 </body>
 </html>

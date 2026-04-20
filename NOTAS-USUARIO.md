@@ -263,6 +263,25 @@ WebP es el formato moderno de imágenes en la web que algunos programas todavía
 
 ---
 
+### 🎨 EPS a PNG
+
+**Convierte archivos EPS (Encapsulated PostScript) a imagen PNG.**
+
+EPS es un formato vectorial de gráficos, usado en diseño gráfico e impresión. Este servicio lo convierte a PNG para que puedas abrirlo en cualquier programa.
+
+Escalas disponibles:
+
+- **1× (72 DPI):** tamaño base, rápido
+- **2× (144 DPI):** calidad media, recomendado para pantalla
+- **3× (216 DPI):** alta calidad, bueno para impresión
+- **4× (288 DPI):** muy alta calidad, archivos grandes
+
+El resultado es un archivo PNG (sin ZIP).
+
+**Útil para:** abrir logos o gráficos en formato EPS que no se pueden visualizar directamente.
+
+---
+
 ## Herramientas forenses
 
 ### 🔍 Metadatos PDF

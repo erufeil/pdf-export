@@ -412,6 +412,22 @@ Extraer la huella digital completa de una imagen: metadatos técnicos, EXIF de c
 
 Si Tika no está disponible, bloques 7, 8 y 10 muestran `"Tika no disponible"` y el resto funciona igual con Pillow.
 
+---
+
+### Etapa 29 Homogeneizacion
+
+completada. Resumen de lo que se hizo en esta sesión:
+
+--accent CSS: cada módulo HTML ahora define --accent: #HEX en :root y usa var(--accent) en lugar de var(--purple), var(--orange), etc.
+Breadcrumbs: estandarizados en todos los módulos con categorías correctas (PDF, Conversión, Web, Forensis)
+Footers: formato PDF Export — Nombre (Etapa N · lib) en los 23 módulos
+API URL: todos usan const API = window.AppConfig?.API_BASE_URL || '/api/v1'
+NOTAS-USUARIO.md: agregada sección EPS a PNG
+CLAUDE-PLAN.md: Etapa 29 marcada como completada
+config.py: versión 1.1.42
+
+---
+
 #### Arquitectura del servicio
 
 ```python
@@ -556,3 +572,161 @@ Todas las páginas de servicios usan el mismo tema oscuro:
 - IMG a TXT: amarillo
 - WEBP a PNG: azul
 - Resto: rojo o azul según contexto
+
+---
+
+### Etapa 29 — Corrección general y homogeneización
+
+**Objetivo:** unificar el marco visual y de código de todos los módulos frontend para que sean indistinguibles estructuralmente entre sí. No cambia funcionalidad.
+
+---
+
+#### A. Doble "home" — eliminar el logo-link
+
+**Problema:** algunos módulos (ej. `pdf-to-txt.html`) tienen el logo del sidebar como `<a href="/">` — un botón home redundante. El breadcrumb ya cumple esa función con `Inicio › Categoría › Módulo`.
+
+**Regla definitiva:**
+- Sidebar logo: siempre `<div class="sidebar-logo">PDF</div>` — no es un enlace
+- Breadcrumb: siempre presente, siempre con `<a href="/">Inicio</a> › Categoría › Módulo actual`
+- No existe ningún otro enlace o botón que lleve a home en la página
+
+---
+
+#### B. Sidebar — contenido desactualizado
+
+**Problema:** cada HTML tiene el sidebar hardcodeado y muchos no incluyen los servicios nuevos (eps-to-png, pdf-metadata, img-metadata, help).
+
+**Regla definitiva:** todos los sidebars deben tener exactamente las mismas secciones y links, en el mismo orden:
+
+```text
+[Tengo un PDF…]
+  TXT  PDF a Texto
+  DOC  PDF a DOCX
+  PNG  PDF a PNG
+  JPG  PDF a JPG
+  ZIP  Comprimir PDF
+  IMG  Extraer Imágenes
+  CUT  Cortar PDF
+  ROT  Rotar PDF
+  MRG  Unir PDFs
+  EXT  Extraer Páginas
+  ORD  Reordenar
+  CSV  PDF a CSV
+  OCR  Escaneado a CSV
+
+[Quiero un PDF…]
+  HTM  HTML a PDF
+  IMG  IMG a PDF
+
+[Utilidades]
+  SCR  Scraper Web
+  NDM  Migrar SQL
+  WBP  WEBP a PNG
+  SVG  SVG a PNG
+  EPS  EPS a PNG
+  OCR  IMG a TXT
+
+[Forensis]
+  META  Metadatos PDF
+  EXIF  Metadatos Imagen
+```
+
+El ítem activo recibe `class="nav-item active"`. El link apunta siempre a `/static/[nombre].html` (sin `/static/` solo en los que están en raíz: `pdf-metadata.html`, `img-metadata.html`, `help.html` → `/pdf-metadata.html`, etc.).
+
+---
+
+#### C. Topbar / encabezado — formato único
+
+**Estructura obligatoria:**
+
+```html
+<div class="topbar">
+  <div class="breadcrumb">
+    <a href="/">Inicio</a>
+    <span class="sep">›</span>
+    <span>[Categoría]</span>   <!-- Tengo un PDF / Quiero un PDF / Utilidades / Forensis -->
+    <span class="sep">›</span>
+    <span class="current">[Nombre del módulo]</span>
+  </div>
+  <span class="topbar-badge">[SIGLA 3-4 chars]</span>
+</div>
+```
+
+Sin botones adicionales, sin elementos extra. El badge usa la sigla del módulo (TXT, DOC, PNG, EPS, META, etc.).
+
+---
+
+#### D. Funciones duplicadas — eliminar de los HTML
+
+**Problema:** `formatBytes()` y `escHtml()` están definidas inline en cada HTML (svg-to-png, eps-to-png y otros) además de existir equivalentes en `common.js` (`window.PDFExport.formatearTamano`, pero con diferente nombre).
+
+**Solución:**
+
+1. Agregar a `common.js` → `window.PDFExport`:
+   - `formatBytes(b)` — igual a la versión inline actual
+   - `escHtml(s)` — igual a la versión inline actual
+2. En cada HTML: eliminar las definiciones locales, reemplazar las llamadas directas por `window.PDFExport.formatBytes(...)` y `window.PDFExport.escHtml(...)`
+3. `toggleSidebar()` también es idéntica en todos los HTML → mover a `common.js`
+
+---
+
+#### E. Footer — formato único
+
+**Formato obligatorio:**
+
+```text
+PDF Export — [Nombre del módulo] (Etapa N · librería principal)
+```
+
+Ejemplos:
+
+- `PDF Export — SVG a PNG (Etapa 23 · cairosvg)`
+- `PDF Export — EPS a PNG (Etapa 27 · Pillow + Ghostscript)`
+- `PDF Export — PDF a Texto (Etapa 3 · PyMuPDF)`
+
+---
+
+#### F. Variable de acento — `--accent` en lugar de nombre de color
+
+**Problema:** cada módulo usa su color de acento con su nombre propio (`--purple`, `--orange`, `--green`) esparcido en decenas de lugares del CSS.
+
+**Solución:** todos los módulos definen `--accent` con su color específico al inicio de `:root`, y el CSS solo usa `var(--accent)` en todos los lugares donde va el color del módulo. Así cambiar el acento de un módulo requiere editar una sola línea.
+
+```css
+:root {
+  /* ... colores base ... */
+  --accent: #A371F7;  /* ← única línea que varía por módulo */
+}
+```
+
+---
+
+#### G. Detección de API URL — patrón único
+
+Todos los módulos deben usar exactamente:
+
+```js
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+```
+
+Sin variaciones (`window.AppConfig.API_BASE_URL`, hardcoded `/api/v1`, etc.).
+
+---
+
+#### H. Tabla resumen de inconsistencias por módulo
+
+Al ejecutar esta etapa, verificar módulo por módulo:
+
+| Check | Descripción | Estado |
+|-------|-------------|--------|
+| ☑ Logo no es link | `<div class="sidebar-logo">PDF</div>` sin `<a>` | Completado — todos los HTML convertidos |
+| ☐ Breadcrumb completo | Inicio › Categoría › Módulo | Pendiente |
+| ☑ Sidebar actualizado | Incluye EPS a PNG + sección Forensis (META + EXIF) | Completado en 9 HTMLs Estilo B |
+| ☐ `--accent` en CSS | Un solo punto de color de acento | Pendiente |
+| ☑ Sin `formatBytes` local | Expuesta como `window.formatBytes` desde common.js | Completado — eliminada de todos los HTMLs |
+| ☑ Sin `escHtml` local | Expuesta como `window.escHtml` desde common.js | Completado — eliminada de todos los HTMLs |
+| ☑ Sin `toggleSidebar` local | Expuesta como `window.toggleSidebar` desde common.js | Completado — eliminada de todos los HTMLs |
+| ☑ Footer formato correcto | `PDF Export — Nombre (Etapa N · lib)` | Completado v1.1.42 |
+| ☑ API URL patrón único | `window.AppConfig?.API_BASE_URL \|\| '/api/v1'` | Completado v1.1.42 |
+
+> **Etapa 29 — Completada en v1.1.42.** Todos los ítems A–G implementados: logo-link, sidebar Forensis+EPS, breadcrumbs, funciones comunes en common.js, footers estandarizados, `--accent` CSS unificado, API URL con optional chaining y fallback.

@@ -21,6 +21,7 @@
         --purple:    #A371F7;
         --text:      #E6EDF3;
         --text-muted:#8B949E;
+        --accent:    #3FB950;
         --sidebar-w: 240px;
         --sidebar-w-collapsed: 60px;
         --header-h:  54px;
@@ -369,6 +370,8 @@
       /* Contenido del panel de servidor */
       #server-contenido { padding: 10px; color: var(--text-muted); font-size: 13px; }
 
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1.5rem 0 1rem; }
+
       /* scrollbar */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
@@ -388,10 +391,10 @@
 
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
-    <a class="sidebar-logo" href="/">
+    <div class="sidebar-logo">
         <div class="logo-icon">PDF</div>
         <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
-    </a>
+    </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Operaciones</div>
@@ -555,12 +558,13 @@
 
         </div>
     </main>
+    <div class="footer">PDF Export — Imagen a PDF (Etapa 17 · Pillow)</div>
 </div>
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
-const API = window.AppConfig.API_BASE_URL;
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 const EXTENSIONES_IMAGEN = ['jpg','jpeg','png','webp','gif','bmp','tiff','tif'];
 
 // ─── Estado ───
@@ -903,12 +907,6 @@ function mostrarMensaje(texto, tipo) {
     mensajeEstado.textContent = texto;
     mensajeEstado.className = 'status-message visible ' + tipo;
     setTimeout(() => { mensajeEstado.className = 'status-message'; }, 5000);
-}
-
-// ─── Sidebar toggle ───
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
 }
 
 // ─── Init ───

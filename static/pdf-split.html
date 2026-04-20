@@ -350,6 +350,8 @@
       #processing-panel { display: none; margin-bottom: 14px; }
       #processing-panel.visible { display: block; }
 
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1.5rem 0 1rem; }
+
       /* scrollbar */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
@@ -368,10 +370,10 @@
 
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
-    <a class="sidebar-logo" href="/">
+    <div class="sidebar-logo">
         <div class="logo-icon">PDF</div>
         <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
-    </a>
+    </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Operaciones</div>
@@ -516,12 +518,13 @@
             </div>
         </div>
     </main>
+    <div class="footer">PDF Export — Cortar PDF (Etapa 2 · PyMuPDF)</div>
 </div>
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
-const API = window.AppConfig.API_BASE_URL;
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 
 // ─── Estado global ───
 const estado = {
@@ -883,12 +886,6 @@ function mostrarMensaje(texto, tipo) {
     mensajeEstado.textContent = texto;
     mensajeEstado.className = 'status-message visible ' + tipo;
     setTimeout(() => { mensajeEstado.className = 'status-message'; }, 5000);
-}
-
-// ─── Sidebar toggle ───
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
 }
 
 // ─── Exponer funciones globales (usadas en onclick del template HTML) ───

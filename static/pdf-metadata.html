@@ -250,12 +250,16 @@
             .main { padding: 20px 16px; }
             .form-row { grid-template-columns: 1fr; }
         }
+        .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1.5rem 0 1rem; }
+        .breadcrumb a:hover { color: var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="topbar">
-    <a href="/">Tengo un PDF...</a>
+<div class="topbar breadcrumb">
+    <a href="/">Inicio</a>
+    <span class="sep">›</span>
+    <a href="/">Forensis</a>
     <span class="sep">›</span>
     <span class="current">Metadatos PDF</span>
 </div>
@@ -379,18 +383,14 @@
 
         </div>
     </main>
+    <div class="footer">PDF Export — Metadatos PDF (Etapa 25 · PyMuPDF)</div>
 </div>
 
 <script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
 <script>
-let API = '';
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 let archivoId = null;
-
-window.addEventListener('load', () => {
-    API = (window.AppConfig && window.AppConfig.API_BASE_URL)
-        ? window.AppConfig.API_BASE_URL
-        : `${location.protocol}//${location.hostname}:${location.port || (location.protocol === 'https:' ? '443' : '80')}/api/v1`;
-});
 
 // ─── Drop zone ────────────────────────────────────────────────────────────────
 const dropZone  = document.getElementById('dropZone');
@@ -685,12 +685,6 @@ function esperarJob(jobId) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatBytes(b) {
-    if (!b) return '—';
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(2) + ' MB';
-}
 function mostrarError(msg) {
     const el = document.getElementById('alertaError');
     el.textContent = msg; el.style.display = 'block';

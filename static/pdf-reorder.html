@@ -20,6 +20,7 @@
       --green:    #3FB950;
       --text:     #E6EDF3;
       --muted:    #8B949E;
+      --accent:   #58A6FF;
       --sidebar-w: 220px;
       --sidebar-w-collapsed: 52px;
     }
@@ -59,14 +60,14 @@
       transition: background 0.15s, color 0.15s; white-space: nowrap; cursor: pointer;
     }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--accent); }
     .nav-badge {
       width: 26px; height: 26px; border-radius: 6px; background: var(--card);
       border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
       font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
       color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
     }
-    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--accent); color: var(--accent); }
     #sidebar.collapsed .nav-item span:last-child { display: none; }
     .sidebar-toggle {
       padding: 12px 14px; border-top: 1px solid var(--border);
@@ -124,16 +125,16 @@
       border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
       text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     }
-    .dropzone:hover, .dropzone.drag-over { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(88,166,255,0.04); }
     .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
     .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .dropzone-text strong { color: var(--blue); }
+    .dropzone-text strong { color: var(--accent); }
     .hidden { display: none; }
 
     /* ── Upload progress ── */
     .upload-progress { display: none; margin-top: 12px; }
     .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
     .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
     /* ── Server files ── */
@@ -143,7 +144,7 @@
       display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .server-toggle:hover { border-color: var(--blue); color: var(--text); }
+    .server-toggle:hover { border-color: var(--accent); color: var(--text); }
     .server-files-list { display: none; margin-top: 8px; }
     .server-files-list.open { display: block; }
     .server-file-btn {
@@ -152,7 +153,7 @@
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
       transition: border-color 0.15s, background 0.15s;
     }
-    .server-file-btn:hover { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .server-file-btn:hover { border-color: var(--accent); background: rgba(88,166,255,0.05); }
     .server-file-btn .sf-name { font-weight: 500; }
     .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
@@ -163,7 +164,7 @@
     .file-icon {
       width: 40px; height: 40px; background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--blue); flex-shrink: 0;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--accent); flex-shrink: 0;
     }
     .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .file-meta p { font-size: 11.5px; color: var(--muted); }
@@ -174,7 +175,7 @@
       padding: 5px 10px; background: transparent; border: 1px solid var(--border); color: var(--muted);
       border-radius: 5px; cursor: pointer; font-size: 11.5px; transition: all 0.15s;
     }
-    .quick-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ── View toggle ── */
     .view-toggle { display: none; gap: 6px; margin-bottom: 12px; }
@@ -183,7 +184,7 @@
       padding: 5px 12px; background: transparent; border: 1px solid var(--border);
       color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.15s;
     }
-    .view-btn.active { background: rgba(88,166,255,0.12); border-color: var(--blue); color: var(--blue); }
+    .view-btn.active { background: rgba(88,166,255,0.12); border-color: var(--accent); color: var(--accent); }
 
     /* ── Thumbnails grid ── */
     .thumbs-grid {
@@ -195,7 +196,7 @@
       -webkit-user-select: none; user-select: none; position: relative;
     }
     .thumb-item:active { cursor: grabbing; }
-    .thumb-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.06); }
+    .thumb-item.selected { border-color: var(--accent); background: rgba(88,166,255,0.06); }
     .thumb-item.dragging { opacity: 0.35; transform: scale(0.95); }
     .thumb-item.drag-over { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(244,162,97,0.3); transform: scale(1.03); }
     .thumb-img {
@@ -208,10 +209,10 @@
       font-size: 10px; color: var(--muted);
     }
     .thumb-num { text-align: center; font-size: 10.5px; margin-top: 5px; color: var(--muted); font-weight: 500; }
-    .thumb-item.selected .thumb-num { color: var(--blue); }
+    .thumb-item.selected .thumb-num { color: var(--accent); }
     .thumb-check {
       position: absolute; top: 5px; right: 5px; width: 16px; height: 16px;
-      background: var(--blue); border-radius: 50%; display: none;
+      background: var(--accent); border-radius: 50%; display: none;
       align-items: center; justify-content: center; color: #fff; font-size: 9px;
     }
     .thumb-item.selected .thumb-check { display: flex; }
@@ -228,12 +229,12 @@
     .list-item:active { cursor: grabbing; }
     .list-item.dragging { opacity: 0.35; }
     .list-item.drag-over { border-color: var(--orange); }
-    .list-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .list-item.selected { border-color: var(--accent); background: rgba(88,166,255,0.05); }
     .list-handle { color: var(--muted); font-size: 14px; cursor: grab; }
     .list-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); min-width: 28px; }
     .list-label { flex: 1; font-size: 12.5px; }
     .list-check {
-      width: 16px; height: 16px; background: var(--blue); border-radius: 50%;
+      width: 16px; height: 16px; background: var(--accent); border-radius: 50%;
       display: none; align-items: center; justify-content: center; color: #fff; font-size: 9px;
     }
     .list-item.selected .list-check { display: flex; }
@@ -249,7 +250,7 @@
       color: var(--text); border-radius: 6px; padding: 5px 8px; font-size: 12px;
       font-family: 'IBM Plex Mono', monospace;
     }
-    .move-pos-row input:focus { outline: none; border-color: var(--blue); }
+    .move-pos-row input:focus { outline: none; border-color: var(--accent); }
 
     /* ── Pagination ── */
     .pagination { display: none; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
@@ -258,7 +259,7 @@
       padding: 5px 12px; background: transparent; border: 1px solid var(--border);
       color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
     }
-    .pagination-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .pagination-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
     .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .pagination-info { font-size: 11.5px; color: var(--muted); }
 
@@ -267,14 +268,14 @@
       background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.18);
       border-radius: 7px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 12px;
     }
-    .summary-count { color: var(--blue); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+    .summary-count { color: var(--accent); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
     .summary-state { color: var(--orange); font-weight: 500; }
 
     /* ── Processing panel ── */
     .processing-panel { display: none; }
     .processing-panel.visible { display: block; }
     .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
     .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
     /* ── Right col options ── */
@@ -296,7 +297,7 @@
       color: var(--muted); border-radius: 8px; font-size: 12px; cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
     .action-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; }
 
     /* ── Status message ── */
@@ -342,6 +343,11 @@
     <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
     <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+    <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -486,9 +492,10 @@
     </div>
   </div>
 
-  <footer>PDF Export — Reordenar Páginas</footer>
+  <footer>PDF Export — Reordenar Páginas (Etapa 13 · PyMuPDF)</footer>
 </div>
 
+<script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
   // ── Estado ──
@@ -502,12 +509,6 @@
   let vistaActual = 'grilla';
   let dragSrcIdx = null;
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
-
-  // ── Sidebar ──
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-  }
 
   // ── Drop zone ──
   const dropZone  = document.getElementById('drop-zone');
@@ -920,14 +921,6 @@
     el.className = 'status-message'; el.textContent = '';
   }
 
-  function formatBytes(b) {
-    if (!b) return '';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(1) + ' MB';
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 </script>
 </body>
 </html>

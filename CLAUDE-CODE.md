@@ -264,7 +264,32 @@ img.src = `${API}/files/${archivoId}/thumbnail/${totalPaginas - 1}`;
 
 ---
 
-## 10. Patrón: valores EXIF de Pillow (IFDRational)
+## 10. Funciones globales en common.js (Etapa 29)
+
+Las siguientes funciones están definidas en `static/js/common.js` y expuestas globalmente:
+
+```javascript
+// Disponibles como window.PDFExport.X o directamente como X en HTML
+window.formatBytes(bytes)   // "1.5 KB", "2.3 MB", etc.
+window.escHtml(str)         // escapa &, <, >, "
+window.toggleSidebar()      // colapsa/expande #sidebar + #main
+```
+
+**Regla**: no definir `function formatBytes`, `function escHtml` ni `function toggleSidebar`
+localmente en ningún HTML. Usar las de common.js.
+
+**Patrón sidebar (Estilo B)** — logo es `<div class="sidebar-logo">PDF</div>` (no `<a>`).
+La sección Forensis va al final del sidebar-nav:
+```html
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
+```
+
+---
+
+## 11. Patrón: valores EXIF de Pillow (IFDRational)
 
 `PIL.Image.getexif()` puede devolver valores `IFDRational` (subclase de `Fraction`) para tags de tipo *rational* (FocalLength, XResolution, DigitalZoomRatio, dpi, etc.).  
 `round(IFDRational, 1)` devuelve `Fraction` → **no serializable a JSON**.
@@ -298,3 +323,49 @@ Padding de números: tantos dígitos como el total de elementos.
 - 8 elementos → 1 dígito (1, 2, ..., 8)
 - 15 elementos → 2 dígitos (01, 02, ..., 15)
 - 100 elementos → 3 dígitos (001, 002, ..., 100)
+
+---
+
+## 12. Homogeneización Frontend (Etapa 29 — completado en v1.1.42)
+
+### `--accent` CSS variable
+
+Cada HTML de módulo define `--accent: #HEX;` en `:root`. Todos los usos del color
+de acento del módulo usan `var(--accent)`. Estado actual:
+
+| Archivo                  | --accent | Color original |
+|--------------------------|----------|----------------|
+| eps-to-png.html          | #F4A261  | --orange       |
+| svg-to-png.html          | #A371F7  | --purple       |
+| pdf-extract-pages.html   | #58A6FF  | --blue         |
+| pdf-reorder.html         | #58A6FF  | --blue         |
+| pdf-to-csv.html          | #58A6FF  | --blue         |
+| pdf-scanned-to-csv.html  | #F4A261  | --orange       |
+| img-to-txt.html          | #E3B341  | --yellow       |
+| img-to-1pdf.html         | #3FB950  | --green        |
+| webp-to-png.html         | #F4A261  | --orange       |
+| img-metadata.html        | #3FB950  | ya tenía       |
+| pdf-metadata.html        | #58A6FF  | ya tenía       |
+
+### API URL pattern (todos los módulos con JS inline)
+
+```javascript
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+```
+
+Los módulos con JS externo (pdf-compress.js, pdf-rotate.js, etc.) usan
+`window.AppConfig.API_BASE_URL` directamente en sus archivos JS.
+
+### Footer de módulo
+
+Todos los módulos tienen un footer con nombre y etapa:
+
+- **Estilo B**: `<footer>PDF Export — Nombre (Etapa N · lib)</footer>`
+- **Estilo A**: `<div class="footer">PDF Export — Nombre (Etapa N · lib)</div>`
+
+CSS Estilo A: `.footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }`
+
+### Breadcrumbs
+
+Todos los módulos tienen breadcrumb. img-metadata y pdf-metadata usan
+`<div class="topbar breadcrumb">` con categoría **Forensis**.

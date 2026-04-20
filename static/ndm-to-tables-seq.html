@@ -226,6 +226,11 @@
     <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
     <a class="nav-item active" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+    <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -326,7 +331,7 @@
     </div>
   </div>
 
-  <footer>PDF Export — Migrar SQL (NDM2)</footer>
+  <footer>PDF Export — NDM2 a Tablas (Etapa 14 · nlm-ingestor)</footer>
 </div>
 
 <script src="/config.js"></script>
@@ -334,12 +339,6 @@
 <script>
   let archivoId = null;
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
-
-  // ── Sidebar ──
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-  }
 
   // ── Drop zone ──
   const dropZone = document.getElementById('drop-zone');
@@ -519,11 +518,6 @@
     el.className = 'status-message'; el.textContent = '';
   }
 
-  function formatBytes(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(1) + ' MB';
-  }
 </script>
 </body>
 </html>

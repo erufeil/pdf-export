@@ -20,6 +20,7 @@
       --green:    #3FB950;
       --text:     #E6EDF3;
       --muted:    #8B949E;
+      --accent:   #58A6FF;
       --sidebar-w: 220px;
       --sidebar-w-collapsed: 52px;
     }
@@ -59,14 +60,14 @@
       transition: background 0.15s, color 0.15s; white-space: nowrap; cursor: pointer;
     }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--blue); }
+    .nav-item.active { background: rgba(88,166,255,0.12); color: var(--accent); }
     .nav-badge {
       width: 26px; height: 26px; border-radius: 6px; background: var(--card);
       border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
       font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
       color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
     }
-    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--blue); color: var(--blue); }
+    .nav-item.active .nav-badge { background: rgba(88,166,255,0.15); border-color: var(--accent); color: var(--accent); }
     #sidebar.collapsed .nav-item span:last-child { display: none; }
     .sidebar-toggle {
       padding: 12px 14px; border-top: 1px solid var(--border);
@@ -123,15 +124,15 @@
       border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
       text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     }
-    .dropzone:hover, .dropzone.drag-over { border-color: var(--blue); background: rgba(88,166,255,0.04); }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(88,166,255,0.04); }
     .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
     .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .dropzone-text strong { color: var(--blue); }
+    .dropzone-text strong { color: var(--accent); }
 
     /* ── Upload progress ── */
     .upload-progress { display: none; margin-top: 12px; }
     .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-    .upload-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.3s; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
     .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
     /* ── File info card ── */
@@ -141,7 +142,7 @@
     .file-icon {
       width: 40px; height: 40px; background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.25);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--blue); flex-shrink: 0;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--accent); flex-shrink: 0;
     }
     .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .file-meta p { font-size: 11.5px; color: var(--muted); }
@@ -153,7 +154,7 @@
       display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .server-toggle:hover { border-color: var(--blue); color: var(--text); }
+    .server-toggle:hover { border-color: var(--accent); color: var(--text); }
     .server-files-list { display: none; margin-top: 8px; }
     .server-files-list.open { display: block; }
     .server-file-btn {
@@ -162,7 +163,7 @@
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
       transition: border-color 0.15s, background 0.15s;
     }
-    .server-file-btn:hover { border-color: var(--blue); background: rgba(88,166,255,0.05); }
+    .server-file-btn:hover { border-color: var(--accent); background: rgba(88,166,255,0.05); }
     .server-file-btn .sf-name { font-weight: 500; }
     .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
@@ -173,10 +174,10 @@
       border-radius: 7px; padding: 8px 12px; font-size: 12.5px; font-family: 'IBM Plex Mono', monospace;
       transition: border-color 0.15s;
     }
-    .paginas-input-row input:focus { outline: none; border-color: var(--blue); }
+    .paginas-input-row input:focus { outline: none; border-color: var(--accent); }
     .paginas-input-row input::placeholder { color: var(--muted); }
     .btn-aplicar {
-      padding: 8px 14px; background: var(--blue); color: #fff; border: none; border-radius: 7px;
+      padding: 8px 14px; background: var(--accent); color: #fff; border: none; border-radius: 7px;
       cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; transition: opacity 0.15s;
     }
     .btn-aplicar:hover { opacity: 0.85; }
@@ -187,7 +188,7 @@
       padding: 4px 10px; background: transparent; border: 1px solid var(--border); color: var(--muted);
       border-radius: 5px; cursor: pointer; font-size: 11.5px; transition: all 0.15s;
     }
-    .quick-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ── Selection summary ── */
     .sel-summary {
@@ -195,7 +196,7 @@
       background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.18);
       border-radius: 7px; padding: 8px 12px; margin-top: 10px; font-size: 12.5px;
     }
-    .sel-count { color: var(--blue); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+    .sel-count { color: var(--accent); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
 
     /* ── Thumbnails panel ── */
     .thumbnails-panel { display: none; }
@@ -210,7 +211,7 @@
       transition: all 0.15s; -webkit-user-select: none; user-select: none;
     }
     .thumb-item:hover { background: rgba(88,166,255,0.05); border-color: rgba(88,166,255,0.2); }
-    .thumb-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.08); }
+    .thumb-item.selected { border-color: var(--accent); background: rgba(88,166,255,0.08); }
     .thumb-img-wrap {
       position: relative; width: 80px; height: 113px;
       background: var(--bg); border-radius: 4px; overflow: hidden;
@@ -220,12 +221,12 @@
     .thumb-placeholder { font-size: 10px; color: var(--muted); text-align: center; }
     .thumb-check {
       position: absolute; top: 3px; right: 3px; width: 18px; height: 18px;
-      background: var(--blue); border-radius: 50%; display: none;
+      background: var(--accent); border-radius: 50%; display: none;
       align-items: center; justify-content: center; color: #fff; font-size: 10px;
     }
     .thumb-item.selected .thumb-check { display: flex; }
     .thumb-num { font-size: 11px; color: var(--muted); font-weight: 500; }
-    .thumb-item.selected .thumb-num { color: var(--blue); }
+    .thumb-item.selected .thumb-num { color: var(--accent); }
 
     /* ── Pagination ── */
     .hidden { display: none; }
@@ -234,7 +235,7 @@
       padding: 5px 12px; background: transparent; border: 1px solid var(--border);
       color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
     }
-    .pagination-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .pagination-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
     .pagination-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .pagination-info { font-size: 11.5px; color: var(--muted); }
 
@@ -242,7 +243,7 @@
     .processing-panel { display: none; }
     .processing-panel.visible { display: block; }
     .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-    .progress-bar-fill { height: 100%; width: 0; background: var(--blue); border-radius: 3px; transition: width 0.4s; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
     .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
     /* ── Right col — options ── */
@@ -254,9 +255,9 @@
       transition: all 0.15s;
     }
     .format-option:last-child { margin-bottom: 0; }
-    .format-option:hover { border-color: var(--blue); }
-    .format-option.selected { border-color: var(--blue); background: rgba(88,166,255,0.06); }
-    .format-option input[type="radio"] { margin-top: 2px; accent-color: var(--blue); cursor: pointer; }
+    .format-option:hover { border-color: var(--accent); }
+    .format-option.selected { border-color: var(--accent); background: rgba(88,166,255,0.06); }
+    .format-option input[type="radio"] { margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
     .format-option label { cursor: pointer; font-size: 12.5px; line-height: 1.4; }
     .format-option label small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
 
@@ -275,7 +276,7 @@
     .status-message.visible { display: block; }
     .status-message.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
     .status-message.error   { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--red); }
-    .status-message.info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); color: var(--blue); }
+    .status-message.info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); color: var(--accent); }
 
     /* ── Info strip ── */
     .info-strip { margin-top: 14px; padding: 10px 14px; background: rgba(88,166,255,0.05); border: 1px solid rgba(88,166,255,0.15); border-radius: 7px; }
@@ -315,6 +316,11 @@
     <a class="nav-item" href="/static/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
     <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
+    <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -461,11 +467,14 @@
     </div>
   </div>
 
-  <footer>PDF Export — Extraer Páginas Específicas</footer>
+  <footer>PDF Export — Extraer Páginas (Etapa 12 · PyMuPDF)</footer>
 </div>
 
+<script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
   // ── Estado global ──
   const estado = {
     archivoId:    null,
@@ -477,14 +486,6 @@
     trabajoId:     null,
     intervalo:     null,
   };
-
-  // ── Sidebar toggle ──
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main    = document.getElementById('main');
-    sidebar.classList.toggle('collapsed');
-    main.classList.toggle('expanded');
-  }
 
   // ── Drop zone ──
   const dropZone  = document.getElementById('drop-zone');
@@ -511,7 +512,7 @@
 
   async function cargarArchivosServidor() {
     try {
-      const r = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+      const r = await fetch(`${API}/files`);
       const d = await r.json();
       if (!d.success || !d.data.length) return;
       const cont = document.getElementById('server-files-contenido');
@@ -532,7 +533,7 @@
   async function subirArchivo(archivo) {
     // Buscar duplicado
     try {
-      const r = await fetch(`${window.AppConfig.API_BASE_URL}/files`);
+      const r = await fetch(`${API}/files`);
       const d = await r.json();
       if (d.success) {
         const dup = d.data.find(f => f.nombre_original === archivo.name && f.tamano_bytes === archivo.size);
@@ -552,7 +553,7 @@
     fd.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${window.AppConfig.API_BASE_URL}/upload`);
+    xhr.open('POST', `${API}/upload`);
     xhr.upload.onprogress = e => {
       if (e.lengthComputable) {
         const pct = Math.round(e.loaded / e.total * 100);
@@ -606,7 +607,7 @@
       item.onclick = () => togglePagina(num);
       item.innerHTML = `
         <div class="thumb-img-wrap">
-          <img src="${window.AppConfig.API_BASE_URL}/files/${estado.archivoId}/thumbnail/${num}"
+          <img src="${API}/files/${estado.archivoId}/thumbnail/${num}"
                alt="Pág ${num}" loading="lazy"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
           <div class="thumb-placeholder" style="display:none">Pág ${num}</div>
@@ -719,7 +720,7 @@
     mostrarProcesando(0, 'Enviando solicitud...');
 
     try {
-      const r = await fetch(`${window.AppConfig.API_BASE_URL}/convert/extract-pages`, {
+      const r = await fetch(`${API}/convert/extract-pages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_id: estado.archivoId, paginas, formato_salida: formato })
@@ -742,7 +743,7 @@
 
   // ── SSE + fallback polling ──
   function monitorearProgreso(jobId) {
-    const sse = new EventSource(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}/progress`);
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
     sse.onmessage = e => {
       try {
         const d = JSON.parse(e.data);
@@ -761,7 +762,7 @@
 
   async function verificarEstadoFinal(jobId) {
     try {
-      const r = await fetch(`${window.AppConfig.API_BASE_URL}/jobs/${jobId}`);
+      const r = await fetch(`${API}/jobs/${jobId}`);
       const d = await r.json();
       if (!d.success) { setTimeout(() => verificarEstadoFinal(jobId), 2000); return; }
       const job = d.data;
@@ -813,14 +814,6 @@
     document.getElementById('btn-ejecutar').textContent = 'Extraer Páginas';
   }
 
-  function formatBytes(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(1) + ' MB';
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 </script>
 </body>
 </html>

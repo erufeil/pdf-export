@@ -21,6 +21,7 @@
         --purple:    #A371F7;
         --text:      #E6EDF3;
         --text-muted:#8B949E;
+        --accent:    #F4A261;
         --sidebar-w: 240px;
         --sidebar-w-collapsed: 60px;
         --header-h:  54px;
@@ -306,6 +307,8 @@
       /* Ocultar input file nativo */
       #input-archivo { display: none; }
 
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1.5rem 0 1rem; }
+
       /* scrollbar */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
@@ -324,10 +327,10 @@
 
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
-    <a class="sidebar-logo" href="/">
+    <div class="sidebar-logo">
         <div class="logo-icon">PDF</div>
         <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
-    </a>
+    </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Operaciones</div>
@@ -479,12 +482,13 @@
 
         </div>
     </main>
+    <div class="footer">PDF Export — WEBP a PNG (Etapa 18 · Pillow)</div>
 </div>
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
-const API = window.AppConfig.API_BASE_URL;
+const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 
 // ─── Estado ───
 const estado = { archivoId: null };
@@ -705,11 +709,6 @@ function mostrarMensaje(texto, tipo) {
     setTimeout(() => { mensajeEstado.className = 'status-message'; }, 5000);
 }
 
-// ─── Sidebar toggle ───
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-}
 </script>
 </body>
 </html>

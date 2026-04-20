@@ -363,6 +363,7 @@
       #panel-opciones { display: none; }
 
       /* ─── FOOTER ─── */
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
       .site-footer {
         border-top: 1px solid var(--border); background: var(--sidebar);
         padding: 20px 32px 28px; margin-top: 40px;
@@ -417,10 +418,10 @@
 
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
-    <a class="sidebar-logo" href="/">
+    <div class="sidebar-logo">
         <div class="logo-icon">PDF</div>
         <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
-    </a>
+    </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Operaciones</div>
@@ -646,6 +647,7 @@
 
         </div>
     </main>
+    <div class="footer">PDF Export — PDF a JPG (Etapa 6 · pdf2image)</div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
@@ -674,12 +676,6 @@
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
-<script>
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-        document.getElementById('main').classList.toggle('expanded');
-    }
-</script>
 <script src="/static/js/pdf-to-jpg.js"></script>
 </body>
 </html>

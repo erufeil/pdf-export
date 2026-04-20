@@ -249,6 +249,9 @@
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
     <a class="nav-item" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
     <a class="nav-item active" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -354,7 +357,7 @@
             </button>
           </div>
           <div style="font-size:11px; color:var(--muted); margin-bottom:14px; margin-top:6px;">
-            Escala seleccionada: <span id="lbl-escala" style="color:var(--orange); font-family:'IBM Plex Mono',monospace;">2×</span>
+            Escala seleccionada: <span id="lbl-escala" style="color:var(--accent); font-family:'IBM Plex Mono',monospace;">2×</span>
           </div>
 
           <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
@@ -366,7 +369,7 @@
     </div>
   </div>
 
-  <footer>PDF Export — EPS a PNG (Etapa 27 · Pillow + Ghostscript)</footer>
+  <footer>PDF Export — EPS a PNG (Etapa 27 · Pillow+Ghostscript)</footer>
 </div>
 
 <script src="/config.js"></script>
@@ -379,11 +382,6 @@
   };
 
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
-
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-  }
 
   // ── Drop zone ──
   const dropZone  = document.getElementById('drop-zone');
@@ -590,15 +588,6 @@
     btn.textContent = 'Convertir a PNG';
   }
 
-  function formatBytes(b) {
-    if (!b) return '0 B';
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(1) + ' MB';
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 </script>
 </body>
 </html>

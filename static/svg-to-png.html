@@ -21,6 +21,7 @@
       --purple:   #A371F7;
       --text:     #E6EDF3;
       --muted:    #8B949E;
+      --accent:   #A371F7;
       --sidebar-w: 220px;
       --sidebar-w-collapsed: 52px;
     }
@@ -60,14 +61,14 @@
       transition: background 0.15s, color 0.15s; white-space: nowrap;
     }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .nav-item.active { background: rgba(163,113,247,0.12); color: var(--purple); }
+    .nav-item.active { background: rgba(163,113,247,0.12); color: var(--accent); }
     .nav-badge {
       width: 26px; height: 26px; border-radius: 6px; background: var(--card);
       border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
       font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
       color: var(--muted); flex-shrink: 0; letter-spacing: -0.5px;
     }
-    .nav-item.active .nav-badge { background: rgba(163,113,247,0.15); border-color: var(--purple); color: var(--purple); }
+    .nav-item.active .nav-badge { background: rgba(163,113,247,0.15); border-color: var(--accent); color: var(--accent); }
     #sidebar.collapsed .nav-item span:last-child { display: none; }
     .sidebar-toggle {
       padding: 12px 14px; border-top: 1px solid var(--border);
@@ -125,16 +126,16 @@
       border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
       text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     }
-    .dropzone:hover, .dropzone.drag-over { border-color: var(--purple); background: rgba(163,113,247,0.04); }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(163,113,247,0.04); }
     .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
     .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .dropzone-text strong { color: var(--purple); }
+    .dropzone-text strong { color: var(--accent); }
     .hidden { display: none; }
 
     /* ── Upload progress ── */
     .upload-progress { display: none; margin-top: 12px; }
     .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-    .upload-bar-fill { height: 100%; width: 0; background: var(--purple); border-radius: 2px; transition: width 0.3s; }
+    .upload-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
     .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
 
     /* ── Server files ── */
@@ -144,7 +145,7 @@
       display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
       transition: border-color 0.15s, color 0.15s;
     }
-    .server-toggle:hover { border-color: var(--purple); color: var(--text); }
+    .server-toggle:hover { border-color: var(--accent); color: var(--text); }
     .server-files-list { display: none; margin-top: 8px; }
     .server-files-list.open { display: block; }
     .server-file-btn {
@@ -153,7 +154,7 @@
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
       transition: border-color 0.15s, background 0.15s;
     }
-    .server-file-btn:hover { border-color: var(--purple); background: rgba(163,113,247,0.05); }
+    .server-file-btn:hover { border-color: var(--accent); background: rgba(163,113,247,0.05); }
     .server-file-btn .sf-name { font-weight: 500; }
     .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
 
@@ -163,7 +164,7 @@
     .file-icon {
       width: 40px; height: 40px; background: rgba(163,113,247,0.12); border: 1px solid rgba(163,113,247,0.25);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--purple); flex-shrink: 0;
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--accent); flex-shrink: 0;
     }
     .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .file-meta p { font-size: 11.5px; color: var(--muted); }
@@ -172,7 +173,7 @@
     .processing-panel { display: none; }
     .processing-panel.visible { display: block; }
     .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-    .progress-bar-fill { height: 100%; width: 0; background: var(--purple); border-radius: 3px; transition: width 0.4s; }
+    .progress-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width 0.4s; }
     .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
     /* ── Status message ── */
@@ -194,14 +195,14 @@
       background: transparent; color: var(--muted); cursor: pointer; font-size: 12px;
       font-family: 'IBM Plex Sans', sans-serif; transition: all 0.15s; text-align: center;
     }
-    .scale-btn:hover { border-color: var(--purple); color: var(--text); }
-    .scale-btn.active { background: rgba(163,113,247,0.12); border-color: var(--purple); color: var(--purple); }
+    .scale-btn:hover { border-color: var(--accent); color: var(--text); }
+    .scale-btn.active { background: rgba(163,113,247,0.12); border-color: var(--accent); color: var(--accent); }
     .scale-btn .scale-val { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; display: block; }
     .scale-btn .scale-desc { font-size: 10px; color: inherit; opacity: 0.8; margin-top: 2px; display: block; }
 
     /* ── Action button ── */
     .btn-action {
-      width: 100%; padding: 12px; background: var(--purple); color: #fff; border: none;
+      width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none;
       border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
       transition: opacity 0.15s; margin-top: 4px;
     }
@@ -249,6 +250,10 @@
     <a class="nav-item" href="/static/ndm-to-tables-seq.html"><span class="nav-badge">NDM</span><span>Migrar SQL</span></a>
     <a class="nav-item" href="/static/webp-to-png.html"><span class="nav-badge">WBP</span><span>WEBP a PNG</span></a>
     <a class="nav-item active" href="/static/svg-to-png.html"><span class="nav-badge">SVG</span><span>SVG a PNG</span></a>
+    <a class="nav-item" href="/static/eps-to-png.html"><span class="nav-badge">EPS</span><span>EPS a PNG</span></a>
+    <div class="nav-section-label">Forensis</div>
+    <a class="nav-item" href="/pdf-metadata.html"><span class="nav-badge">META</span><span>Metadatos PDF</span></a>
+    <a class="nav-item" href="/img-metadata.html"><span class="nav-badge">EXIF</span><span>Metadatos Imagen</span></a>
   </div>
   <div class="sidebar-toggle" onclick="toggleSidebar()">
     <span class="toggle-icon">⇤</span>
@@ -354,7 +359,7 @@
             </button>
           </div>
           <div style="font-size:11px; color:var(--muted); margin-bottom:14px; margin-top:6px;">
-            Escala seleccionada: <span id="lbl-escala" style="color:var(--purple); font-family:'IBM Plex Mono',monospace;">2×</span>
+            Escala seleccionada: <span id="lbl-escala" style="color:var(--accent); font-family:'IBM Plex Mono',monospace;">2×</span>
           </div>
 
           <button type="button" class="btn-action" id="btn-ejecutar" disabled onclick="ejecutar()">
@@ -366,7 +371,7 @@
     </div>
   </div>
 
-  <footer>PDF Export — SVG a PNG (Etapa 23 · cairosvg)</footer>
+  <footer>PDF Export — SVG a PNG (Etapa 24 · cairosvg)</footer>
 </div>
 
 <script src="/config.js"></script>
@@ -379,12 +384,6 @@
   };
 
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
-
-  // ── Sidebar ──
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('main').classList.toggle('expanded');
-  }
 
   // ── Drop zone ──
   const dropZone  = document.getElementById('drop-zone');
@@ -594,15 +593,6 @@
     btn.textContent = 'Convertir a PNG';
   }
 
-  function formatBytes(b) {
-    if (!b) return '0 B';
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(1) + ' MB';
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 </script>
 </body>
 </html>

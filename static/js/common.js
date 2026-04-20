@@ -379,6 +379,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function formatBytes(b) {
+    if (!b) return '0 B';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+}
+
 // Exportar para uso global
 window.PDFExport = {
     FileUploader,
@@ -391,5 +407,13 @@ window.PDFExport = {
     formatearTamano,
     formatearFecha,
     mostrarMensaje,
-    ocultarMensaje
+    ocultarMensaje,
+    formatBytes,
+    escHtml,
+    toggleSidebar
 };
+
+// Aliases globales para compatibilidad con llamadas directas en HTML
+window.formatBytes    = formatBytes;
+window.escHtml        = escHtml;
+window.toggleSidebar  = toggleSidebar;
