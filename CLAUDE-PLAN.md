@@ -428,6 +428,66 @@ config.py: versión 1.1.42
 
 ---
 
+### Etapa 30 — JSON Viewer (completada v1.1.43)
+
+**Página:** `static/json-viewer.html` (frontend puro, sin backend)
+**Categoría sidebar:** Viewers (nueva categoría entre Forensis y Misceláneos)
+**Acento UI:** azul `#58A6FF` (`cat-viewer`)
+
+#### Objetivo
+Visor interactivo de archivos JSON con árbol colapsable, coloreado por tipo y búsqueda en tiempo real.
+
+#### Funcionalidades
+
+- Drop zone para archivos `.json` o pegado directo en textarea
+- Árbol colapsable/expandible: objetos `{}` y arrays `[]` con toggle `▼/▶`
+- Colores por tipo: claves (azul), strings (verde), números (naranja), booleanos (violeta), null (gris)
+- Barra de herramientas: búsqueda con resaltado, Expandir todo, Colapsar todo, Copiar formateado
+- Estadísticas: tipo raíz, cantidad de nodos, tamaño del archivo
+- Error informativo si el JSON es inválido (muestra mensaje del parser)
+- 100% frontend — no requiere backend ni job
+
+#### Cambios en index.html
+
+- Nueva CSS class `cat-viewer` (borde azul `--blue`)
+- Nueva sección `view-viewers` con tarjeta JSON Viewer
+- Nuevo nav-item "Viewers" (👁️) en sidebar Operaciones entre Forensis y Misceláneos
+
+----
+
+### Etapa 31 — Markdown Viewer (completada v1.1.44)
+
+**Página:** `static/md-viewer.html` (frontend puro, sin backend)
+**Categoría sidebar:** Viewers (misma categoría que JSON Viewer)
+**Acento UI:** verde `#3FB950`
+
+#### Objetivo
+Visor con renderizado completo de Markdown: headings, párrafos, listas, tablas, código, blockquotes, links, negrita, cursiva, tachado.
+
+#### Funcionalidades MD Viewer
+
+- Drop zone para archivos `.md`/`.markdown`/`.txt` o pegado directo en textarea
+- Parser Markdown puro JS (sin librerías externas): h1–h6, párrafos, ul, ol, blockquotes, code blocks, inline code, tablas, hr, bold/italic/strikethrough, links, imágenes (referencia visual)
+- Toggle **Vista previa** / **Fuente** para alternar entre renderizado y texto raw
+- **Copiar MD** — copia el markdown original al portapapeles
+- Estadísticas: número de líneas, palabras y encabezados
+- Error de parsing: nunca falla (el parser maneja cualquier input)
+- 100% frontend — no requiere backend ni job
+
+#### Seguridad del parser MD
+
+- Todo texto de usuario se escapa con `escaparHTML()` antes de insertarse en el DOM
+- Links solo permiten protocolos `https://`, `http://`, `mailto:`, `#`, `/` — el resto se reemplaza con `#`
+- Imágenes externas NO se cargan — se muestra un placeholder `🖼 [nombre]`
+- Sin passthrough de HTML crudo del Markdown fuente
+
+#### Cambios index.html — Etapa 31
+
+- Tarjeta MD Viewer agregada en `view-viewers`
+- Contador actualizado a "2 herramientas"
+
+----
+
 #### Arquitectura del servicio
 
 ```python

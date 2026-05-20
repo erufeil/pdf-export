@@ -310,6 +310,53 @@ Muestra datos EXIF de la cámara (modelo, apertura, velocidad, ISO), coordenadas
 
 ---
 
+---
+
+## Viewers — Visualizadores de archivos
+
+### 👁️ JSON Viewer
+
+**Visualiza archivos JSON de forma ordenada y fácil de leer.**
+
+En lugar de ver el JSON como texto plano difícil de entender, el visor lo muestra como un árbol interactivo donde podés:
+
+- **Expandir y colapsar** secciones haciendo clic en la flecha ▼
+- Ver cada tipo de dato con su propio color: textos (verde), números (naranja), verdadero/falso (violeta), nulo (gris), claves (azul)
+- **Buscar** dentro del JSON: escribí en la barra de búsqueda y se resaltan todas las coincidencias
+- **Copiar el JSON formateado** con un clic
+
+Para cargar un JSON: arrastrá el archivo a la zona marcada, o directamente pegá el texto en el cuadro de texto y hacé clic en "Visualizar JSON".
+
+**No requiere subir archivos al servidor** — todo se procesa en tu navegador.
+
+**Útil para:** entender respuestas de APIs, revisar archivos de configuración, explorar datos estructurados.
+
+---
+
+### 📝 Markdown Viewer
+
+**Visualiza archivos Markdown (.md) con formato agradable y legible.**
+
+Los archivos Markdown son documentos de texto con marcas especiales (# para títulos, ** para negrita, etc.). El visor los convierte automáticamente en una página bien formateada con:
+
+- **Títulos** con jerarquía visual (h1 grande, h2 mediano, etc.)
+- **Negrita**, *cursiva* y ~~tachado~~
+- Listas con viñetas y listas numeradas
+- Bloques de código con fondo oscuro y fuente monoespaciada
+- Tablas ordenadas con bordes
+- Citas (blockquotes) con borde lateral verde
+- Links clickeables
+
+Podés alternar entre **Vista previa** (el markdown renderizado) y **Fuente** (el texto original) con los botones de la barra superior.
+
+Para cargar: arrastrá el archivo al área marcada, o pegá el texto directamente en el cuadro y hacé clic en "Visualizar Markdown".
+
+**No requiere subir archivos al servidor** — todo se procesa en tu navegador.
+
+**Útil para:** leer documentación, revisar archivos README, visualizar notas escritas en Markdown.
+
+---
+
 ## Límites y consideraciones
 
 | Límite | Valor |

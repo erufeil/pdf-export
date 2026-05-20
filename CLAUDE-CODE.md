@@ -333,19 +333,21 @@ Padding de números: tantos dígitos como el total de elementos.
 Cada HTML de módulo define `--accent: #HEX;` en `:root`. Todos los usos del color
 de acento del módulo usan `var(--accent)`. Estado actual:
 
-| Archivo                  | --accent | Color original |
-|--------------------------|----------|----------------|
-| eps-to-png.html          | #F4A261  | --orange       |
-| svg-to-png.html          | #A371F7  | --purple       |
-| pdf-extract-pages.html   | #58A6FF  | --blue         |
-| pdf-reorder.html         | #58A6FF  | --blue         |
-| pdf-to-csv.html          | #58A6FF  | --blue         |
-| pdf-scanned-to-csv.html  | #F4A261  | --orange       |
-| img-to-txt.html          | #E3B341  | --yellow       |
-| img-to-1pdf.html         | #3FB950  | --green        |
-| webp-to-png.html         | #F4A261  | --orange       |
-| img-metadata.html        | #3FB950  | ya tenía       |
-| pdf-metadata.html        | #58A6FF  | ya tenía       |
+| Archivo                  | --accent | Color original      |
+|--------------------------|----------|---------------------|
+| eps-to-png.html          | #F4A261  | --orange            |
+| svg-to-png.html          | #A371F7  | --purple            |
+| pdf-extract-pages.html   | #58A6FF  | --blue              |
+| pdf-reorder.html         | #58A6FF  | --blue              |
+| pdf-to-csv.html          | #58A6FF  | --blue              |
+| pdf-scanned-to-csv.html  | #F4A261  | --orange            |
+| img-to-txt.html          | #E3B341  | --yellow            |
+| img-to-1pdf.html         | #3FB950  | --green             |
+| webp-to-png.html         | #F4A261  | --orange            |
+| img-metadata.html        | #3FB950  | ya tenía            |
+| pdf-metadata.html        | #58A6FF  | ya tenía            |
+| json-viewer.html         | #58A6FF  | --blue (cat-viewer) |
+| md-viewer.html           | #3FB950  | --green (cat-viewer)|
 
 ### API URL pattern (todos los módulos con JS inline)
 
@@ -371,7 +373,7 @@ CSS: `.sidebar-logo-link { display:flex; align-items:center; gap:10px; text-deco
 
 ### Sidebar de módulo (igual a home)
 
-Operaciones: `Tengo un PDF...` / `Quiero un PDF` / `Forensis` / `Misceláneos` (todos `href="/"`)  
+Operaciones: `Tengo un PDF...` / `Quiero un PDF` / `Forensis` / `Viewers` / `Misceláneos` (todos `href="/"`)  
 Sistema: `Archivos en Cache` / `Acerca de` (ambos `href="/"`) + `Ayuda` (`href="/help.html" target="_blank"`)  
 El ítem de la categoría activa lleva `class="nav-item active"`.
 

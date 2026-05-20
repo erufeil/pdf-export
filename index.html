@@ -402,6 +402,8 @@
       .card.cat-create:hover { border-color: var(--orange); box-shadow: 0 8px 24px rgba(244,162,97,.15); }
       .card.cat-misc { border-left-color: var(--purple); }
       .card.cat-misc:hover { border-color: var(--purple); box-shadow: 0 8px 24px rgba(163,113,247,.15); }
+      .card.cat-viewer { border-left-color: var(--blue); }
+      .card.cat-viewer:hover { border-color: var(--blue); box-shadow: 0 8px 24px rgba(88,166,255,.15); }
 
       .card-badge {
         position: absolute;
@@ -432,6 +434,7 @@
       .card.cat-export .card-icon { color: var(--red); border-color: rgba(230,57,70,.3); }
       .card.cat-create .card-icon { color: var(--orange); border-color: rgba(244,162,97,.3); }
       .card.cat-misc .card-icon { color: var(--purple); border-color: rgba(163,113,247,.3); }
+      .card.cat-viewer .card-icon { color: var(--blue); border-color: rgba(88,166,255,.3); }
 
       .card-title {
         font-size: 14px;
@@ -710,6 +713,11 @@
             <span class="nav-label">Forensis</span>
         </div>
 
+        <div class="nav-item" data-tooltip="Viewers" onclick="mostrarVista('viewers')">
+            <span class="nav-icon">👁️</span>
+            <span class="nav-label">Viewers</span>
+        </div>
+
         <div class="nav-item" data-tooltip="Miscelaneos" onclick="mostrarVista('misc')">
             <span class="nav-icon">🔧</span>
             <span class="nav-label">Miscelaneos</span>
@@ -946,6 +954,32 @@
             </div>
         </div>
 
+        <!-- ── VIEWERS ── -->
+        <div class="view" id="view-viewers">
+            <div class="section-header">
+                <div class="section-icon">👁️</div>
+                <div>
+                    <div class="section-title">Viewers</div>
+                    <div class="section-desc">Visualizadores interactivos de archivos de datos</div>
+                </div>
+                <div class="section-count">2 herramientas</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/json-viewer.html" class="card cat-viewer">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">JSON</div>
+                    <div class="card-title">JSON Viewer</div>
+                    <div class="card-desc">Visualizador interactivo de archivos JSON con árbol colapsable</div>
+                </a>
+                <a href="/md-viewer.html" class="card cat-viewer">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">MD</div>
+                    <div class="card-title">Markdown Viewer</div>
+                    <div class="card-desc">Renderiza archivos .md con headings, tablas, código y listas</div>
+                </a>
+            </div>
+        </div>
+
         <!-- ── BUSQUEDA (vista temporal al buscar) ── -->
         <div class="view" id="view-search">
             <div class="section-header">
@@ -1071,9 +1105,10 @@
         export:   { label: 'Tengo un PDF...',    navIdx: 0 },
         create:   { label: 'Quiero un PDF',      navIdx: 1 },
         forensis: { label: 'Forensis',           navIdx: 2 },
-        misc:     { label: 'Miscelaneos',        navIdx: 3 },
-        cache:    { label: 'Archivos en Cache',  navIdx: 4 },
-        about:    { label: 'Acerca de',          navIdx: 5 },
+        viewers:  { label: 'Viewers',            navIdx: 3 },
+        misc:     { label: 'Miscelaneos',        navIdx: 4 },
+        cache:    { label: 'Archivos en Cache',  navIdx: 5 },
+        about:    { label: 'Acerca de',          navIdx: 6 },
         search:   { label: 'Busqueda',           navIdx: -1 },
     };
 

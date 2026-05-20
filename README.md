@@ -47,7 +47,7 @@ Las variables se pasan directamente en `docker-compose.yml`:
 ```yaml
 environment:
   - PORT=5000
-  - APP_VERSION=1.1.12     # version que aparece en el footer
+  - APP_VERSION=1.1.44     # version que aparece en el footer
   - FILE_RETENTION_HOURS=4  # horas de retencion de archivos
   - TIMEOUT=30000           # timeout en ms para peticiones del frontend
   - RETRY_ATTEMPTS=3

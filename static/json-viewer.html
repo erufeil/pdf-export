@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Viewer — PDF-Export</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+        --accent:    #58A6FF;
+      }
+
+      html { background: #0D1117; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1);
+        overflow: hidden;
+      }
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+      .sidebar-logo {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer; text-decoration: none; color: var(--text);
+        height: var(--header-h); flex-shrink: 0;
+      }
+      .sidebar-logo-link {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; color: inherit;
+      }
+      .logo-icon {
+        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+        color: white; flex-shrink: 0; letter-spacing: -1px;
+      }
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+      .nav-section-label {
+        font-size: 10px; font-weight: 600; color: var(--text-muted);
+        letter-spacing: .08em; text-transform: uppercase;
+        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
+
+      .nav-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 14px; cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 0.15s; white-space: nowrap; position: relative;
+        text-decoration: none; color: inherit;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active { background: var(--bg); border-left-color: var(--accent); }
+      .nav-item.active .nav-label { color: var(--text); }
+      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B; color: var(--text); padding: 5px 10px;
+        border-radius: 6px; font-size: 12px; white-space: nowrap;
+        border: 1px solid var(--border); pointer-events: none; z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
+
+      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+      .collapse-btn {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        color: var(--text-muted); font-size: 13px; padding: 6px 0;
+        -webkit-user-select: none; user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
+
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+        display: flex; flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+      /* HEADER */
+      .header {
+        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; padding: 0 24px; gap: 14px;
+        position: sticky; top: 0; z-index: 50;
+      }
+      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+      .breadcrumb a {
+        color: var(--text-muted); cursor: pointer; transition: color 0.15s;
+        text-decoration: none; display: flex; align-items: center;
+      }
+      .breadcrumb a:hover { color: var(--accent); }
+      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .stat-chip {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+      }
+      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+      /* ─── CONTENT ─── */
+      .content { padding: 28px 32px; flex: 1; }
+
+      .page-header {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        margin-bottom: 28px; gap: 16px;
+      }
+      .page-title-group { display: flex; align-items: center; gap: 14px; }
+      .page-badge {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+        background: rgba(88,166,255,0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.3);
+        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+      }
+      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+      /* ─── LAYOUT DOS COLUMNAS ─── */
+      .layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+
+      /* ─── COLUMNA IZQUIERDA: INPUT ─── */
+      .input-col { display: flex; flex-direction: column; gap: 14px; }
+
+      .dropzone {
+        background: var(--card); border: 2px dashed var(--border);
+        border-radius: 14px; padding: 28px 16px; text-align: center;
+        cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      }
+      .dropzone:hover, .dropzone.drag-over {
+        border-color: var(--accent);
+        background: rgba(88,166,255,0.04);
+      }
+      .dropzone-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+      .dropzone-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+      .dropzone-sub { font-size: 11px; color: var(--text-muted); }
+
+      .separator-o {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em;
+      }
+      .separator-o::before, .separator-o::after {
+        content: ''; flex: 1; height: 1px; background: var(--border);
+      }
+
+      .paste-area {
+        width: 100%; background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; padding: 12px; resize: vertical; min-height: 120px;
+        transition: border-color 0.2s;
+        outline: none;
+      }
+      .paste-area:focus { border-color: var(--accent); }
+      .paste-area::placeholder { color: var(--text-muted); }
+
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600;
+        cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+        text-decoration: none; width: 100%;
+      }
+      .btn-primary { background: var(--accent); color: #0D1117; }
+      .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 16px rgba(88,166,255,.35); transform: translateY(-1px); }
+      .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+      .btn-secondary:hover { background: var(--card-hover); border-color: var(--text-muted); }
+      .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+      .btn-sm {
+        padding: 6px 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border);
+        background: var(--card); color: var(--text-muted); cursor: pointer;
+        font-family: inherit; transition: all 0.15s; white-space: nowrap;
+      }
+      .btn-sm:hover { background: var(--card-hover); color: var(--text); border-color: var(--text-muted); }
+
+      /* ─── COLUMNA DERECHA: VIEWER ─── */
+      .viewer-col { display: flex; flex-direction: column; gap: 14px; }
+
+      .viewer-toolbar {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      }
+      .search-input {
+        flex: 1; min-width: 160px; background: var(--card); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; padding: 7px 12px; outline: none; transition: border-color 0.2s;
+      }
+      .search-input:focus { border-color: var(--accent); }
+      .search-input::placeholder { color: var(--text-muted); }
+      .search-count {
+        font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;
+        white-space: nowrap; min-width: 60px;
+      }
+
+      .viewer-panel {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 14px; overflow: hidden; min-height: 300px;
+      }
+      .viewer-panel-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 16px; border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+      }
+      .viewer-panel-title {
+        font-size: 11px; font-weight: 600; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+      }
+      .viewer-panel-meta {
+        font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;
+      }
+      .viewer-body {
+        padding: 16px; overflow-y: auto; max-height: 620px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6;
+      }
+      .viewer-placeholder {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: 260px; gap: 12px;
+      }
+      .viewer-placeholder-icon { font-size: 40px; opacity: 0.3; }
+      .viewer-placeholder-text { font-size: 14px; color: var(--text-muted); }
+
+      /* ─── ÁRBOL JSON ─── */
+      .json-nodo { padding-left: 18px; }
+      .json-nodo:first-child { padding-left: 0; }
+
+      .json-fila {
+        display: flex; align-items: baseline; gap: 0;
+        padding: 1px 0; cursor: default; border-radius: 3px;
+        transition: background 0.1s;
+      }
+      .json-fila:hover { background: rgba(255,255,255,0.04); }
+
+      .json-toggle {
+        font-size: 10px; color: var(--text-muted); cursor: pointer;
+        width: 16px; flex-shrink: 0; -webkit-user-select: none; user-select: none;
+        transition: color 0.15s; display: inline-block; text-align: center;
+      }
+      .json-toggle:hover { color: var(--accent); }
+      .json-indent { width: 16px; flex-shrink: 0; display: inline-block; }
+
+      .json-clave { color: var(--blue); }
+      .json-colon { color: var(--text-muted); margin-right: 4px; }
+      .json-str { color: var(--green); }
+      .json-num { color: var(--orange); }
+      .json-bool { color: var(--purple); }
+      .json-null { color: var(--text-muted); font-style: italic; }
+      .json-bracket { color: var(--text); }
+      .json-summary {
+        font-size: 11px; color: var(--text-muted); margin-left: 6px; font-style: italic;
+      }
+
+      .json-hijos { border-left: 1px solid var(--border); margin-left: 7px; }
+      .json-hijos.colapsado { display: none; }
+
+      .json-cierre-fila { display: flex; align-items: baseline; padding: 1px 0; }
+
+      /* Resaltado de búsqueda */
+      .json-match { background: rgba(88,166,255,0.25); border-radius: 2px; }
+      .json-match-active { background: rgba(88,166,255,0.5); border-radius: 2px; }
+
+      /* Error */
+      .error-panel {
+        background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,.25);
+        border-radius: 10px; padding: 14px 16px; color: var(--red); font-size: 13px;
+      }
+      .error-panel strong { display: block; margin-bottom: 4px; }
+      .error-detail { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #ff8899; word-break: break-all; }
+
+      /* Stats strip */
+      .stats-strip {
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        font-size: 12px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;
+      }
+      .stat-item { display: flex; align-items: center; gap: 5px; }
+      .stat-label { color: var(--text-muted); }
+      .stat-value { color: var(--text); font-weight: 600; }
+
+      /* ─── FOOTER ─── */
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
+      .footer-home-link { color: #aaa; text-decoration: none; }
+      .footer-home-link:hover { color: var(--text); }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+      /* Elementos ocultos por defecto (gestionados por JS) */
+      #barra-herramientas { display: none; }
+      #btn-limpiar { display: none; }
+      #stats-strip { display: none; }
+      #input-archivo { display: none; }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        .content { padding: 20px 16px; }
+      }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <div class="sidebar-logo">
+        <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+            <div class="logo-icon">PDF</div>
+            <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
+        <a class="nav-item" href="/" data-tooltip="Tengo un PDF...">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Forensis">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Forensis</span>
+        </a>
+        <a class="nav-item active" href="/" data-tooltip="Viewers">
+            <span class="nav-icon">👁️</span>
+            <span class="nav-label">Viewers</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Miscelaneos">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">Miscelaneos</span>
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
+        <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </a>
+        <a class="nav-item" href="/help.html" target="_blank" data-tooltip="Ayuda">
+            <span class="nav-icon">❓</span>
+            <span class="nav-label">Ayuda</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="breadcrumb">
+            <a href="/" title="Inicio">🏠</a>
+            <span class="sep">/</span>
+            <a href="/">Viewers</a>
+            <span class="sep">/</span>
+            <span class="current">JSON Viewer</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Local</div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-title-group">
+                <div class="page-badge">JSON</div>
+                <div>
+                    <div class="page-title">JSON Viewer</div>
+                    <div class="page-subtitle">Visualizador interactivo con árbol colapsable, búsqueda y coloreado por tipo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layout">
+
+            <!-- COLUMNA IZQUIERDA: carga y pegado -->
+            <div class="input-col">
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">📂</span>
+                    <div class="dropzone-title">Arrastra un archivo .json aquí</div>
+                    <div class="dropzone-sub">o haz clic para seleccionar</div>
+                </div>
+
+                <div class="separator-o">o</div>
+
+                <textarea
+                    id="textarea-json"
+                    class="paste-area"
+                    placeholder='Pegá tu JSON aquí...&#10;&#10;{"ejemplo": true}'
+                    spellcheck="false"
+                ></textarea>
+
+                <button type="button" class="btn btn-primary" id="btn-cargar">
+                    👁️ Visualizar JSON
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-limpiar">
+                    ✕ Limpiar
+                </button>
+
+                <div id="stats-strip" class="stats-strip">
+                    <div class="stat-item">
+                        <span class="stat-label">Tipo raíz:</span>
+                        <span class="stat-value" id="stat-tipo">—</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nodos:</span>
+                        <span class="stat-value" id="stat-nodos">—</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tamaño:</span>
+                        <span class="stat-value" id="stat-tamano">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: visualizador -->
+            <div class="viewer-col">
+                <div class="viewer-toolbar" id="barra-herramientas">
+                    <input
+                        type="text"
+                        class="search-input"
+                        id="input-buscar"
+                        placeholder="🔍 Buscar en el JSON..."
+                    >
+                    <span class="search-count" id="contador-busqueda"></span>
+                    <button type="button" class="btn-sm" id="btn-expandir-todo">Expandir todo</button>
+                    <button type="button" class="btn-sm" id="btn-colapsar-todo">Colapsar todo</button>
+                    <button type="button" class="btn-sm" id="btn-copiar">📋 Copiar</button>
+                </div>
+
+                <div class="viewer-panel">
+                    <div class="viewer-panel-header">
+                        <span class="viewer-panel-title">Árbol JSON</span>
+                        <span class="viewer-panel-meta" id="panel-meta"></span>
+                    </div>
+                    <div class="viewer-body" id="visor-cuerpo">
+                        <div class="viewer-placeholder" id="placeholder">
+                            <div class="viewer-placeholder-icon">{ }</div>
+                            <div class="viewer-placeholder-text">Cargá o pegá un JSON para visualizarlo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="footer">
+        PDF-Export &amp; Import · ERF
+        &nbsp;|&nbsp; JSON Viewer (Etapa 30 · JS)
+        &nbsp;|&nbsp; <span id="app-version"></span>
+        &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+    </div>
+
+</div>
+
+<input type="file" id="input-archivo" accept=".json,application/json">
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    const inputArchivo = document.getElementById('input-archivo');
+    const zonaCarga    = document.getElementById('zona-carga');
+    const textareaJSON = document.getElementById('textarea-json');
+    const btnCargar    = document.getElementById('btn-cargar');
+    const btnLimpiar   = document.getElementById('btn-limpiar');
+    const visorCuerpo  = document.getElementById('visor-cuerpo');
+    const placeholder  = document.getElementById('placeholder');
+    const barraHerr    = document.getElementById('barra-herramientas');
+    const inputBuscar  = document.getElementById('input-buscar');
+    const contBusq     = document.getElementById('contador-busqueda');
+    const panelMeta    = document.getElementById('panel-meta');
+    const statsStrip   = document.getElementById('stats-strip');
+    const statTipo     = document.getElementById('stat-tipo');
+    const statNodos    = document.getElementById('stat-nodos');
+    const statTamano   = document.getElementById('stat-tamano');
+
+    let jsonActual     = null;
+    let textoBruto     = '';
+    let contadorNodos  = 0;
+    let terminosBusq   = [];
+    let matchActual    = 0;
+    let todosLosMatches = [];
+
+    // ─── Versión ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.AppConfig && window.AppConfig.version) {
+            const el = document.getElementById('app-version');
+            if (el) el.textContent = 'v' + window.AppConfig.version;
+        }
+    });
+
+    // ─── Drop zone ─────────────────────────────────────────────────────────────
+    zonaCarga.addEventListener('click', () => inputArchivo.click());
+
+    zonaCarga.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zonaCarga.classList.add('drag-over');
+    });
+    zonaCarga.addEventListener('dragleave', () => zonaCarga.classList.remove('drag-over'));
+    zonaCarga.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zonaCarga.classList.remove('drag-over');
+        const archivo = e.dataTransfer.files[0];
+        if (archivo) leerArchivo(archivo);
+    });
+
+    inputArchivo.addEventListener('change', () => {
+        if (inputArchivo.files[0]) leerArchivo(inputArchivo.files[0]);
+        inputArchivo.value = '';
+    });
+
+    function leerArchivo(archivo) {
+        const lector = new FileReader();
+        lector.onload = (e) => {
+            const texto = e.target.result;
+            textareaJSON.value = texto;
+            procesarJSON(texto, archivo.name);
+        };
+        lector.readAsText(archivo, 'utf-8');
+    }
+
+    // ─── Botón cargar ──────────────────────────────────────────────────────────
+    btnCargar.addEventListener('click', () => {
+        const texto = textareaJSON.value.trim();
+        if (!texto) return;
+        procesarJSON(texto, 'pegado');
+    });
+
+    textareaJSON.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            btnCargar.click();
+        }
+    });
+
+    // ─── Limpiar ───────────────────────────────────────────────────────────────
+    btnLimpiar.addEventListener('click', () => {
+        jsonActual = null;
+        textoBruto = '';
+        textareaJSON.value = '';
+        visorCuerpo.innerHTML = '';
+        visorCuerpo.appendChild(placeholder);
+        placeholder.style.display = '';
+        barraHerr.style.display = 'none';
+        btnLimpiar.style.display = 'none';
+        statsStrip.style.display = 'none';
+        panelMeta.textContent = '';
+        inputBuscar.value = '';
+        contBusq.textContent = '';
+        todosLosMatches = [];
+        contadorNodos = 0;
+    });
+
+    // ─── Procesar JSON ─────────────────────────────────────────────────────────
+    function procesarJSON(texto, nombreOrigen) {
+        try {
+            const dato = JSON.parse(texto);
+            jsonActual = dato;
+            textoBruto = texto;
+            contadorNodos = 0;
+
+            placeholder.style.display = 'none';
+            visorCuerpo.innerHTML = '';
+
+            const raiz = construirArbol(dato, undefined, true);
+            visorCuerpo.appendChild(raiz);
+
+            const tipo = Array.isArray(dato) ? 'Array' : (dato === null ? 'null' : typeof dato);
+            panelMeta.textContent = nombreOrigen;
+            statTipo.textContent = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+            statNodos.textContent = contadorNodos.toLocaleString('es-AR');
+            statTamano.textContent = formatearBytes(new Blob([texto]).size);
+
+            barraHerr.style.display = '';
+            btnLimpiar.style.display = '';
+            statsStrip.style.display = '';
+
+            inputBuscar.value = '';
+            contBusq.textContent = '';
+            todosLosMatches = [];
+
+        } catch (err) {
+            mostrarError(err.message);
+        }
+    }
+
+    function formatearBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function mostrarError(msg) {
+        placeholder.style.display = 'none';
+        visorCuerpo.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'error-panel';
+        const fuerte = document.createElement('strong');
+        fuerte.textContent = 'JSON inválido';
+        const detalle = document.createElement('div');
+        detalle.className = 'error-detail';
+        detalle.textContent = msg;
+        div.appendChild(fuerte);
+        div.appendChild(detalle);
+        visorCuerpo.appendChild(div);
+        barraHerr.style.display = 'none';
+        statsStrip.style.display = 'none';
+        panelMeta.textContent = '';
+    }
+
+    // ─── Constructor de árbol ──────────────────────────────────────────────────
+    function construirArbol(valor, clave, esRaiz) {
+        contadorNodos++;
+        const contenedor = document.createElement('div');
+        contenedor.className = 'json-nodo';
+
+        const tipo = Array.isArray(valor) ? 'array'
+            : valor === null ? 'null'
+            : typeof valor;
+
+        if (tipo === 'object' || tipo === 'array') {
+            const entradas = tipo === 'array'
+                ? valor.map((v, i) => [i, v])
+                : Object.entries(valor);
+            const esVacio = entradas.length === 0;
+
+            const filaPrincipal = document.createElement('div');
+            filaPrincipal.className = 'json-fila';
+
+            const toggle = document.createElement('span');
+            toggle.className = 'json-toggle';
+            toggle.textContent = esVacio ? ' ' : '▼';
+
+            filaPrincipal.appendChild(toggle);
+
+            if (clave !== undefined && !esRaiz) {
+                const spanClave = document.createElement('span');
+                spanClave.className = 'json-clave';
+                spanClave.textContent = typeof clave === 'number' ? clave : '"' + clave + '"';
+                filaPrincipal.appendChild(spanClave);
+
+                const colon = document.createElement('span');
+                colon.className = 'json-colon';
+                colon.textContent = ': ';
+                filaPrincipal.appendChild(colon);
+            }
+
+            const abre = document.createElement('span');
+            abre.className = 'json-bracket';
+            abre.textContent = tipo === 'array' ? '[' : '{';
+            filaPrincipal.appendChild(abre);
+
+            const resumen = document.createElement('span');
+            resumen.className = 'json-summary';
+            resumen.textContent = tipo === 'array'
+                ? entradas.length + ' elemento' + (entradas.length !== 1 ? 's' : '')
+                : entradas.length + ' propiedad' + (entradas.length !== 1 ? 'es' : '');
+            resumen.style.display = 'none';
+            filaPrincipal.appendChild(resumen);
+
+            contenedor.appendChild(filaPrincipal);
+
+            if (!esVacio) {
+                const hijos = document.createElement('div');
+                hijos.className = 'json-hijos';
+
+                entradas.forEach(([k, v]) => {
+                    hijos.appendChild(construirArbol(v, k, false));
+                });
+
+                contenedor.appendChild(hijos);
+
+                const filaCierre = document.createElement('div');
+                filaCierre.className = 'json-cierre-fila';
+                const indent = document.createElement('span');
+                indent.className = 'json-indent';
+                const cierre = document.createElement('span');
+                cierre.className = 'json-bracket';
+                cierre.textContent = tipo === 'array' ? ']' : '}';
+                filaCierre.appendChild(indent);
+                filaCierre.appendChild(cierre);
+                contenedor.appendChild(filaCierre);
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const colapsado = hijos.classList.toggle('colapsado');
+                    toggle.textContent = colapsado ? '▶' : '▼';
+                    resumen.style.display = colapsado ? '' : 'none';
+                    filaCierre.style.display = colapsado ? 'none' : '';
+                });
+            } else {
+                const cierre = document.createElement('span');
+                cierre.className = 'json-bracket';
+                cierre.textContent = tipo === 'array' ? ']' : '}';
+                filaPrincipal.appendChild(cierre);
+            }
+
+        } else {
+            const fila = document.createElement('div');
+            fila.className = 'json-fila';
+
+            const indent = document.createElement('span');
+            indent.className = 'json-indent';
+            fila.appendChild(indent);
+
+            if (clave !== undefined && !esRaiz) {
+                const spanClave = document.createElement('span');
+                spanClave.className = 'json-clave';
+                spanClave.textContent = typeof clave === 'number' ? clave : '"' + clave + '"';
+                fila.appendChild(spanClave);
+
+                const colon = document.createElement('span');
+                colon.className = 'json-colon';
+                colon.textContent = ': ';
+                fila.appendChild(colon);
+            }
+
+            const spanValor = document.createElement('span');
+            if (tipo === 'null') {
+                spanValor.className = 'json-null';
+                spanValor.textContent = 'null';
+            } else if (tipo === 'boolean') {
+                spanValor.className = 'json-bool';
+                spanValor.textContent = String(valor);
+            } else if (tipo === 'number') {
+                spanValor.className = 'json-num';
+                spanValor.textContent = String(valor);
+            } else {
+                spanValor.className = 'json-str';
+                spanValor.textContent = '"' + valor.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+            }
+
+            fila.appendChild(spanValor);
+            contenedor.appendChild(fila);
+        }
+
+        return contenedor;
+    }
+
+    // ─── Expandir / Colapsar todo ──────────────────────────────────────────────
+    document.getElementById('btn-expandir-todo').addEventListener('click', () => {
+        visorCuerpo.querySelectorAll('.json-hijos.colapsado').forEach(h => {
+            h.classList.remove('colapsado');
+        });
+        visorCuerpo.querySelectorAll('.json-toggle').forEach(t => {
+            if (t.textContent === '▶') t.textContent = '▼';
+        });
+        visorCuerpo.querySelectorAll('.json-summary').forEach(s => {
+            s.style.display = 'none';
+        });
+        visorCuerpo.querySelectorAll('.json-cierre-fila').forEach(c => {
+            c.style.display = '';
+        });
+    });
+
+    document.getElementById('btn-colapsar-todo').addEventListener('click', () => {
+        const todosHijos = visorCuerpo.querySelectorAll('.json-hijos');
+        todosHijos.forEach(h => h.classList.add('colapsado'));
+        visorCuerpo.querySelectorAll('.json-toggle').forEach(t => {
+            if (t.textContent === '▼') t.textContent = '▶';
+        });
+        visorCuerpo.querySelectorAll('.json-summary').forEach(s => {
+            s.style.display = '';
+        });
+        visorCuerpo.querySelectorAll('.json-cierre-fila').forEach(c => {
+            c.style.display = 'none';
+        });
+        // Dejar el primer nivel expandido
+        const primerNivel = visorCuerpo.querySelector('.json-nodo > .json-hijos');
+        if (primerNivel) {
+            primerNivel.classList.remove('colapsado');
+            const primerToggle = visorCuerpo.querySelector('.json-nodo > .json-fila .json-toggle');
+            if (primerToggle && primerToggle.textContent === '▶') primerToggle.textContent = '▼';
+            const primerResumen = visorCuerpo.querySelector('.json-nodo > .json-fila .json-summary');
+            if (primerResumen) primerResumen.style.display = 'none';
+            const primerCierre = visorCuerpo.querySelector('.json-nodo > .json-cierre-fila');
+            if (primerCierre) primerCierre.style.display = '';
+        }
+    });
+
+    // ─── Copiar ────────────────────────────────────────────────────────────────
+    document.getElementById('btn-copiar').addEventListener('click', () => {
+        if (!jsonActual) return;
+        const formateado = JSON.stringify(jsonActual, null, 2);
+        navigator.clipboard.writeText(formateado).then(() => {
+            const btn = document.getElementById('btn-copiar');
+            btn.textContent = '✓ Copiado';
+            setTimeout(() => { btn.textContent = '📋 Copiar'; }, 1800);
+        });
+    });
+
+    // ─── Búsqueda ──────────────────────────────────────────────────────────────
+    let timerBusq = null;
+    inputBuscar.addEventListener('input', () => {
+        clearTimeout(timerBusq);
+        timerBusq = setTimeout(realizarBusqueda, 200);
+    });
+
+    inputBuscar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && todosLosMatches.length > 0) {
+            matchActual = (matchActual + 1) % todosLosMatches.length;
+            resaltarActivo();
+        }
+        if (e.key === 'Escape') {
+            inputBuscar.value = '';
+            realizarBusqueda();
+        }
+    });
+
+    function realizarBusqueda() {
+        const termino = inputBuscar.value.trim().toLowerCase();
+
+        visorCuerpo.querySelectorAll('.json-match, .json-match-active').forEach(el => {
+            el.classList.remove('json-match', 'json-match-active');
+        });
+        todosLosMatches = [];
+        matchActual = 0;
+
+        if (!termino || !jsonActual) {
+            contBusq.textContent = '';
+            return;
+        }
+
+        const candidatos = visorCuerpo.querySelectorAll('.json-clave, .json-str, .json-num, .json-bool, .json-null');
+        candidatos.forEach(el => {
+            if (el.textContent.toLowerCase().includes(termino)) {
+                el.classList.add('json-match');
+                todosLosMatches.push(el);
+                asegurarVisible(el);
+            }
+        });
+
+        contBusq.textContent = todosLosMatches.length > 0
+            ? todosLosMatches.length + ' coincidencia' + (todosLosMatches.length !== 1 ? 's' : '')
+            : 'Sin resultados';
+
+        if (todosLosMatches.length > 0) resaltarActivo();
+    }
+
+    function resaltarActivo() {
+        todosLosMatches.forEach(el => el.classList.remove('json-match-active'));
+        const actual = todosLosMatches[matchActual];
+        if (actual) {
+            actual.classList.add('json-match-active');
+            actual.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function asegurarVisible(elemento) {
+        let padre = elemento.closest('.json-hijos');
+        while (padre) {
+            if (padre.classList.contains('colapsado')) {
+                padre.classList.remove('colapsado');
+                const toggle = padre.previousElementSibling
+                    ? padre.previousElementSibling.querySelector('.json-toggle')
+                    : null;
+                if (toggle && toggle.textContent === '▶') toggle.textContent = '▼';
+                const resumen = padre.previousElementSibling
+                    ? padre.previousElementSibling.querySelector('.json-summary')
+                    : null;
+                if (resumen) resumen.style.display = 'none';
+            }
+            padre = padre.parentElement ? padre.parentElement.closest('.json-hijos') : null;
+        }
+    }
+
+    // ─── Sidebar ───────────────────────────────────────────────────────────────
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const main = document.getElementById('main');
+        sb.classList.toggle('collapsed');
+        main.classList.toggle('expanded');
+    }
+</script>
+</body>
+</html>
