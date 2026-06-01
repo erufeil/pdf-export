@@ -456,6 +456,30 @@ def convertir_compress():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/compress/analyze', methods=['POST'])
+def analizar_compresion():
+    """
+    Analiza el PDF y devuelve estadísticas detalladas por categoría
+    para estimar el ahorro antes de comprimir.
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.pdf_compress import analizar_pdf
+        analisis = analizar_pdf(archivo_id)
+        return respuesta_exitosa(analisis, 'Análisis completado')
+    except Exception as e:
+        logger.error(f"Error analizando PDF para compresión: {e}")
+        return respuesta_error('ANALYZE_ERROR', str(e), 500)
+
+
 @bp.route('/compress/info', methods=['GET'])
 def obtener_info_compresion():
     """

@@ -12,7 +12,7 @@ import fitz  # PyMuPDF
 
 import config
 import models
-from utils import file_manager, job_manager
+from utils import job_manager
 
 logger = logging.getLogger(__name__)
 
@@ -112,21 +112,8 @@ def procesar_reorder(trabajo_id: str, archivo_id: str, parametros: dict) -> dict
         ruta_pdf, nuevo_orden, trabajo_id, nombre_original
     )
 
-    # Empaquetar en ZIP
-    job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo resultado")
-
-    nombre_base_sin_ext = Path(nombre_original).stem
-    nombre_zip = f"{trabajo_id}_{nombre_base_sin_ext}_reordenado.zip"
-
-    archivos_para_zip = [(str(ruta_resultado), ruta_resultado.name.replace(f"{trabajo_id}_", ""))]
-    ruta_zip = file_manager.crear_zip(archivos_para_zip, nombre_zip)
-
-    # Limpiar archivo temporal
-    if ruta_resultado.exists():
-        ruta_resultado.unlink()
-
     return {
-        'ruta_resultado': str(ruta_zip),
+        'ruta_resultado': str(ruta_resultado),
         'mensaje': f'PDF reordenado con {len(nuevo_orden)} paginas'
     }
 

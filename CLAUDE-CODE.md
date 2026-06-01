@@ -238,29 +238,31 @@ img.src = `${API}/files/${archivoId}/thumbnail/${totalPaginas - 1}`;
 
 ## 9. Procesadores registrados en `app.py`
 
-| Tipo (string)         | Servicio                   | Retorna     |
-|-----------------------|----------------------------|-------------|
-| `'split'`             | pdf_split                  | ZIP         |
-| `'to-txt'`            | pdf_to_txt                 | ZIP         |
-| `'to-docx'`           | pdf_to_docx                | ZIP         |
-| `'to-png'`            | pdf_to_images              | ZIP         |
-| `'to-jpg'`            | pdf_to_images              | ZIP         |
-| `'compress'`          | pdf_compress               | ZIP         |
-| `'extract-images'`    | pdf_extract_images         | ZIP         |
-| `'rotate'`            | pdf_rotate                 | ZIP         |
-| `'from-html'`         | html_to_pdf                | ZIP         |
-| `'merge'`             | pdf_merge                  | ZIP         |
-| `'extract-pages'`     | pdf_extract_pages          | ZIP         |
-| `'reorder'`           | pdf_reorder                | ZIP         |
-| `'ndm-to-tables-seq'` | ndm_to_tables_seq          | TXT directo |
-| `'scrape-url'`        | web_scraper                | ZIP         |
-| `'to-csv'`            | pdf_to_csv                 | ZIP         |
-| `'img-to-1pdf'`       | img_to_1pdf                | PDF directo |
-| `'webp-to-png'`       | webp_to_png                | PNG directo |
-| `'to-csv-ocr'`        | pdf_scanned_to_csv         | ZIP         |
-| `'svg-to-png'`        | svg_to_png                 | PNG directo |
-| `'img-to-txt'`        | img_to_txt                 | TXT directo |
-| `'eps-to-png'`        | eps_to_png                 | PNG directo |
+| Tipo (string)         | Servicio                   | Retorna                              |
+|-----------------------|----------------------------|--------------------------------------|
+| `'split'`             | pdf_split                  | ZIP (múltiples PDFs)                 |
+| `'to-txt'`            | pdf_to_txt                 | TXT directo                          |
+| `'to-docx'`           | pdf_to_docx                | DOCX directo                         |
+| `'to-png'`            | pdf_to_images              | ZIP (múltiples PNGs)                 |
+| `'to-jpg'`            | pdf_to_images              | ZIP (múltiples JPGs)                 |
+| `'compress'`          | pdf_compress               | PDF directo                          |
+| `'extract-images'`    | pdf_extract_images         | ZIP (múltiples imágenes)             |
+| `'rotate'`            | pdf_rotate                 | PDF directo                          |
+| `'from-html'`         | html_to_pdf                | PDF directo                          |
+| `'merge'`             | pdf_merge                  | PDF directo                          |
+| `'extract-pages'`     | pdf_extract_pages          | PDF directo (unico) / ZIP (separados)|
+| `'reorder'`           | pdf_reorder                | PDF directo                          |
+| `'ndm-to-tables-seq'` | ndm_to_tables_seq          | TXT directo                          |
+| `'scrape-url'`        | web_scraper                | ZIP                                  |
+| `'to-csv'`            | pdf_to_csv                 | ZIP (múltiples CSVs)                 |
+| `'img-to-1pdf'`       | img_to_1pdf                | PDF directo                          |
+| `'webp-to-png'`       | webp_to_png                | PNG directo                          |
+| `'to-csv-ocr'`        | pdf_scanned_to_csv         | ZIP (múltiples CSVs)                 |
+| `'svg-to-png'`        | svg_to_png                 | PNG directo                          |
+| `'img-to-txt'`        | img_to_txt                 | TXT directo                          |
+| `'eps-to-png'`        | eps_to_png                 | PNG directo                          |
+
+**Regla:** Si el resultado siempre es un único archivo → retornar directo. ZIP solo cuando se generan múltiples archivos.
 
 ---
 

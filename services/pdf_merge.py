@@ -5,7 +5,6 @@ Combina multiples PDFs en uno solo, con opcion de marcadores.
 """
 
 import logging
-import zipfile
 from pathlib import Path
 from typing import List, Dict
 
@@ -88,7 +87,8 @@ def unir_pdfs(archivos_ordenados: List[Dict], trabajo_id: str, agregar_marcadore
 
     job_manager.actualizar_progreso(trabajo_id, 90, "Guardando PDF unido")
 
-    nombre_resultado = f"{trabajo_id}_merged.pdf"
+    nombre_base_primer = Path(archivos_ordenados[0]['nombre_original']).stem
+    nombre_resultado = f"{trabajo_id}_{nombre_base_primer} - unido.pdf"
     ruta_resultado = config.OUTPUT_FOLDER / nombre_resultado
     doc_resultado.save(str(ruta_resultado), deflate=True)
     doc_resultado.close()
@@ -138,23 +138,8 @@ def procesar_merge(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     # Unir los PDFs
     ruta_pdf_unido = unir_pdfs(archivos_info, trabajo_id, agregar_marcadores)
 
-    # Comprimir en ZIP
-    job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo resultado")
-
-    # Usar el nombre del primer archivo como base para el ZIP
-    nombre_base = Path(archivos_info[0]['nombre_original']).stem
-    nombre_zip = f"{trabajo_id}_{nombre_base}_merged.zip"
-    ruta_zip = config.OUTPUT_FOLDER / nombre_zip
-
-    with zipfile.ZipFile(str(ruta_zip), 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        nombre_dentro_zip = f"{nombre_base} - merged.pdf"
-        zf.write(str(ruta_pdf_unido), nombre_dentro_zip)
-
-    # Eliminar PDF intermedio
-    ruta_pdf_unido.unlink(missing_ok=True)
-
     return {
-        'ruta_resultado': str(ruta_zip),
+        'ruta_resultado': str(ruta_pdf_unido),
         'mensaje': f'{len(archivos_info)} PDFs unidos correctamente ({total_paginas} paginas totales)'
     }
 

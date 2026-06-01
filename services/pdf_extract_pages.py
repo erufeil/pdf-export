@@ -186,18 +186,22 @@ def procesar_extract_pages(trabajo_id: str, archivo_id: str, parametros: dict) -
         trabajo_id, nombre_base, num_paginas
     )
 
-    # Crear ZIP
+    # Retorno directo si es un único PDF, ZIP si son separados
+    if formato_salida == 'unico':
+        ruta_salida, _ = archivos_generados[0]
+        return {
+            'ruta_resultado': str(ruta_salida),
+            'mensaje': f'{len(paginas)} paginas extraidas correctamente'
+        }
+
     job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo archivos")
 
-    # Nombre del ZIP descriptivo
     nombre_base_sin_ext = Path(nombre_base).stem
-    tipo = 'paginas' if formato_salida == 'unico' else 'paginas_sep'
-    nombre_zip = f"{trabajo_id}_{nombre_base_sin_ext}_{tipo}.zip"
+    nombre_zip = f"{trabajo_id}_{nombre_base_sin_ext}_paginas_sep.zip"
 
     archivos_para_zip = [(str(ruta), nombre) for ruta, nombre in archivos_generados]
     ruta_zip = file_manager.crear_zip(archivos_para_zip, nombre_zip)
 
-    # Limpiar archivos temporales individuales
     for ruta_temp, _ in archivos_generados:
         if ruta_temp.exists():
             ruta_temp.unlink()

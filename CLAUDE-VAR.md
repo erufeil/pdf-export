@@ -202,21 +202,46 @@ fecha_modificacion: string  ← ISO format (para detección de duplicados)
 }
 ```
 
+### `POST /api/v1/convert/compress/analyze` *(Etapa 32 — análisis previo, síncrono)*
+```json
+{ "file_id": "uuid" }
+```
+Retorna estadísticas detalladas por categoría (imagenes, fuentes, metadatos, estructura,
+interactivo, navegacion, optimizacion) con `ahorro_estimado_pct` por categoría.
+
 ### `POST /api/v1/convert/compress`
 ```json
 {
   "file_id": "uuid",
   "opciones": {
-    "nivel": "media",
-    "dpi_maximo": 120,
-    "calidad_jpg": 75,
-    "eliminar_metadatos": true,
+    "preset": "estandar",
+    "reimagenes": true,
+    "dpi": 150,
+    "calidad_jpeg": 85,
+    "grises": false,
+    "dedup_imagenes": false,
+    "subset_fuentes": false,
+    "dedup_fuentes": false,
+    "eliminar_xmp": true,
+    "eliminar_thumbnails": true,
+    "limpiar_basicos": false,
+    "garbage": true,
+    "comprimir_streams": true,
+    "dedup_objetos": true,
     "eliminar_anotaciones": false,
-    "eliminar_bookmarks": false,
-    "escala_grises": false
+    "eliminar_js": true,
+    "aplanar_formularios": false,
+    "eliminar_adjuntos": false,
+    "eliminar_firmas": false,
+    "eliminar_marcadores": false,
+    "eliminar_ocg": false,
+    "linearizar": false
   }
 }
 ```
+- `preset`: `'ligero'|'estandar'|'agresivo'|'maximo'|'personalizado'`
+- Retorna **ZIP** con `{stem} - Comprimido.pdf` + `reporte.txt`
+- Compat. API antigua: acepta también `nivel`, `dpi_maximo`, `calidad_jpg`, `eliminar_metadatos`, `eliminar_bookmarks`, `escala_grises`
 
 ### `POST /api/v1/convert/split`
 ```json

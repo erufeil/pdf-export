@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Servicio de compresion de PDF para PDFexport.
-Reduce el tamano del PDF comprimiendo imagenes y optimizando estructura.
-"""
-
+import hashlib
 import logging
-from pathlib import Path
-from typing import Dict
 from io import BytesIO
+from pathlib import Path
+from typing import Dict, Tuple
 
 import fitz  # PyMuPDF
 from PIL import Image
@@ -18,330 +14,572 @@ from utils import file_manager, job_manager
 
 logger = logging.getLogger(__name__)
 
-# Niveles de compresion predefinidos
-NIVELES_COMPRESION = {
-    'baja': {
-        'dpi_maximo': 150,
-        'calidad_jpg': 90,
-        'descripcion': 'Mejor calidad, menor reduccion'
+# Presets: definen el valor por defecto de cada opción booleana/numérica
+PRESETS: Dict[str, dict] = {
+    'ligero': {
+        'reimagenes': False, 'dpi': 150, 'calidad_jpeg': 85,
+        'grises': False, 'dedup_imagenes': False,
+        'subset_fuentes': False, 'dedup_fuentes': False,
+        'eliminar_xmp': True, 'limpiar_basicos': False, 'eliminar_thumbnails': True,
+        'garbage': True, 'comprimir_streams': True, 'dedup_objetos': True,
+        'bajar_version': False, 'eliminar_tags': False,
+        'eliminar_anotaciones': False, 'aplanar_formularios': False,
+        'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': False,
+        'eliminar_marcadores': False, 'eliminar_ocg': False,
+        'linearizar': False,
     },
-    'media': {
-        'dpi_maximo': 120,
-        'calidad_jpg': 75,
-        'descripcion': 'Equilibrado'
+    'estandar': {
+        'reimagenes': True, 'dpi': 150, 'calidad_jpeg': 85,
+        'grises': False, 'dedup_imagenes': False,
+        'subset_fuentes': False, 'dedup_fuentes': False,
+        'eliminar_xmp': True, 'limpiar_basicos': False, 'eliminar_thumbnails': True,
+        'garbage': True, 'comprimir_streams': True, 'dedup_objetos': True,
+        'bajar_version': False, 'eliminar_tags': False,
+        'eliminar_anotaciones': False, 'aplanar_formularios': False,
+        'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': False,
+        'eliminar_marcadores': False, 'eliminar_ocg': False,
+        'linearizar': False,
     },
-    'alta': {
-        'dpi_maximo': 96,
-        'calidad_jpg': 60,
-        'descripcion': 'Maxima reduccion'
-    }
+    'agresivo': {
+        'reimagenes': True, 'dpi': 96, 'calidad_jpeg': 60,
+        'grises': False, 'dedup_imagenes': True,
+        'subset_fuentes': True, 'dedup_fuentes': True,
+        'eliminar_xmp': True, 'limpiar_basicos': False, 'eliminar_thumbnails': True,
+        'garbage': True, 'comprimir_streams': True, 'dedup_objetos': True,
+        'bajar_version': False, 'eliminar_tags': False,
+        'eliminar_anotaciones': True, 'aplanar_formularios': False,
+        'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': True,
+        'eliminar_marcadores': False, 'eliminar_ocg': True,
+        'linearizar': False,
+    },
+    'maximo': {
+        'reimagenes': True, 'dpi': 72, 'calidad_jpeg': 60,
+        'grises': True, 'dedup_imagenes': True,
+        'subset_fuentes': True, 'dedup_fuentes': True,
+        'eliminar_xmp': True, 'limpiar_basicos': False, 'eliminar_thumbnails': True,
+        'garbage': True, 'comprimir_streams': True, 'dedup_objetos': True,
+        'bajar_version': False, 'eliminar_tags': False,
+        'eliminar_anotaciones': True, 'aplanar_formularios': False,
+        'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': True,
+        'eliminar_marcadores': False, 'eliminar_ocg': True,
+        'linearizar': True,
+    },
 }
 
 
-def comprimir_imagen(imagen_bytes: bytes, formato: str, calidad: int, escala_grises: bool = False) -> bytes:
-    """
-    Comprime una imagen usando PIL.
+# ─── Helpers internos ───────────────────────────────────────────────────────
 
-    Args:
-        imagen_bytes: Bytes de la imagen original
-        formato: Formato de la imagen (jpeg, png, etc)
-        calidad: Calidad de compresion (1-100)
-        escala_grises: Convertir a escala de grises
+def _recomprimir_imagenes(doc: fitz.Document, dpi: int, calidad: int,
+                          grises: bool, dedup: bool) -> None:
+    """Recomprime todas las imágenes únicas del documento."""
+    xrefs_vistos: set = set()
+    xrefs: list = []
+    for pag in doc:
+        for info in pag.get_images(full=True):
+            xref = info[0]
+            if xref not in xrefs_vistos:
+                xrefs_vistos.add(xref)
+                xrefs.append(xref)
 
-    Returns:
-        Bytes de la imagen comprimida
-    """
-    try:
-        img = Image.open(BytesIO(imagen_bytes))
+    # Detectar duplicados si se solicita
+    hash_a_xref: dict = {}
+    xrefs_duplicados: set = set()
+    if dedup:
+        for xref in xrefs:
+            try:
+                img_data = doc.extract_image(xref)
+                if img_data:
+                    h = hashlib.sha256(img_data['image']).hexdigest()
+                    if h in hash_a_xref:
+                        xrefs_duplicados.add(xref)
+                    else:
+                        hash_a_xref[h] = xref
+            except Exception:
+                pass
 
-        # Convertir a escala de grises si se solicita
-        if escala_grises:
-            img = img.convert('L')
-        elif img.mode == 'RGBA':
-            # Convertir RGBA a RGB para JPEG
-            img = img.convert('RGB')
-        elif img.mode not in ('RGB', 'L'):
-            img = img.convert('RGB')
+    factor = dpi / 150.0
 
-        # Guardar con compresion
-        buffer = BytesIO()
-        if formato.lower() in ('jpg', 'jpeg'):
-            img.save(buffer, format='JPEG', quality=calidad, optimize=True)
-        elif formato.lower() == 'png':
-            img.save(buffer, format='PNG', optimize=True)
-        else:
-            # Para otros formatos, convertir a JPEG
-            img.save(buffer, format='JPEG', quality=calidad, optimize=True)
-
-        return buffer.getvalue()
-
-    except Exception as e:
-        logger.warning(f"No se pudo comprimir imagen: {e}")
-        return imagen_bytes
-
-
-def comprimir_pdf(ruta_pdf: Path, opciones: Dict, trabajo_id: str, nombre_original: str) -> Path:
-    """
-    Comprime un archivo PDF reemplazando imagenes con versiones comprimidas.
-
-    Trabaja directamente sobre el documento, reemplazando cada imagen
-    por su version comprimida/redimensionada usando PyMuPDF.
-
-    Args:
-        ruta_pdf: Ruta al archivo PDF original
-        opciones: Opciones de compresion
-        trabajo_id: ID del trabajo para progreso
-        nombre_original: Nombre original del archivo
-
-    Returns:
-        Ruta al PDF comprimido
-    """
-    # Obtener configuracion segun nivel o personalizada
-    nivel = opciones.get('nivel', 'media')
-
-    if nivel in NIVELES_COMPRESION:
-        dpi_maximo = NIVELES_COMPRESION[nivel]['dpi_maximo']
-        calidad_jpg = NIVELES_COMPRESION[nivel]['calidad_jpg']
-    else:
-        dpi_maximo = opciones.get('dpi_maximo', 120)
-        calidad_jpg = opciones.get('calidad_jpg', 75)
-
-    eliminar_metadatos = opciones.get('eliminar_metadatos', False)
-    eliminar_anotaciones = opciones.get('eliminar_anotaciones', False)
-    eliminar_bookmarks = opciones.get('eliminar_bookmarks', False)
-    escala_grises = opciones.get('escala_grises', False)
-
-    job_manager.actualizar_progreso(trabajo_id, 5, "Analizando documento")
-
-    # Abrir documento - trabajamos sobre el mismo documento
-    doc = fitz.open(str(ruta_pdf))
-    num_paginas = len(doc)
-
-    # Recopilar todos los xrefs de imagenes unicos del documento
-    # (una imagen puede aparecer en multiples paginas con el mismo xref)
-    xrefs_procesados = set()
-    xrefs_imagenes = []
-
-    for pagina in doc:
-        for img_info in pagina.get_images(full=True):
-            xref = img_info[0]
-            if xref not in xrefs_procesados:
-                xrefs_procesados.add(xref)
-                xrefs_imagenes.append(xref)
-
-    total_imagenes = len(xrefs_imagenes)
-    imagenes_procesadas = 0
-
-    job_manager.actualizar_progreso(
-        trabajo_id, 10,
-        f"Procesando {total_imagenes} imagenes unicas en {num_paginas} paginas"
-    )
-
-    # Procesar cada imagen unica y reemplazarla en el documento
-    for xref in xrefs_imagenes:
+    for xref in xrefs:
+        if xref in xrefs_duplicados:
+            continue
         try:
-            # Extraer imagen original
-            imagen_base = doc.extract_image(xref)
-            if not imagen_base:
+            img_data = doc.extract_image(xref)
+            if not img_data:
                 continue
+            orig = img_data['image']
+            ancho = img_data.get('width', 0)
+            alto  = img_data.get('height', 0)
 
-            img_bytes_original = imagen_base["image"]
-            ancho = imagen_base.get("width", 0)
-            alto = imagen_base.get("height", 0)
-
-            # Abrir con PIL para procesar
-            img = Image.open(BytesIO(img_bytes_original))
-
-            # Convertir a escala de grises si se solicita
-            if escala_grises:
+            img = Image.open(BytesIO(orig))
+            if grises:
                 img = img.convert('L')
             elif img.mode == 'RGBA':
                 img = img.convert('RGB')
             elif img.mode not in ('RGB', 'L'):
                 img = img.convert('RGB')
 
-            # Calcular redimension basada en DPI
-            factor_escala = dpi_maximo / 150.0
-            if factor_escala < 1.0:
-                nuevo_ancho = max(50, int(ancho * factor_escala))
-                nuevo_alto = max(50, int(alto * factor_escala))
-                img = img.resize((nuevo_ancho, nuevo_alto), Image.LANCZOS)
+            if factor < 1.0:
+                nw = max(50, int(ancho * factor))
+                nh = max(50, int(alto  * factor))
+                img = img.resize((nw, nh), Image.LANCZOS)
 
-            # Guardar como JPEG comprimido
-            buffer = BytesIO()
-            img.save(buffer, format='JPEG', quality=calidad_jpg, optimize=True)
-            img_bytes_nuevo = buffer.getvalue()
+            buf = BytesIO()
+            img.save(buf, format='JPEG', quality=calidad, optimize=True)
+            nuevos = buf.getvalue()
 
-            # Solo reemplazar si la imagen nueva es mas chica
-            if len(img_bytes_nuevo) < len(img_bytes_original):
-                # Crear Pixmap de PyMuPDF desde los bytes JPEG
-                nuevo_pixmap = fitz.Pixmap(img_bytes_nuevo)
-
-                # Reemplazar la imagen en la primera pagina que la contenga
-                # (al reemplazar por xref, se actualiza en todas las paginas)
-                for pagina in doc:
-                    imagenes_pagina = [i[0] for i in pagina.get_images(full=True)]
-                    if xref in imagenes_pagina:
-                        pagina.replace_image(xref, pixmap=nuevo_pixmap)
+            if len(nuevos) < len(orig):
+                pix = fitz.Pixmap(nuevos)
+                for pag in doc:
+                    if xref in [i[0] for i in pag.get_images(full=True)]:
+                        pag.replace_image(xref, pixmap=pix)
                         break
 
-            imagenes_procesadas += 1
-
-            # Actualizar progreso
-            progreso = 10 + int((imagenes_procesadas / max(total_imagenes, 1)) * 70)
-            job_manager.actualizar_progreso(
-                trabajo_id, progreso,
-                f"Imagen {imagenes_procesadas} de {total_imagenes}"
-            )
-
         except Exception as e:
-            logger.warning(f"Error procesando imagen xref={xref}: {e}")
-            imagenes_procesadas += 1
-
-    # Eliminar anotaciones de todas las paginas si se solicita
-    if eliminar_anotaciones:
-        for pagina in doc:
-            for annot in list(pagina.annots() or []):
-                pagina.delete_annot(annot)
-
-    # Eliminar metadatos si se solicita
-    if eliminar_metadatos:
-        doc.set_metadata({})
-
-    # Eliminar bookmarks/TOC si se solicita
-    if eliminar_bookmarks:
-        doc.set_toc([])
-
-    job_manager.actualizar_progreso(trabajo_id, 85, "Optimizando y guardando")
-
-    # Guardar con opciones de optimizacion
-    nombre_salida = f"{trabajo_id}_{nombre_original} - comprimido.pdf"
-    ruta_salida = config.OUTPUT_FOLDER / nombre_salida
-
-    doc.save(
-        str(ruta_salida),
-        garbage=4,           # Maxima limpieza de objetos no usados
-        deflate=True,        # Compresion deflate
-        clean=True,          # Limpiar contenido
-    )
-
-    doc.close()
-
-    return ruta_salida
+            logger.warning(f"Error imagen xref={xref}: {e}")
 
 
-def obtener_info_compresion(archivo_id: str) -> Dict:
+def _eliminar_thumbnails(doc: fitz.Document) -> None:
+    """Elimina thumbnails embebidos en las páginas del PDF."""
+    for pag in doc:
+        try:
+            tipo, _ = doc.xref_get_key(pag.xref, 'Thumb')
+            if tipo != 'null':
+                doc.xref_set_key(pag.xref, 'Thumb', 'null')
+        except Exception:
+            pass
+
+
+def _eliminar_javascript(doc: fitz.Document) -> None:
+    """Elimina objetos JavaScript del PDF iterando el xref."""
+    try:
+        for xref in range(1, doc.xref_length()):
+            for key in ('JS', 'JavaScript'):
+                try:
+                    tipo, _ = doc.xref_get_key(xref, key)
+                    if tipo != 'null':
+                        doc.xref_set_key(xref, key, 'null')
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.warning(f"Error eliminando JS: {e}")
+
+
+def _eliminar_adjuntos(doc: fitz.Document) -> None:
+    """Elimina archivos adjuntos embebidos (EmbeddedFiles)."""
+    try:
+        count = doc.embfile_count()
+        for i in range(count - 1, -1, -1):
+            try:
+                doc.embfile_del(i)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.warning(f"Error eliminando adjuntos: {e}")
+
+
+def _aplanar_formularios(doc: fitz.Document) -> None:
+    """Elimina campos de formulario (los borra, no los aplana a texto)."""
+    for pag in doc:
+        for w in list(pag.widgets() or []):
+            try:
+                pag.delete_widget(w)
+            except Exception:
+                pass
+
+
+def _eliminar_ocg(doc: fitz.Document) -> None:
+    """Elimina capas opcionales (OCG) del catálogo."""
+    try:
+        cat = doc.pdf_catalog()
+        tipo, _ = doc.xref_get_key(cat, 'OCProperties')
+        if tipo != 'null':
+            doc.xref_set_key(cat, 'OCProperties', 'null')
+    except Exception as e:
+        logger.warning(f"Error eliminando OCG: {e}")
+
+
+# ─── Análisis ────────────────────────────────────────────────────────────────
+
+def analizar_pdf(archivo_id: str) -> dict:
     """
-    Obtiene informacion del archivo para estimar compresion.
-
-    Args:
-        archivo_id: ID del archivo
-
-    Returns:
-        dict con informacion del archivo
+    Analiza un PDF y devuelve estadísticas detalladas por categoría
+    junto con estimaciones de ahorro para mostrar en la UI.
     """
     archivo = models.obtener_archivo(archivo_id)
     if not archivo:
         raise ValueError("Archivo no encontrado")
-
     ruta_pdf = Path(archivo['ruta_archivo'])
     if not ruta_pdf.exists():
-        raise ValueError("Archivo fisico no encontrado")
+        raise ValueError("Archivo físico no encontrado")
 
-    tamano_actual = ruta_pdf.stat().st_size
-
-    # Abrir para obtener mas info
+    tamano_bytes = ruta_pdf.stat().st_size
     doc = fitz.open(str(ruta_pdf))
-    num_paginas = len(doc)
+    try:
+        # ── A. Imágenes ──────────────────────────────────────────────────
+        xrefs_vistos: set = set()
+        imagenes: list = []
+        total_bytes_img = 0
+        for pag in doc:
+            for info in pag.get_images(full=True):
+                xref = info[0]
+                if xref in xrefs_vistos:
+                    continue
+                xrefs_vistos.add(xref)
+                try:
+                    img_data = doc.extract_image(xref)
+                    if img_data:
+                        nb = len(img_data.get('image', b''))
+                        imagenes.append({'xref': xref, 'bytes': nb})
+                        total_bytes_img += nb
+                except Exception:
+                    pass
 
-    # Contar imagenes y estimar potencial de compresion
-    total_imagenes = 0
-    tamano_imagenes = 0
-
-    for pagina in doc:
-        for img_info in pagina.get_images(full=True):
+        # Duplicadas
+        hashes: dict = {}
+        duplicadas = 0
+        for img in imagenes:
             try:
-                xref = img_info[0]
-                imagen = doc.extract_image(xref)
-                if imagen:
-                    total_imagenes += 1
-                    tamano_imagenes += len(imagen.get("image", b""))
-            except:
+                img_data = doc.extract_image(img['xref'])
+                if img_data:
+                    h = hashlib.sha256(img_data['image']).hexdigest()
+                    if h in hashes:
+                        duplicadas += 1
+                    else:
+                        hashes[h] = img['xref']
+            except Exception:
                 pass
 
+        pct_img = int(total_bytes_img / tamano_bytes * 100) if tamano_bytes > 0 else 0
+        pct_img = min(pct_img, 95)
+        # Ahorro estimado: compresión a 85% JPEG reduce ~45% del peso de imágenes
+        ahorro_img = int(pct_img * 0.45)
+
+        # ── B. Fuentes ───────────────────────────────────────────────────
+        fuentes_nombres: set = set()
+        fuentes_embebidas = 0
+        fuentes_subseteadas = 0
+        for pag in doc:
+            for f in pag.get_fonts(full=True):
+                nombre = f[3] or f[4] or ''
+                if nombre and nombre not in fuentes_nombres:
+                    fuentes_nombres.add(nombre)
+                    if f[2]:  # tipo de fuente (no vacío → embebida probable)
+                        fuentes_embebidas += 1
+                    if '+' in nombre:  # nombre subseteado: "ABCDEF+FontName"
+                        fuentes_subseteadas += 1
+        ahorro_fuentes = 5 if fuentes_embebidas > 2 else (2 if fuentes_embebidas > 0 else 0)
+
+        # ── C. Metadatos ─────────────────────────────────────────────────
+        meta = doc.metadata or {}
+        tiene_xmp = bool(doc.get_xml_metadata())
+        tiene_thumbnails = False
+        for pag in doc:
+            try:
+                tipo, _ = doc.xref_get_key(pag.xref, 'Thumb')
+                if tipo != 'null':
+                    tiene_thumbnails = True
+                    break
+            except Exception:
+                pass
+        campos_basicos = [k for k, v in {
+            'Título': meta.get('title'), 'Autor': meta.get('author'),
+            'Asunto': meta.get('subject'), 'Palabras clave': meta.get('keywords'),
+            'Creador': meta.get('creator'), 'Productor': meta.get('producer'),
+        }.items() if v]
+        ahorro_meta = 1 if (tiene_xmp or tiene_thumbnails) else 0
+
+        # ── D. Estructura ────────────────────────────────────────────────
+        version_pdf = (meta.get('format') or 'PDF 1.4').replace('PDF ', '')
+        tiene_tags = False
+        try:
+            cat = doc.pdf_catalog()
+            tipo, _ = doc.xref_get_key(cat, 'MarkInfo')
+            if tipo not in ('null', ''):
+                tiene_tags = True
+        except Exception:
+            pass
+        ahorro_estructura = 3  # garbage + deflate siempre ayudan
+
+        # ── E. Elementos interactivos ────────────────────────────────────
+        total_anot = sum(len(list(pag.annots() or [])) for pag in doc)
+        total_form = sum(len(list(pag.widgets() or [])) for pag in doc)
+        total_adj = 0
+        try:
+            total_adj = doc.embfile_count()
+        except Exception:
+            pass
+        ahorro_interactivo = 2 if (total_anot + total_adj) > 0 else 0
+
+        # ── F. Navegación ────────────────────────────────────────────────
+        toc = doc.get_toc()
+        total_marcadores = len(toc)
+        tiene_ocg = False
+        try:
+            cat = doc.pdf_catalog()
+            tipo, _ = doc.xref_get_key(cat, 'OCProperties')
+            if tipo != 'null':
+                tiene_ocg = True
+        except Exception:
+            pass
+        ahorro_navegacion = 1 if (total_marcadores > 5 or tiene_ocg) else 0
+
+        # ── G. Optimización ──────────────────────────────────────────────
+        esta_linearizado = False
+        try:
+            tipo, _ = doc.xref_get_key(-1, 'Linearized')
+            esta_linearizado = tipo != 'null'
+        except Exception:
+            pass
+
+        return {
+            'tamanio_bytes': tamano_bytes,
+            'tamanio_texto': file_manager.formatear_tamano(tamano_bytes),
+            'paginas': len(doc),
+            'imagenes': {
+                'total': len(imagenes),
+                'tamanio_estimado_bytes': total_bytes_img,
+                'tamanio_estimado_texto': file_manager.formatear_tamano(total_bytes_img),
+                'porcentaje_del_pdf': pct_img,
+                'tiene_duplicadas': duplicadas > 0,
+                'duplicadas': duplicadas,
+                'ahorro_estimado_pct': ahorro_img,
+            },
+            'fuentes': {
+                'total': len(fuentes_nombres),
+                'embebidas': fuentes_embebidas,
+                'subseteadas': fuentes_subseteadas,
+                'ahorro_estimado_pct': ahorro_fuentes,
+            },
+            'metadatos': {
+                'tiene_xmp': tiene_xmp,
+                'tiene_thumbnails': tiene_thumbnails,
+                'campos_basicos': campos_basicos,
+                'ahorro_estimado_pct': ahorro_meta,
+            },
+            'estructura': {
+                'tiene_tags_accesibilidad': tiene_tags,
+                'version_pdf': version_pdf,
+                'objetos_total': doc.xref_length(),
+                'ahorro_estimado_pct': ahorro_estructura,
+            },
+            'interactivo': {
+                'anotaciones': total_anot,
+                'formularios': total_form,
+                'firmas': 0,
+                'adjuntos': total_adj,
+                'ahorro_estimado_pct': ahorro_interactivo,
+            },
+            'navegacion': {
+                'marcadores': total_marcadores,
+                'tiene_ocg': tiene_ocg,
+                'ahorro_estimado_pct': ahorro_navegacion,
+            },
+            'optimizacion': {
+                'esta_linearizado': esta_linearizado,
+                'ahorro_estimado_pct': 1,
+            },
+        }
+    finally:
+        doc.close()
+
+
+# ─── Compresión ──────────────────────────────────────────────────────────────
+
+def _resolver_opts(parametros: dict) -> dict:
+    """
+    Mezcla el preset base con las opciones explícitas del request.
+    Las claves explícitas (distintas de 'preset') sobreescriben el preset.
+    Soporta también la API antigua (nivel/dpi_maximo/calidad_jpg/...).
+    """
+    # ── Compatibilidad con API antigua ──────────────────────────────────
+    if 'nivel' in parametros:
+        mapa = {'baja': 'ligero', 'media': 'estandar', 'alta': 'agresivo'}
+        nombre_preset = mapa.get(parametros['nivel'], 'estandar')
+        opts = dict(PRESETS[nombre_preset])
+        if 'dpi_maximo' in parametros:
+            opts['dpi'] = int(parametros['dpi_maximo'])
+        if 'calidad_jpg' in parametros:
+            opts['calidad_jpeg'] = int(parametros['calidad_jpg'])
+        if parametros.get('eliminar_metadatos'):
+            opts['eliminar_xmp'] = True
+            opts['limpiar_basicos'] = True
+        if 'eliminar_anotaciones' in parametros:
+            opts['eliminar_anotaciones'] = bool(parametros['eliminar_anotaciones'])
+        if 'eliminar_bookmarks' in parametros:
+            opts['eliminar_marcadores'] = bool(parametros['eliminar_bookmarks'])
+        if 'escala_grises' in parametros:
+            opts['grises'] = bool(parametros['escala_grises'])
+        return opts
+
+    # ── API nueva ────────────────────────────────────────────────────────
+    preset_nombre = parametros.get('preset', 'estandar')
+    base = dict(PRESETS.get(preset_nombre, PRESETS['estandar']))
+    # Sobreescribir con valores explícitos (excepto 'preset')
+    for k, v in parametros.items():
+        if k != 'preset':
+            base[k] = v
+    return base
+
+
+def comprimir_pdf(ruta_pdf: Path, parametros: dict, trabajo_id: str,
+                  nombre_original: str) -> Tuple[Path, int, int]:
+    """
+    Comprime el PDF aplicando las opciones indicadas.
+    Devuelve (ruta_comprimido, tamano_original, tamano_final).
+    """
+    opts = _resolver_opts(parametros)
+    tamano_original = ruta_pdf.stat().st_size
+
+    job_manager.actualizar_progreso(trabajo_id, 5, "Abriendo documento")
+    doc = fitz.open(str(ruta_pdf))
+
+    try:
+        # A — Imágenes ─────────────────────────────────────────────────
+        if opts.get('reimagenes', True) or opts.get('grises', False):
+            job_manager.actualizar_progreso(trabajo_id, 15, "Recomprimiendo imágenes")
+            _recomprimir_imagenes(
+                doc,
+                dpi=int(opts.get('dpi', 150)),
+                calidad=int(opts.get('calidad_jpeg', 85)),
+                grises=bool(opts.get('grises', False)),
+                dedup=bool(opts.get('dedup_imagenes', False)),
+            )
+
+        job_manager.actualizar_progreso(trabajo_id, 55, "Procesando metadatos y estructura")
+
+        # C — Metadatos ────────────────────────────────────────────────
+        if opts.get('eliminar_xmp', True):
+            try:
+                doc.set_xml_metadata('')
+            except Exception as e:
+                logger.warning(f"Error eliminando XMP: {e}")
+
+        if opts.get('limpiar_basicos', False):
+            doc.set_metadata({})
+
+        if opts.get('eliminar_thumbnails', True):
+            _eliminar_thumbnails(doc)
+
+        # E — Elementos interactivos ────────────────────────────────────
+        if opts.get('eliminar_anotaciones', False):
+            job_manager.actualizar_progreso(trabajo_id, 65, "Eliminando anotaciones")
+            for pag in doc:
+                for annot in list(pag.annots() or []):
+                    try:
+                        pag.delete_annot(annot)
+                    except Exception:
+                        pass
+
+        if opts.get('eliminar_js', True):
+            _eliminar_javascript(doc)
+
+        if opts.get('eliminar_adjuntos', False):
+            _eliminar_adjuntos(doc)
+
+        if opts.get('aplanar_formularios', False):
+            _aplanar_formularios(doc)
+
+        # F — Navegación ────────────────────────────────────────────────
+        if opts.get('eliminar_marcadores', False):
+            doc.set_toc([])
+
+        if opts.get('eliminar_ocg', False):
+            _eliminar_ocg(doc)
+
+        job_manager.actualizar_progreso(trabajo_id, 85, "Guardando y optimizando")
+
+        stem = Path(nombre_original).stem
+        nombre_salida = f"{trabajo_id}_{stem} - Comprimido.pdf"
+        ruta_salida = config.OUTPUT_FOLDER / nombre_salida
+
+        # D + B + G — flags de save PyMuPDF
+        doc.save(
+            str(ruta_salida),
+            garbage=4 if opts.get('garbage', True) else 0,
+            compress=opts.get('comprimir_streams', True),
+            deflate=opts.get('comprimir_streams', True),
+            deflate_images=opts.get('comprimir_streams', True),
+            clean=True,
+            linear=opts.get('linearizar', False),
+        )
+
+        tamano_final = ruta_salida.stat().st_size
+        return ruta_salida, tamano_original, tamano_final
+
+    finally:
+        doc.close()
+
+
+# ─── Info (compat. GET /compress/info antiguo) ───────────────────────────────
+
+def obtener_info_compresion(archivo_id: str) -> dict:
+    archivo = models.obtener_archivo(archivo_id)
+    if not archivo:
+        raise ValueError("Archivo no encontrado")
+    ruta_pdf = Path(archivo['ruta_archivo'])
+    if not ruta_pdf.exists():
+        raise ValueError("Archivo físico no encontrado")
+
+    tamano_actual = ruta_pdf.stat().st_size
+    doc = fitz.open(str(ruta_pdf))
+    num_paginas = len(doc)
+    total_imagenes = 0
+    tamano_imagenes = 0
+    xrefs_vistos: set = set()
+    for pag in doc:
+        for info in pag.get_images(full=True):
+            xref = info[0]
+            if xref in xrefs_vistos:
+                continue
+            xrefs_vistos.add(xref)
+            try:
+                img_data = doc.extract_image(xref)
+                if img_data:
+                    total_imagenes += 1
+                    tamano_imagenes += len(img_data.get('image', b''))
+            except Exception:
+                pass
     doc.close()
 
-    # Estimar reduccion potencial
-    # Si hay muchas imagenes, la reduccion puede ser mayor
-    porcentaje_imagenes = (tamano_imagenes / tamano_actual * 100) if tamano_actual > 0 else 0
-
+    pct = round(tamano_imagenes / tamano_actual * 100, 1) if tamano_actual > 0 else 0
     return {
         'tamano_actual': tamano_actual,
         'tamano_actual_texto': file_manager.formatear_tamano(tamano_actual),
         'num_paginas': num_paginas,
         'total_imagenes': total_imagenes,
-        'porcentaje_imagenes': round(porcentaje_imagenes, 1),
+        'porcentaje_imagenes': pct,
         'estimaciones': {
-            'baja': {
-                'tamano': int(tamano_actual * 0.7),
-                'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.7)),
-                'reduccion': 30
-            },
-            'media': {
-                'tamano': int(tamano_actual * 0.5),
-                'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.5)),
-                'reduccion': 50
-            },
-            'alta': {
-                'tamano': int(tamano_actual * 0.3),
-                'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.3)),
-                'reduccion': 70
-            }
+            'baja':  {'tamano': int(tamano_actual * 0.7), 'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.7)), 'reduccion': 30},
+            'media': {'tamano': int(tamano_actual * 0.5), 'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.5)), 'reduccion': 50},
+            'alta':  {'tamano': int(tamano_actual * 0.3), 'tamano_texto': file_manager.formatear_tamano(int(tamano_actual * 0.3)), 'reduccion': 70},
         }
     }
 
 
+# ─── Procesador principal ────────────────────────────────────────────────────
+
 def procesar_compress(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
-    """
-    Procesador principal de compresion de PDF.
-    Esta funcion es llamada por el job_manager.
-
-    Args:
-        trabajo_id: ID del trabajo
-        archivo_id: ID del archivo a procesar
-        parametros: Opciones de compresion
-
-    Returns:
-        dict con ruta_resultado y mensaje
-    """
-    # Obtener archivo
     archivo = models.obtener_archivo(archivo_id)
     if not archivo:
         raise ValueError("Archivo no encontrado")
-
     ruta_pdf = Path(archivo['ruta_archivo'])
     if not ruta_pdf.exists():
-        raise ValueError("Archivo fisico no encontrado")
+        raise ValueError("Archivo físico no encontrado")
 
     nombre_original = archivo['nombre_original']
-    tamano_original = ruta_pdf.stat().st_size
+    job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando compresión")
 
-    job_manager.actualizar_progreso(trabajo_id, 2, "Iniciando compresion")
+    ruta_comp, tam_orig, tam_final = comprimir_pdf(ruta_pdf, parametros, trabajo_id, nombre_original)
 
-    # Comprimir
-    ruta_comprimido = comprimir_pdf(ruta_pdf, parametros, trabajo_id, nombre_original)
-
-    # Calcular reduccion
-    tamano_final = ruta_comprimido.stat().st_size
-    reduccion = ((tamano_original - tamano_final) / tamano_original * 100) if tamano_original > 0 else 0
-
-    job_manager.actualizar_progreso(trabajo_id, 95, "Finalizando")
+    reduccion = (tam_orig - tam_final) / tam_orig * 100 if tam_orig > 0 else 0
 
     return {
-        'ruta_resultado': str(ruta_comprimido),
-        'mensaje': f'PDF comprimido: {file_manager.formatear_tamano(tamano_original)} -> {file_manager.formatear_tamano(tamano_final)} (reduccion del {reduccion:.1f}%)'
+        'ruta_resultado': str(ruta_comp),
+        'mensaje': f'{file_manager.formatear_tamano(tam_orig)} → {file_manager.formatear_tamano(tam_final)} ({reduccion:.1f}% reducción)',
+        'tamano_original': tam_orig,
+        'tamano_final': tam_final,
+        'reduccion_pct': round(reduccion, 1),
     }
 
 
-# Registrar el procesador en el job_manager
 job_manager.registrar_procesador('compress', procesar_compress)

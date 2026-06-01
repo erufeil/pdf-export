@@ -412,82 +412,6 @@ Extraer la huella digital completa de una imagen: metadatos técnicos, EXIF de c
 
 Si Tika no está disponible, bloques 7, 8 y 10 muestran `"Tika no disponible"` y el resto funciona igual con Pillow.
 
----
-
-### Etapa 29 Homogeneizacion
-
-completada. Resumen de lo que se hizo en esta sesión:
-
---accent CSS: cada módulo HTML ahora define --accent: #HEX en :root y usa var(--accent) en lugar de var(--purple), var(--orange), etc.
-Breadcrumbs: estandarizados en todos los módulos con categorías correctas (PDF, Conversión, Web, Forensis)
-Footers: formato PDF Export — Nombre (Etapa N · lib) en los 23 módulos
-API URL: todos usan const API = window.AppConfig?.API_BASE_URL || '/api/v1'
-NOTAS-USUARIO.md: agregada sección EPS a PNG
-CLAUDE-PLAN.md: Etapa 29 marcada como completada
-config.py: versión 1.1.42
-
----
-
-### Etapa 30 — JSON Viewer (completada v1.1.43)
-
-**Página:** `static/json-viewer.html` (frontend puro, sin backend)
-**Categoría sidebar:** Viewers (nueva categoría entre Forensis y Misceláneos)
-**Acento UI:** azul `#58A6FF` (`cat-viewer`)
-
-#### Objetivo
-Visor interactivo de archivos JSON con árbol colapsable, coloreado por tipo y búsqueda en tiempo real.
-
-#### Funcionalidades
-
-- Drop zone para archivos `.json` o pegado directo en textarea
-- Árbol colapsable/expandible: objetos `{}` y arrays `[]` con toggle `▼/▶`
-- Colores por tipo: claves (azul), strings (verde), números (naranja), booleanos (violeta), null (gris)
-- Barra de herramientas: búsqueda con resaltado, Expandir todo, Colapsar todo, Copiar formateado
-- Estadísticas: tipo raíz, cantidad de nodos, tamaño del archivo
-- Error informativo si el JSON es inválido (muestra mensaje del parser)
-- 100% frontend — no requiere backend ni job
-
-#### Cambios en index.html
-
-- Nueva CSS class `cat-viewer` (borde azul `--blue`)
-- Nueva sección `view-viewers` con tarjeta JSON Viewer
-- Nuevo nav-item "Viewers" (👁️) en sidebar Operaciones entre Forensis y Misceláneos
-
-----
-
-### Etapa 31 — Markdown Viewer (completada v1.1.44)
-
-**Página:** `static/md-viewer.html` (frontend puro, sin backend)
-**Categoría sidebar:** Viewers (misma categoría que JSON Viewer)
-**Acento UI:** verde `#3FB950`
-
-#### Objetivo
-Visor con renderizado completo de Markdown: headings, párrafos, listas, tablas, código, blockquotes, links, negrita, cursiva, tachado.
-
-#### Funcionalidades MD Viewer
-
-- Drop zone para archivos `.md`/`.markdown`/`.txt` o pegado directo en textarea
-- Parser Markdown puro JS (sin librerías externas): h1–h6, párrafos, ul, ol, blockquotes, code blocks, inline code, tablas, hr, bold/italic/strikethrough, links, imágenes (referencia visual)
-- Toggle **Vista previa** / **Fuente** para alternar entre renderizado y texto raw
-- **Copiar MD** — copia el markdown original al portapapeles
-- Estadísticas: número de líneas, palabras y encabezados
-- Error de parsing: nunca falla (el parser maneja cualquier input)
-- 100% frontend — no requiere backend ni job
-
-#### Seguridad del parser MD
-
-- Todo texto de usuario se escapa con `escaparHTML()` antes de insertarse en el DOM
-- Links solo permiten protocolos `https://`, `http://`, `mailto:`, `#`, `/` — el resto se reemplaza con `#`
-- Imágenes externas NO se cargan — se muestra un placeholder `🖼 [nombre]`
-- Sin passthrough de HTML crudo del Markdown fuente
-
-#### Cambios index.html — Etapa 31
-
-- Tarjeta MD Viewer agregada en `view-viewers`
-- Contador actualizado a "2 herramientas"
-
-----
-
 #### Arquitectura del servicio
 
 ```python
@@ -502,7 +426,7 @@ extraer_metadatos_imagen(archivo_id) -> dict
 ```
 
 #### Determinismo en el análisis de colores (REGLA IMPORTANTE)
-El análisis de colores NO usa `random`. Usa `img.resize((100,100), Image.LANCZOS).quantize(colors=8, method=Image.Quantize.MEDIANCUT)`. MEDIANCUT es determinista: la misma imagen siempre produce los mismos colores. No pasar parámetro `random_seed` ni usar `random` en ninguna parte de este servicio ni de ningún análisis forense. Si un algoritmo requiere seed, usar `random.seed(43)` fijo, pero preferir algoritmos deterministas sin seed.
+El análisis de colores NO usa `random`. Usa `img.resize((100,100), Image.LANCZOS).quantize(colors=8, method=Image.Quantize.MEDIANCUT)`. MEDIANCUT es determinista: la misma imagen siempre produce los mismos colores. No pasar parámetro `random_seed` ni usar `random` en ninguna parte de este servicio ni de ningún análisis forense.
 
 #### 10 bloques de información
 
@@ -601,6 +525,431 @@ def _extraer_tika(ruta: Path, mime_type: str) -> dict:
 - Llamada sincrona directa: `img_metadata.extraer_metadatos_imagen(archivo_id)`
 
 ---
+
+### Etapa 29 Homogeneizacion
+
+completada. Resumen de lo que se hizo en esta sesión:
+
+--accent CSS: cada módulo HTML ahora define --accent: #HEX en :root y usa var(--accent) en lugar de var(--purple), var(--orange), etc.
+Breadcrumbs: estandarizados en todos los módulos con categorías correctas (PDF, Conversión, Web, Forensis)
+Footers: formato PDF Export — Nombre (Etapa N · lib) en los 23 módulos
+API URL: todos usan const API = window.AppConfig?.API_BASE_URL || '/api/v1'
+NOTAS-USUARIO.md: agregada sección EPS a PNG
+CLAUDE-PLAN.md: Etapa 29 marcada como completada
+config.py: versión 1.1.42
+
+---
+
+### Etapa 30 — JSON Viewer (completada v1.1.43)
+
+**Página:** `static/json-viewer.html` (frontend puro, sin backend)
+**Categoría sidebar:** Viewers (nueva categoría entre Forensis y Misceláneos)
+**Acento UI:** azul `#58A6FF` (`cat-viewer`)
+
+#### Objetivo
+Visor interactivo de archivos JSON con árbol colapsable, coloreado por tipo y búsqueda en tiempo real.
+
+#### Funcionalidades
+
+- Drop zone para archivos `.json` o pegado directo en textarea
+- Árbol colapsable/expandible: objetos `{}` y arrays `[]` con toggle `▼/▶`
+- Colores por tipo: claves (azul), strings (verde), números (naranja), booleanos (violeta), null (gris)
+- Barra de herramientas: búsqueda con resaltado, Expandir todo, Colapsar todo, Copiar formateado
+- Estadísticas: tipo raíz, cantidad de nodos, tamaño del archivo
+- Error informativo si el JSON es inválido (muestra mensaje del parser)
+- 100% frontend — no requiere backend ni job
+
+#### Cambios en index.html
+
+- Nueva CSS class `cat-viewer` (borde azul `--blue`)
+- Nueva sección `view-viewers` con tarjeta JSON Viewer
+- Nuevo nav-item "Viewers" (👁️) en sidebar Operaciones entre Forensis y Misceláneos
+
+----
+
+### Etapa 31 — Markdown Viewer (completada v1.1.44)
+
+**Página:** `static/md-viewer.html` (frontend puro, sin backend)
+**Categoría sidebar:** Viewers (misma categoría que JSON Viewer)
+**Acento UI:** verde `#3FB950`
+
+#### Objetivo
+Visor con renderizado completo de Markdown: headings, párrafos, listas, tablas, código, blockquotes, links, negrita, cursiva, tachado.
+
+#### Funcionalidades MD Viewer
+
+- Drop zone para archivos `.md`/`.markdown`/`.txt` o pegado directo en textarea
+- Parser Markdown puro JS (sin librerías externas): h1–h6, párrafos, ul, ol, blockquotes, code blocks, inline code, tablas, hr, bold/italic/strikethrough, links, imágenes (referencia visual)
+- Toggle **Vista previa** / **Fuente** para alternar entre renderizado y texto raw
+- **Copiar MD** — copia el markdown original al portapapeles
+- Estadísticas: número de líneas, palabras y encabezados
+- Error de parsing: nunca falla (el parser maneja cualquier input)
+- 100% frontend — no requiere backend ni job
+
+#### Seguridad del parser MD
+
+- Todo texto de usuario se escapa con `escaparHTML()` antes de insertarse en el DOM
+- Links solo permiten protocolos `https://`, `http://`, `mailto:`, `#`, `/` — el resto se reemplaza con `#`
+- Imágenes externas NO se cargan — se muestra un placeholder `🖼 [nombre]`
+- Sin passthrough de HTML crudo del Markdown fuente
+
+#### Cambios index.html — Etapa 31
+
+- Tarjeta MD Viewer agregada en `view-viewers`
+- Contador actualizado a "2 herramientas"
+
+
+----
+
+### Etapa 32 — Comprimir PDF (avanzado)
+
+**Página:** `static/pdf-compress.html`
+**Servicio:** `services/pdf_compress.py` (ampliar el existente de Etapa 7)
+**Endpoint:** `POST /api/v1/convert/compress` (ya existe — ampliar parámetros)
+**Endpoint análisis:** `POST /api/v1/convert/compress/analyze` (nuevo, síncrono)
+**Categoría sidebar:** Tengo un PDF...
+**Acento UI:** `#E63946` (rojo)
+**Retorna:** PDF sin comprimir
+
+#### Objetivo
+
+Reducir el tamaño de un PDF al máximo posible mediante 7 categorías de optimización con checkboxes. El usuario elige un preset o personaliza cada opción. Un análisis previo muestra estadísticas del PDF y el ahorro estimado por categoría antes de procesar.
+
+---
+
+#### Análisis automático (síncrono, antes de comprimir)
+
+```
+POST /api/v1/convert/compress/analyze
+{ "file_id": "uuid" }
+```
+
+Respuesta:
+```json
+{
+  "tamanio_bytes": 4500000,
+  "paginas": 24,
+  "imagenes": {
+    "total": 18,
+    "tamanio_estimado_bytes": 3200000,
+    "dpi_promedio": 240,
+    "tiene_duplicadas": true
+  },
+  "fuentes": {
+    "total": 6,
+    "embebidas": 5,
+    "subseteadas": 2
+  },
+  "metadatos": {
+    "tiene_xmp": true,
+    "tiene_thumbnails": false,
+    "campos_basicos": ["Title", "Author", "Producer"]
+  },
+  "estructura": {
+    "tiene_tags_accesibilidad": true,
+    "version_pdf": "1.7",
+    "objetos_no_referenciados": 12
+  },
+  "interactivo": {
+    "anotaciones": 3,
+    "formularios": 0,
+    "javascript": false,
+    "firmas": 0,
+    "adjuntos": 0
+  },
+  "navegacion": {
+    "marcadores": 8,
+    "capas_ocg": 0,
+    "destinos_nombrados": 2
+  },
+  "optimizacion": {
+    "esta_linearizado": false,
+    "streams_sin_comprimir": 4,
+    "xref_sin_comprimir": true
+  }
+}
+```
+
+---
+
+#### Presets
+
+| Preset | Qué aplica | Reducción estimada |
+|--------|-----------|-------------------|
+| **Ligero** | Metadatos XMP + thumbnails + garbage + comprimir streams | 5–15% |
+| **Estándar** | Ligero + imágenes a 150 DPI / 85% JPEG + dedup objetos | 20–50% |
+| **Agresivo** | Estándar + 96 DPI / 60% + dedup fuentes + anotaciones + adjuntos + JS + OCG | 50–80% |
+| **Máximo** | Agresivo + convertir a grises + linearizar + bajar versión PDF | 60–90% |
+
+---
+
+#### Categorías y opciones
+
+##### A. Imágenes (mayor impacto en tamaño)
+
+| Opción | Descripción | Default Estándar | Agresivo | Máximo |
+|--------|------------|-----------------|---------|--------|
+| Remuestrear imágenes | DPI máximo destino: 72 / 96 / 120 / 150 / 300 | 150 DPI | 96 DPI | 72 DPI |
+| Recomprimir JPEG | Calidad destino: 60 / 75 / 85 / 95 % | 85% | 60% | 60% |
+| Convertir a escala de grises | Luma (0.299R + 0.587G + 0.114B) — reduce ~3× en imágenes color | Off | Off | On |
+| Eliminar imágenes duplicadas | Detecta streams con mismo SHA-256 y unifica referencias | Off | On | On |
+| Recodificar como JPEG 2000 | Mejor ratio calidad/tamaño (requiere Pillow con OpenJPEG) | Off | Off | Off |
+
+**Librería:** PyMuPDF — `page.get_images()`, `doc.extract_image()`, `page.insert_image()`
+
+---
+
+##### B. Fuentes
+
+| Opción | Descripción | Estándar | Agresivo |
+|--------|------------|---------|---------|
+| Subconjunto de fuentes (font subsetting) | Solo glifos usados — via `save(garbage=4, clean=True)` | Off | On |
+| Eliminar fuentes duplicadas | Misma fuente referenciada múltiples veces → una sola | Off | On |
+| Eliminar fuentes de familias estándar | Helvetica, Times, Courier, Symbol no necesitan embeberse | Off | Off |
+
+**Nota:** PyMuPDF aplica subsetting automáticamente con `garbage=4`. Para subsetting preciso se requiere Ghostscript.
+
+---
+
+##### C. Metadatos
+
+| Opción | Descripción | Estándar | Agresivo |
+|--------|------------|---------|---------|
+| Eliminar stream XMP | Borra el bloque XMP completo del PDF | On | On |
+| Limpiar campos básicos | Vacía Título, Autor, Asunto, Palabras clave, Creador, Productor | Off | Off |
+| Eliminar thumbnails embebidos | Imágenes miniatura de página almacenadas internamente | On | On |
+| Eliminar información XML interno | Limpia entradas adicionales del diccionario del documento | On | On |
+
+**Librería:** PyMuPDF — `doc.set_xml_metadata('')`, `doc.set_metadata({})`
+
+---
+
+##### D. Estructura
+
+| Opción | Descripción | Estándar | Agresivo |
+|--------|------------|---------|---------|
+| Garbage collection (objetos huérfanos) | Elimina objetos no referenciados desde la raíz del PDF | On | On |
+| Comprimir streams de contenido | Aplica Deflate/zlib a streams sin comprimir | On | On |
+| Comprimir tabla xref | Usa xref comprimida (PDF 1.5+) — reduce overhead de tabla | On | On |
+| Deduplicar objetos idénticos | Fusiona objetos con mismo contenido en el xref | On | On |
+| Eliminar comentarios del PDF | Elimina `%% comments` del byte stream del PDF | On | On |
+| Bajar versión PDF | 1.7 → 1.6 → 1.5 → 1.4 — habilita más optimizaciones antiguas | Off | Off |
+| Eliminar árbol de estructura (tags) | Elimina tags de accesibilidad — afecta lectores de pantalla | Off | Off |
+
+**Librería:** PyMuPDF — `doc.save(..., garbage=4, compress=True, deflate=True, clean=True)`
+
+---
+
+##### E. Elementos interactivos
+
+| Opción | Descripción | Estándar | Agresivo |
+|--------|------------|---------|---------|
+| Eliminar anotaciones y comentarios | Highlights, sticky notes, marcas de revisión de PDF | Off | On |
+| Aplanar formularios | Convierte campos de formulario a texto estático (no editable) | Off | Off |
+| Eliminar campos de formulario | Borra campos sin aplanarlos (se pierden datos ingresados) | Off | Off |
+| Eliminar JavaScript | Elimina scripts JS embebidos en el PDF | On | On |
+| Eliminar firmas digitales | Borra objetos de firma del diccionario del PDF | Off | Off |
+| Eliminar adjuntos | Elimina archivos embebidos (EmbeddedFiles / attachments) | Off | On |
+
+**Librería:** PyMuPDF — `pagina.annots()`, `pagina.delete_annot(annot)`, manipulación de `/AcroForm` y `/EmbeddedFiles`
+
+---
+
+##### F. Navegación
+
+| Opción | Descripción | Estándar | Agresivo |
+|--------|------------|---------|---------|
+| Eliminar marcadores (bookmarks) | Borra el outline / tabla de contenidos del PDF | Off | Off |
+| Eliminar destinos nombrados | Elimina `/Dests` del diccionario raíz | Off | Off |
+| Eliminar capas opcionales (OCG) | Borra capas de contenido opcional (OCG/OCMD) | Off | On |
+
+**Librería:** PyMuPDF — `doc.set_toc([])`, manipulación del catálogo del PDF
+
+---
+
+##### G. Optimización de transmisión
+
+| Opción | Descripción | Estándar | Máximo |
+|--------|------------|---------|-------|
+| Linearizar (Fast Web View) | Optimiza para carga incremental en browser — best effort | Off | On |
+
+**Librería:** PyMuPDF — `doc.save(..., linear=True)`
+
+---
+
+#### UI — Layout
+
+```
+┌─ Drop Zone ────────────────────────────────────────────────────┐
+│   Arrastra tu PDF aquí o haz clic para seleccionar             │
+└────────────────────────────────────────────────────────────────┘
+
+ 📊 Análisis automático:  24 pág · 4.3 MB · 18 imágenes (74%) · 6 fuentes · XMP presente
+
+┌─ Modo de compresión ──────────────────────────────────────────┐
+│  ○ Ligero   ● Estándar   ○ Agresivo   ○ Máximo   ○ Personalizado │
+└────────────────────────────────────────────────────────────────┘
+
+[▼ A. Imágenes — ahorro estimado: ~60%]
+   ☑ Remuestrear   DPI máx: [150▼]    Calidad JPEG: [85%▼]
+   ☐ Eliminar duplicadas
+   ☐ Convertir a escala de grises
+   ☐ Recodificar como JPEG 2000
+
+[▼ B. Fuentes — ahorro estimado: ~8%]
+   ☐ Subconjunto de fuentes
+   ☐ Eliminar fuentes duplicadas
+   ☐ Eliminar familias estándar (Helvetica, Times, Courier)
+
+[▶ C. Metadatos — ahorro estimado: ~1%]
+   ☑ Eliminar XMP    ☑ Eliminar thumbnails    ☐ Limpiar campos básicos
+
+[▶ D. Estructura — ahorro estimado: ~3%]
+   ☑ Garbage collection    ☑ Comprimir streams    ☑ Comprimir xref
+   ☑ Deduplicar objetos    ☑ Eliminar comentarios
+   ☐ Bajar versión PDF     ☐ Eliminar tags de accesibilidad
+
+[▶ E. Elementos interactivos — ahorro estimado: ~0%]
+   ☐ Eliminar anotaciones    ☐ Aplanar formularios
+   ☑ Eliminar JavaScript     ☐ Eliminar firmas    ☐ Eliminar adjuntos
+
+[▶ F. Navegación — ahorro estimado: ~0%]
+   ☐ Eliminar marcadores    ☐ Destinos nombrados    ☐ Capas OCG
+
+[▶ G. Optimización de transmisión]
+   ☐ Linearizar (Fast Web View)
+
+ Ahorro total estimado: ~64%    →    4.3 MB  ➜  ~1.5 MB
+
+[ Comprimir PDF ]
+```
+
+---
+
+#### Backend — `services/pdf_compress.py` (ampliar)
+
+```python
+def procesar_compress(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
+    opciones = parametros.get('opciones', {})
+
+    # A — Imágenes
+    if opciones.get('reimagenes', True):
+        _recomprimir_imagenes(doc, dpi=opciones.get('dpi', 150), calidad=opciones.get('calidad_jpeg', 85))
+    if opciones.get('grises', False):
+        _convertir_grises(doc)
+    if opciones.get('dedup_imagenes', False):
+        _eliminar_imagenes_duplicadas(doc)
+
+    # C — Metadatos
+    if opciones.get('eliminar_xmp', True):
+        doc.set_xml_metadata('')
+    if opciones.get('limpiar_basicos', False):
+        doc.set_metadata({})
+    if opciones.get('eliminar_thumbnails', True):
+        _eliminar_thumbnails(doc)
+
+    # E — Elementos interactivos
+    if opciones.get('eliminar_anotaciones', False):
+        for pagina in doc:
+            for annot in list(pagina.annots()):
+                pagina.delete_annot(annot)
+    if opciones.get('eliminar_js', True):
+        _eliminar_javascript(doc)
+    if opciones.get('eliminar_adjuntos', False):
+        _eliminar_adjuntos(doc)
+    if opciones.get('aplanar_formularios', False):
+        _aplanar_formularios(doc)
+
+    # F — Navegación
+    if opciones.get('eliminar_marcadores', False):
+        doc.set_toc([])
+    if opciones.get('eliminar_ocg', False):
+        _eliminar_ocg(doc)
+
+    # D + B + G — save con flags PyMuPDF
+    doc.save(str(ruta_salida),
+        garbage=4 if opciones.get('garbage', True) else 0,
+        compress=opciones.get('comprimir_streams', True),
+        deflate=opciones.get('comprimir_streams', True),
+        clean=True,
+        linear=opciones.get('linearizar', False),
+    )
+```
+
+---
+
+#### Parámetros del job (`parametros.opciones`)
+
+| Clave | Tipo | Default Estándar | Descripción |
+|-------|------|-----------------|-------------|
+| `preset` | str | `'estandar'` | `'ligero'|'estandar'|'agresivo'|'maximo'|'personalizado'` |
+| `reimagenes` | bool | True | Recomprimir imágenes |
+| `dpi` | int | 150 | DPI máximo: 72 / 96 / 120 / 150 / 300 |
+| `calidad_jpeg` | int | 85 | Calidad JPEG: 60 / 75 / 85 / 95 |
+| `grises` | bool | False | Convertir imágenes a escala de grises (On en Máximo) |
+| `dedup_imagenes` | bool | False | Eliminar imágenes duplicadas (On en Agresivo) |
+| `jpeg2000` | bool | False | Recodificar como JPEG 2000 |
+| `subset_fuentes` | bool | False | Subconjunto de fuentes (On en Agresivo) |
+| `dedup_fuentes` | bool | False | Eliminar fuentes duplicadas (On en Agresivo) |
+| `eliminar_xmp` | bool | True | Eliminar stream XMP |
+| `limpiar_basicos` | bool | False | Vaciar campos básicos de metadatos |
+| `eliminar_thumbnails` | bool | True | Eliminar thumbnails embebidos |
+| `garbage` | bool | True | Garbage collection de objetos huérfanos |
+| `comprimir_streams` | bool | True | Comprimir streams con Deflate |
+| `dedup_objetos` | bool | True | Deduplicar objetos idénticos en xref |
+| `bajar_version` | bool | False | Bajar versión PDF |
+| `eliminar_tags` | bool | False | Eliminar árbol de estructura (tags) |
+| `eliminar_anotaciones` | bool | False | Eliminar anotaciones y comentarios (On en Agresivo) |
+| `aplanar_formularios` | bool | False | Aplanar formularios a texto estático |
+| `eliminar_js` | bool | True | Eliminar JavaScript embebido |
+| `eliminar_firmas` | bool | False | Eliminar firmas digitales |
+| `eliminar_adjuntos` | bool | False | Eliminar adjuntos / archivos embebidos (On en Agresivo) |
+| `eliminar_marcadores` | bool | False | Eliminar marcadores (bookmarks) |
+| `eliminar_ocg` | bool | False | Eliminar capas opcionales OCG (On en Agresivo) |
+| `linearizar` | bool | False | Linearizar para Fast Web View (On en Máximo) |
+
+---
+
+#### Endpoint
+
+```
+POST /api/v1/convert/compress
+{
+  "file_id": "uuid",
+  "opciones": {
+    "preset": "estandar",
+    "reimagenes": true,
+    "dpi": 150,
+    "calidad_jpeg": 85,
+    "eliminar_xmp": true,
+    "eliminar_thumbnails": true,
+    "garbage": true,
+    "comprimir_streams": true,
+    "dedup_objetos": true,
+    "eliminar_js": true
+  }
+}
+```
+
+El procesador `'compress'` ya está registrado en `app.py`. Solo se amplían los parámetros que acepta.
+
+---
+
+#### Nombre de salida
+
+```
+{nombre_base}_compress.pdf
+```
+
+---
+
+#### Notas de implementación
+
+- **Font subsetting:** PyMuPDF aplica subsetting automáticamente con `save(garbage=4, clean=True)`. Subsetting manual preciso requiere Ghostscript (`gs -dSubsetFonts=true`). Documentar en NOTAS-USUARIO.md.
+- **Bajar versión PDF:** PyMuPDF no controla la versión directamente. Alternativa: `gs -dCompatibilityLevel=1.4`. Marcar como "experimental" en la UI si se implementa.
+- **Linearización:** `doc.save(..., linear=True)` es best effort — no todos los PDFs se linearizan perfectamente. Advertir al usuario si el PDF resultante no cambia de tamaño.
+- **Estimación de ahorro:** Los porcentajes son indicativos, calculados desde el análisis previo. El ahorro real varía según el contenido específico del PDF.
+- **Tabla de etapas:** Retorna ZIP (igual que la mayoría de servicios PDF). El procesador `'compress'` ya existe — no registrar uno nuevo.
 
 ---
 

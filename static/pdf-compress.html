@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
     <title>Comprimir PDF — PDF-Export</title>
     <link rel="icon" type="image/x-icon" href="/static/fav.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,392 +19,185 @@
         --orange:    #F4A261;
         --blue:      #58A6FF;
         --green:     #3FB950;
+        --yellow:    #E3B341;
         --purple:    #A371F7;
         --text:      #E6EDF3;
-        --text-muted:#8B949E;
+        --muted:     #8B949E;
         --sidebar-w: 240px;
-        --sidebar-w-collapsed: 60px;
+        --sidebar-w-c: 60px;
         --header-h:  54px;
+        --accent:    #E63946;
       }
+      html { background: var(--bg); }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
 
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-
-      body {
-        font-family: 'IBM Plex Sans', sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        display: flex;
-        min-height: 100vh;
-      }
-
-      /* ─── SIDEBAR ─── */
+      /* ── Sidebar ─────────────────────────────────────────────────────── */
       #sidebar {
-        width: var(--sidebar-w);
-        min-height: 100vh;
-        background: var(--sidebar);
-        border-right: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        position: fixed;
-        top: 0; left: 0; bottom: 0;
-        z-index: 100;
-        transition: width 0.25s cubic-bezier(.4,0,.2,1);
-        overflow: hidden;
+        width:var(--sidebar-w); min-height:100vh; background:var(--sidebar);
+        border-right:1px solid var(--border); display:flex; flex-direction:column;
+        position:fixed; top:0; left:0; bottom:0; z-index:100;
+        transition:width .25s cubic-bezier(.4,0,.2,1); overflow:hidden;
       }
-      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+      #sidebar.collapsed { width:var(--sidebar-w-c); }
+      .sidebar-logo { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); height:var(--header-h); flex-shrink:0; }
+      .sidebar-logo-link { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+      .logo-icon { width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:13px; color:white; flex-shrink:0; letter-spacing:-1px; }
+      .logo-text { font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; line-height:1.2; white-space:nowrap; overflow:hidden; transition:opacity .2s; }
+      .logo-sub { font-size:10px; color:var(--muted); font-weight:400; font-family:'IBM Plex Sans',sans-serif; }
+      #sidebar.collapsed .logo-text { opacity:0; width:0; }
+      .nav-section { padding:6px 0; border-bottom:1px solid var(--border); }
+      .nav-section-label { font-size:10px; font-weight:600; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; padding:8px 14px 4px; white-space:nowrap; overflow:hidden; transition:opacity .2s; }
+      #sidebar.collapsed .nav-section-label { opacity:0; }
+      .nav-item { display:flex; align-items:center; gap:10px; padding:8px 14px; cursor:pointer; border-left:3px solid transparent; transition:background .15s; white-space:nowrap; position:relative; text-decoration:none; color:inherit; -webkit-user-select:none; user-select:none; }
+      .nav-item:hover { background:rgba(255,255,255,.04); }
+      .nav-item.active { background:var(--bg); border-left-color:var(--accent); }
+      .nav-item.active .nav-label { color:var(--text); }
+      .nav-icon { font-size:18px; width:22px; text-align:center; flex-shrink:0; line-height:1; }
+      .nav-label { font-size:13px; color:var(--muted); transition:opacity .2s,color .15s; overflow:hidden; }
+      .nav-item:hover .nav-label { color:var(--text); }
+      #sidebar.collapsed .nav-label { opacity:0; width:0; }
+      #sidebar.collapsed .nav-item:hover::after { content:attr(data-tooltip); position:absolute; left:calc(var(--sidebar-w-c) + 8px); background:#2D333B; color:var(--text); padding:5px 10px; border-radius:6px; font-size:12px; white-space:nowrap; border:1px solid var(--border); pointer-events:none; z-index:200; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+      .sidebar-footer { margin-top:auto; padding:10px 14px; border-top:1px solid var(--border); }
+      .collapse-btn { display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--muted); font-size:13px; padding:6px 0; -webkit-user-select:none; user-select:none; }
+      .collapse-btn:hover { color:var(--text); }
+      .collapse-icon { font-size:18px; width:22px; text-align:center; flex-shrink:0; transition:transform .3s; }
+      #sidebar.collapsed .collapse-icon { transform:scaleX(-1); }
+      .collapse-label { transition:opacity .2s; white-space:nowrap; }
+      #sidebar.collapsed .collapse-label { opacity:0; }
 
-      .sidebar-logo {
-        display: flex; align-items: center; gap: 10px;
-        padding: 11px 14px;
-        border-bottom: 1px solid var(--border);
-        cursor: pointer; text-decoration: none; color: var(--text);
-        height: var(--header-h); flex-shrink: 0;
-      }
-      .logo-icon {
-        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
-        color: white; flex-shrink: 0; letter-spacing: -1px;
-      }
-      .logo-text {
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
-        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
-      }
-      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
-      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
-
-      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
-      .nav-section-label {
-        font-size: 10px; font-weight: 600; color: var(--text-muted);
-        letter-spacing: .08em; text-transform: uppercase;
-        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
-      }
-      #sidebar.collapsed .nav-section-label { opacity: 0; }
-
-      .nav-item {
-        display: flex; align-items: center; gap: 10px;
-        padding: 8px 14px; cursor: pointer;
-        border-left: 3px solid transparent;
-        transition: background 0.15s; white-space: nowrap; position: relative;
-        text-decoration: none; color: inherit;
-        -webkit-user-select: none; user-select: none;
-      }
-      .nav-item:hover { background: rgba(255,255,255,0.04); }
-      .nav-item.active { background: var(--bg); border-left-color: var(--red); }
-      .nav-item.active .nav-label { color: var(--text); }
-      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
-      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
-      .nav-item:hover .nav-label { color: var(--text); }
-      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
-
-      #sidebar.collapsed .nav-item:hover::after {
-        content: attr(data-tooltip);
-        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
-        background: #2D333B; color: var(--text); padding: 5px 10px;
-        border-radius: 6px; font-size: 12px; white-space: nowrap;
-        border: 1px solid var(--border); pointer-events: none; z-index: 200;
-        box-shadow: 0 4px 16px rgba(0,0,0,.4);
-      }
-
-      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
-      .collapse-btn {
-        display: flex; align-items: center; gap: 10px; cursor: pointer;
-        color: var(--text-muted); font-size: 13px; padding: 6px 0;
-        -webkit-user-select: none; user-select: none;
-      }
-      .collapse-btn:hover { color: var(--text); }
-      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
-      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
-      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
-      #sidebar.collapsed .collapse-label { opacity: 0; }
-
-      /* ─── MAIN ─── */
-      #main {
-        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
-        display: flex; flex-direction: column;
-        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
-      }
-      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
-
-      /* HEADER */
-      .header {
-        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
-        display: flex; align-items: center; padding: 0 24px; gap: 14px;
-        position: sticky; top: 0; z-index: 50;
-      }
-      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
-      .breadcrumb a { color: var(--text-muted); cursor: pointer; transition: color 0.15s; text-decoration: none; display: flex; align-items: center; }
-      .breadcrumb a:hover { color: var(--red); }
-      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
-      .breadcrumb .current { color: var(--text); font-weight: 500; }
-
-      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-      .stat-chip {
-        display: flex; align-items: center; gap: 5px;
-        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
-        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
-      }
-      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      /* ── Main ────────────────────────────────────────────────────────── */
+      #main { margin-left:var(--sidebar-w); flex:1; min-height:100vh; display:flex; flex-direction:column; transition:margin-left .25s cubic-bezier(.4,0,.2,1); }
+      #main.expanded { margin-left:var(--sidebar-w-c); }
+      .header { height:var(--header-h); background:var(--sidebar); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 24px; gap:14px; position:sticky; top:0; z-index:50; }
+      .breadcrumb { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); }
+      .breadcrumb a { color:var(--muted); cursor:pointer; transition:color .15s; text-decoration:none; display:flex; align-items:center; }
+      .breadcrumb a:hover { color:var(--accent); }
+      .breadcrumb .sep { color:var(--border); margin:0 2px; }
+      .breadcrumb .current { color:var(--text); font-weight:500; }
+      .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+      .stat-chip { display:flex; align-items:center; gap:5px; font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--muted); background:var(--card); border:1px solid var(--border); border-radius:6px; padding:3px 8px; }
+      .stat-chip .dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 2s infinite; }
       @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-      .home-btn {
-        display: flex; align-items: center; gap: 6px;
-        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-        padding: 5px 12px; font-size: 13px; color: var(--text-muted);
-        cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
-        font-family: inherit; text-decoration: none;
-      }
-      .home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
+      /* ── Content ─────────────────────────────────────────────────────── */
+      .content { padding:28px 32px; flex:1; max-width:900px; width:100%; }
+      .page-header { margin-bottom:24px; }
+      .page-title-row { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+      .page-badge { font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:16px; background:rgba(230,57,70,.12); color:var(--accent); border:1px solid rgba(230,57,70,.3); border-radius:8px; padding:8px 14px; }
+      .page-title { font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:700; }
+      .page-subtitle { font-size:13px; color:var(--muted); }
 
-      /* ─── CONTENT ─── */
-      .content { padding: 28px 32px; flex: 1; max-width: 1100px; width: 100%; }
+      /* ── Drop zone ───────────────────────────────────────────────────── */
+      .dropzone { background:var(--card); border:2px dashed var(--border); border-radius:14px; padding:48px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
+      .dropzone:hover,.dropzone.drag-over { border-color:var(--accent); background:rgba(230,57,70,.04); }
+      .dropzone-icon { font-size:40px; margin-bottom:14px; display:block; }
+      .dropzone-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:6px; }
+      .dropzone-sub { font-size:12px; color:var(--muted); }
 
-      .page-header {
-        display: flex; align-items: flex-start; justify-content: space-between;
-        margin-bottom: 28px; gap: 16px;
-      }
-      .page-title-group { display: flex; align-items: center; gap: 14px; }
-      .page-badge {
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
-        background: rgba(230,57,70,0.12); color: var(--red); border: 1px solid rgba(230,57,70,0.3);
-        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
-      }
-      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
-      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+      /* ── Progreso ────────────────────────────────────────────────────── */
+      .progress-wrap { margin-top:14px; }
+      .progress-info { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+      .progress-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+      .progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--orange)); border-radius:2px; transition:width .3s; }
 
-      /* ─── TWO COLUMN LAYOUT ─── */
-      .two-col { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+      /* ── Info archivo ────────────────────────────────────────────────── */
+      .file-info-bar { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-top:14px; }
+      .file-icon { width:36px; height:36px; background:rgba(230,57,70,.12); border:1px solid rgba(230,57,70,.25); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:11px; color:var(--accent); flex-shrink:0; }
+      .file-info-text { flex:1; min-width:0; }
+      .file-nombre { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .file-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+      .btn-cambiar { background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted); font-size:12px; padding:4px 10px; cursor:pointer; transition:all .15s; }
+      .btn-cambiar:hover { border-color:var(--accent); color:var(--accent); }
 
-      /* DROP ZONE */
-      .dropzone {
-        background: var(--card); border: 2px dashed var(--border); border-radius: 14px;
-        padding: 48px 24px; text-align: center; cursor: pointer;
-        transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden;
-      }
-      .dropzone:hover, .dropzone.drag-over { border-color: var(--red); background: rgba(230,57,70,0.04); }
-      .dropzone-icon { font-size: 40px; margin-bottom: 14px; display: block; }
-      .dropzone-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-      .dropzone-sub { font-size: 12px; color: var(--text-muted); }
+      /* ── Análisis strip ──────────────────────────────────────────────── */
+      .analisis-strip { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+      .analisis-chip { display:flex; align-items:center; gap:5px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--muted); }
+      .analisis-chip .chip-val { color:var(--text); font-weight:600; margin-left:3px; font-family:'IBM Plex Mono',monospace; }
 
-      /* FILE INFO */
-      .file-info-card {
-        display: none;
-        background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-        padding: 18px 20px; margin-top: 14px;
-      }
-      .file-info-card.visible { display: block; }
-      .file-info-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-      .file-icon-box {
-        width: 40px; height: 40px; background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,.25);
-        border-radius: 8px; display: flex; align-items: center; justify-content: center;
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 11px; color: var(--red);
-        flex-shrink: 0;
-      }
-      .file-name-text { font-size: 14px; font-weight: 600; color: var(--text); }
-      .file-meta-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+      /* ── Presets ─────────────────────────────────────────────────────── */
+      .preset-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; margin-bottom:14px; }
+      .preset-btn { flex:1; min-width:100px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:10px; cursor:pointer; text-align:center; transition:all .15s; }
+      .preset-btn:hover { border-color:var(--muted); }
+      .preset-btn.active { border-color:var(--accent); background:rgba(230,57,70,.08); }
+      .preset-name { font-size:13px; font-weight:600; color:var(--text); }
+      .preset-desc { font-size:11px; color:var(--muted); margin-top:3px; }
+      .preset-est { font-size:11px; color:var(--green); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
 
-      /* Stats del archivo */
-      .file-stats {
-        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-        padding-top: 14px; border-top: 1px solid var(--border);
-      }
-      .stat-item { text-align: center; }
-      .stat-value {
-        font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 700;
-        color: var(--orange);
-      }
-      .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+      /* ── Categorías acordeón ─────────────────────────────────────────── */
+      .cat-section { background:var(--card); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+      .cat-header { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; -webkit-user-select:none; user-select:none; transition:background .15s; }
+      .cat-header:hover { background:var(--card-hover,#21262D); }
+      .cat-letter { width:24px; height:24px; background:rgba(230,57,70,.15); border:1px solid rgba(230,57,70,.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12px; color:var(--accent); flex-shrink:0; }
+      .cat-name { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+      .cat-savings { font-size:11px; background:rgba(63,185,80,.1); border:1px solid rgba(63,185,80,.25); color:var(--green); border-radius:12px; padding:2px 8px; font-family:'IBM Plex Mono',monospace; display:none; }
+      .cat-savings.visible { display:inline; }
+      .cat-arrow { font-size:12px; color:var(--muted); transition:transform .2s; flex-shrink:0; }
+      .cat-header.open .cat-arrow { transform:rotate(180deg); }
+      .cat-body { display:none; padding:0 16px 14px; border-top:1px solid var(--border); }
+      .cat-body.open { display:block; }
 
-      /* PROGRESS BARS */
-      .progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-      .progress-fill {
-        height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--orange));
-        border-radius: 2px; transition: width 0.3s ease;
-      }
-      .progress-info-row {
-        display: flex; justify-content: space-between; font-size: 12px;
-        color: var(--text-muted); margin-bottom: 6px;
-      }
+      /* ── Checkboxes ──────────────────────────────────────────────────── */
+      .check-row { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(48,54,61,.6); }
+      .check-row:last-child { border-bottom:none; }
+      .check-row input[type="checkbox"] { width:16px; height:16px; margin-top:2px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+      .check-info { flex:1; }
+      .check-label { font-size:13px; color:var(--text); cursor:pointer; display:block; }
+      .check-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+      .check-controls { display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+      .ctrl-label { font-size:11px; color:var(--muted); }
+      .ctrl-select { background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; padding:4px 8px; font-family:'IBM Plex Mono',monospace; cursor:pointer; }
+      .ctrl-select:focus { outline:none; border-color:var(--accent); }
+      .check-disabled { opacity:.45; }
+      .check-disabled input[type="checkbox"] { cursor:not-allowed; }
 
-      /* PROCESSING PANEL */
-      .processing-panel {
-        display: none;
-        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-        padding: 14px 16px; margin-top: 14px;
-      }
-      .processing-panel.visible { display: block; }
+      /* ── Estimación total ────────────────────────────────────────────── */
+      .estimacion-total { background:rgba(63,185,80,.06); border:1px solid rgba(63,185,80,.2); border-radius:10px; padding:14px 18px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+      .est-label { font-size:13px; color:var(--muted); }
+      .est-valor { font-family:'IBM Plex Mono',monospace; font-size:1.1rem; font-weight:700; color:var(--green); }
+      .est-sub { font-size:12px; color:var(--muted); }
 
-      /* STATUS MESSAGE */
-      .status-message {
-        display: none; border-radius: 10px; padding: 14px 16px; margin-top: 14px;
-        font-size: 13px; text-align: center;
-      }
-      .status-message.success { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,.25); color: var(--green); }
-      .status-message.error   { background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,.25); color: var(--red); }
-      .status-message.info    { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,.25); color: var(--blue); }
+      /* ── Botones ─────────────────────────────────────────────────────── */
+      .btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:11px 24px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:inherit; transition:all .15s; text-decoration:none; }
+      .btn-primary { background:var(--accent); color:white; }
+      .btn-primary:hover { background:#c9303c; box-shadow:0 4px 16px rgba(230,57,70,.35); transform:translateY(-1px); }
+      .btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+      .action-row { margin-top:14px; }
 
-      /* RESULT CARD */
-      .result-card {
-        display: none;
-        background: var(--card); border: 1px solid rgba(63,185,80,.3); border-radius: 14px;
-        padding: 20px; margin-top: 14px;
-      }
-      .result-card.visible { display: block; }
-      .result-card-title { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 16px; }
-      .result-comparison {
-        display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px;
-      }
-      .size-box {
-        text-align: center; padding: 12px 20px;
-        background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      }
-      .size-box .size-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-      .size-box .size-value { font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; font-weight: 700; }
-      .size-arrow { font-size: 1.3rem; color: var(--green); }
-      .reduction-badge {
-        display: inline-block; background: rgba(63,185,80,0.12);
-        border: 1px solid rgba(63,185,80,.3); color: var(--green);
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700;
-        padding: 6px 16px; border-radius: 20px; font-size: 14px;
-      }
+      /* ── Status / resultado ──────────────────────────────────────────── */
+      .status-message { border-radius:10px; padding:14px 16px; margin-top:14px; font-size:13px; text-align:center; }
+      .status-message.success { background:rgba(63,185,80,.08); border:1px solid rgba(63,185,80,.25); color:var(--green); }
+      .status-message.error   { background:rgba(230,57,70,.08); border:1px solid rgba(230,57,70,.25); color:var(--accent); }
+      .status-message.info    { background:rgba(88,166,255,.08); border:1px solid rgba(88,166,255,.25); color:var(--blue); }
 
-      /* INFO STRIP */
-      .info-strip {
-        display: flex; align-items: center; gap: 8px;
-        background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,.15);
-        border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text-muted);
-        margin-top: 20px;
-      }
-      .info-strip strong { color: var(--blue); }
+      .result-card { background:var(--card); border:1px solid rgba(63,185,80,.3); border-radius:14px; padding:20px; margin-top:14px; }
+      .result-title { font-size:13px; font-weight:600; color:var(--green); margin-bottom:16px; }
+      .result-compare { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+      .size-box { text-align:center; padding:12px 20px; background:var(--bg); border:1px solid var(--border); border-radius:8px; min-width:100px; }
+      .size-box .slbl { font-size:11px; color:var(--muted); margin-bottom:4px; }
+      .size-box .sval { font-family:'IBM Plex Mono',monospace; font-size:1.2rem; font-weight:700; }
+      .size-arrow { font-size:1.3rem; color:var(--green); }
+      .reduction-badge { display:inline-block; background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.3); color:var(--green); font-family:'IBM Plex Mono',monospace; font-weight:700; padding:6px 16px; border-radius:20px; font-size:14px; }
 
-      /* ─── OPTIONS PANEL ─── */
-      .options-panel {
-        background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-      }
-      .options-panel + .options-panel { margin-top: 12px; }
-      .options-header {
-        padding: 14px 18px; border-bottom: 1px solid var(--border);
-        font-size: 12px; font-weight: 600; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: .06em;
-      }
+      /* ── Info strip ──────────────────────────────────────────────────── */
+      .info-strip { display:flex; align-items:center; gap:8px; background:rgba(88,166,255,.06); border:1px solid rgba(88,166,255,.15); border-radius:8px; padding:10px 14px; font-size:12px; color:var(--muted); margin-top:20px; }
+      .info-strip strong { color:var(--blue); }
 
-      /* Nivel de compresion cards */
-      .level-cards { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-      .level-option input[type="radio"] { display: none; }
-      .level-option label {
-        display: block; padding: 12px 14px;
-        background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-        cursor: pointer; transition: all 0.15s;
-      }
-      .level-option label:hover { border-color: var(--text-muted); }
-      .level-option input[type="radio"]:checked + label { border-color: var(--red); background: rgba(230,57,70,0.08); }
-      .level-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-      .level-name { font-size: 13px; font-weight: 600; color: var(--text); }
-      .level-reduction { font-size: 11px; color: var(--green); font-weight: 600; }
-      .level-description { font-size: 11px; color: var(--text-muted); }
-      .level-estimate { font-size: 11px; color: var(--orange); margin-top: 4px; font-family: 'IBM Plex Mono', monospace; }
+      /* ── Footer ──────────────────────────────────────────────────────── */
+      .footer { text-align:center; color:#aaa; font-size:0.75rem; padding:1rem 0 0.5rem; }
+      .footer-home-link { color:#aaa; text-decoration:none; }
+      .footer-home-link:hover { color:var(--text); }
 
-      /* Custom options (personalizada) */
-      #custom-options {
-        display: none; padding: 10px 12px 4px;
-        background: rgba(88,166,255,0.04); border-top: 1px solid var(--border);
-      }
-      #custom-options.visible { display: block; }
-      .custom-row { display: flex; gap: 10px; margin-bottom: 10px; }
-      .custom-field { flex: 1; }
-      .custom-field label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
-      .custom-field input[type="number"] {
-        width: 100%; padding: 8px 10px;
-        background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-        color: var(--text); font-size: 13px; font-family: 'IBM Plex Mono', monospace;
-      }
-      .custom-field input[type="number"]:focus { outline: none; border-color: var(--red); }
+      /* ── Scrollbar ───────────────────────────────────────────────────── */
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:transparent; }
+      ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
-      /* Checkboxes */
-      .checkbox-list { padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; }
-      .checkbox-option { display: flex; align-items: flex-start; gap: 10px; }
-      .checkbox-option input[type="checkbox"] {
-        width: 16px; height: 16px; margin-top: 2px; accent-color: var(--red);
-        cursor: pointer; flex-shrink: 0;
-      }
-      .option-label { font-size: 13px; color: var(--text); cursor: pointer; display: block; }
-      .option-desc  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-      /* Estimacion */
-      .estimate-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 12px; }
-      .estimate-row {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 18px; border-bottom: 1px solid var(--border); font-size: 13px;
-      }
-      .estimate-row:last-child { border-bottom: none; }
-      .estimate-label { color: var(--text-muted); }
-      .estimate-value { font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--orange); }
-      .estimate-value.green { color: var(--green); }
-
-      /* ACTION BUTTONS */
-      .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-      .btn {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
-        cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; text-decoration: none;
-      }
-      .btn-primary { background: var(--red); color: white; }
-      .btn-primary:hover { background: #c9303c; box-shadow: 0 4px 16px rgba(230,57,70,.35); transform: translateY(-1px); }
-      .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-
-      /* Ocultos por defecto */
-      #progreso-carga { display: none; margin-top: 14px; }
-      #panel-opciones { display: none; }
-
-      /* ─── FOOTER ─── */
-      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
-      .site-footer {
-        border-top: 1px solid var(--border); background: var(--sidebar);
-        padding: 20px 32px 28px; margin-top: 40px;
-      }
-      .footer-inner { max-width: 1100px; }
-      .footer-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-      .footer-brand { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-      .footer-brand-icon {
-        width: 28px; height: 28px; font-size: 11px; background: var(--red); border-radius: 6px;
-        display: flex; align-items: center; justify-content: center;
-        font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: white;
-        letter-spacing: -1px; flex-shrink: 0;
-      }
-      .footer-brand strong { color: var(--text); }
-      .footer-home-btn {
-        display: flex; align-items: center; gap: 6px;
-        background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-        padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--text-muted);
-        text-decoration: none; white-space: nowrap; flex-shrink: 0;
-        transition: background 0.15s, border-color 0.15s, color 0.15s;
-      }
-      .footer-home-btn:hover { background: var(--card-hover); border-color: var(--red); color: var(--text); }
-      .footer-divider { height: 1px; background: var(--border); margin: 16px 0; }
-      .footer-version { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
-      .footer-legal { margin-top: 10px; }
-      .footer-legal summary {
-        font-size: 12px; color: var(--text-muted); cursor: pointer;
-        -webkit-user-select: none; user-select: none;
-        list-style: none; display: flex; align-items: center; gap: 6px; transition: color 0.15s;
-      }
-      .footer-legal summary:hover { color: var(--text); }
-      .footer-legal[open] summary { color: var(--text); margin-bottom: 12px; }
-      .footer-legal-body {
-        font-size: 12px; color: var(--text-muted); line-height: 1.7;
-        border-left: 2px solid var(--border); padding-left: 14px;
-        display: flex; flex-direction: column; gap: 8px; max-width: 720px;
-      }
-
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-      @media (max-width: 900px) {
-        .two-col { grid-template-columns: 1fr; }
-        #sidebar { width: var(--sidebar-w-collapsed); }
-        #main { margin-left: var(--sidebar-w-collapsed); }
-        .content { padding: 20px 16px; }
+      @media (max-width:900px) {
+        #sidebar { width:var(--sidebar-w-c); }
+        #main { margin-left:var(--sidebar-w-c); }
+        .content { padding:20px 16px; }
+        .preset-row { flex-direction:column; }
       }
     </style>
 </head>
@@ -412,35 +206,41 @@
 <!-- ═══ SIDEBAR ═══ -->
 <nav id="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-icon">PDF</div>
-        <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+        <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+            <div class="logo-icon">PDF</div>
+            <div class="logo-text">PDF-Export<br><span class="logo-sub">&amp; Import · ERF</span></div>
+        </a>
     </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Operaciones</div>
         <a class="nav-item active" href="/" data-tooltip="Tengo un PDF...">
-            <span class="nav-icon">📄</span>
-            <span class="nav-label">Tengo un PDF...</span>
+            <span class="nav-icon">📄</span><span class="nav-label">Tengo un PDF...</span>
         </a>
         <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
-            <span class="nav-icon">✨</span>
-            <span class="nav-label">Quiero un PDF</span>
+            <span class="nav-icon">✨</span><span class="nav-label">Quiero un PDF</span>
         </a>
-        <a class="nav-item" href="/" data-tooltip="Miscelaneos">
-            <span class="nav-icon">🔧</span>
-            <span class="nav-label">Miscelaneos</span>
+        <a class="nav-item" href="/" data-tooltip="Forensis">
+            <span class="nav-icon">🔍</span><span class="nav-label">Forensis</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Viewers">
+            <span class="nav-icon">👁️</span><span class="nav-label">Viewers</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Misceláneos">
+            <span class="nav-icon">🔧</span><span class="nav-label">Misceláneos</span>
         </a>
     </div>
 
     <div class="nav-section">
         <div class="nav-section-label">Sistema</div>
         <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
-            <span class="nav-icon">🗄️</span>
-            <span class="nav-label">Archivos en Cache</span>
+            <span class="nav-icon">🗄️</span><span class="nav-label">Archivos en Cache</span>
         </a>
-        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
-            <span class="nav-icon">ℹ️</span>
-            <span class="nav-label">Acerca de PDF-Export</span>
+        <a class="nav-item" href="/" data-tooltip="Acerca de">
+            <span class="nav-icon">ℹ️</span><span class="nav-label">Acerca de</span>
+        </a>
+        <a class="nav-item" href="/help.html" target="_blank" data-tooltip="Ayuda">
+            <span class="nav-icon">❓</span><span class="nav-label">Ayuda</span>
         </a>
     </div>
 
@@ -455,7 +255,6 @@
 <!-- ═══ MAIN ═══ -->
 <div id="main">
 
-    <!-- HEADER -->
     <header class="header">
         <div class="breadcrumb">
             <a href="/" title="Inicio">🏠</a>
@@ -466,259 +265,411 @@
         </div>
         <div class="header-right">
             <div class="stat-chip"><span class="dot"></span>Online</div>
-            <a class="home-btn" href="/">🏠 Inicio</a>
         </div>
     </header>
 
-    <!-- CONTENIDO -->
     <main class="content">
 
         <div class="page-header">
-            <div class="page-title-group">
+            <div class="page-title-row">
                 <div class="page-badge">CMPR</div>
                 <div>
                     <div class="page-title">Comprimir PDF</div>
-                    <div class="page-subtitle">Reduce el tamano del PDF comprimiendo imagenes y optimizando estructura</div>
+                    <div class="page-subtitle">7 categorías de optimización · análisis automático · presets por nivel</div>
                 </div>
             </div>
         </div>
 
-        <div class="two-col">
-
-            <!-- COLUMNA IZQUIERDA: opciones -->
-            <div id="panel-opciones">
-
-                <!-- Nivel de compresion -->
-                <div class="options-panel">
-                    <div class="options-header">Nivel de Compresion</div>
-                    <div class="level-cards">
-                        <div class="level-option">
-                            <input type="radio" name="nivel" id="nivel-baja" value="baja">
-                            <label for="nivel-baja">
-                                <div class="level-header">
-                                    <span class="level-name">Baja</span>
-                                    <span class="level-reduction" id="reduccion-baja">~30% menor</span>
-                                </div>
-                                <div class="level-description">Mejor calidad, menor reduccion — 150 DPI, calidad 90%</div>
-                                <div class="level-estimate" id="estimate-baja"></div>
-                            </label>
-                        </div>
-
-                        <div class="level-option">
-                            <input type="radio" name="nivel" id="nivel-media" value="media" checked>
-                            <label for="nivel-media">
-                                <div class="level-header">
-                                    <span class="level-name">Media</span>
-                                    <span class="level-reduction" id="reduccion-media">~50% menor</span>
-                                </div>
-                                <div class="level-description">Equilibrado — 120 DPI, calidad 75%</div>
-                                <div class="level-estimate" id="estimate-media"></div>
-                            </label>
-                        </div>
-
-                        <div class="level-option">
-                            <input type="radio" name="nivel" id="nivel-alta" value="alta">
-                            <label for="nivel-alta">
-                                <div class="level-header">
-                                    <span class="level-name">Alta</span>
-                                    <span class="level-reduction" id="reduccion-alta">~70% menor</span>
-                                </div>
-                                <div class="level-description">Maxima reduccion — 96 DPI, calidad 60%</div>
-                                <div class="level-estimate" id="estimate-alta"></div>
-                            </label>
-                        </div>
-
-                        <div class="level-option">
-                            <input type="radio" name="nivel" id="nivel-personalizada" value="personalizada">
-                            <label for="nivel-personalizada">
-                                <div class="level-header">
-                                    <span class="level-name">Personalizada</span>
-                                </div>
-                                <div class="level-description">Configura DPI y calidad manualmente</div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Opciones personalizadas (ocultas por defecto) -->
-                    <div id="custom-options">
-                        <div class="custom-row">
-                            <div class="custom-field">
-                                <label for="dpi-maximo">DPI maximo</label>
-                                <input type="number" id="dpi-maximo" min="72" max="300" value="120">
-                            </div>
-                            <div class="custom-field">
-                                <label for="calidad-jpg">Calidad (%)</label>
-                                <input type="number" id="calidad-jpg" min="30" max="95" value="75">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Opciones adicionales -->
-                <div class="options-panel">
-                    <div class="options-header">Opciones Adicionales</div>
-                    <div class="checkbox-list">
-                        <div class="checkbox-option">
-                            <input type="checkbox" id="eliminar-metadatos" checked>
-                            <div>
-                                <label class="option-label" for="eliminar-metadatos">Eliminar metadatos</label>
-                                <div class="option-desc">Remueve autor, fecha de creacion, etc.</div>
-                            </div>
-                        </div>
-                        <div class="checkbox-option">
-                            <input type="checkbox" id="eliminar-anotaciones">
-                            <div>
-                                <label class="option-label" for="eliminar-anotaciones">Eliminar anotaciones</label>
-                                <div class="option-desc">Remueve comentarios y marcas</div>
-                            </div>
-                        </div>
-                        <div class="checkbox-option">
-                            <input type="checkbox" id="eliminar-bookmarks">
-                            <div>
-                                <label class="option-label" for="eliminar-bookmarks">Eliminar marcadores</label>
-                                <div class="option-desc">Remueve indice / tabla de contenidos</div>
-                            </div>
-                        </div>
-                        <div class="checkbox-option">
-                            <input type="checkbox" id="escala-grises">
-                            <div>
-                                <label class="option-label" for="escala-grises">Convertir a escala de grises</label>
-                                <div class="option-desc">Reduce tamano eliminando color</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Estimacion -->
-                <div class="estimate-card" id="result-estimate">
-                    <div class="estimate-row">
-                        <span class="estimate-label">Tamano estimado</span>
-                        <span class="estimate-value" id="tamano-estimado">—</span>
-                    </div>
-                    <div class="estimate-row">
-                        <span class="estimate-label">Reduccion estimada</span>
-                        <span class="estimate-value green" id="reduccion-estimada">—</span>
-                    </div>
-                </div>
-
-                <div class="actions">
-                    <button type="button" class="btn btn-primary" id="btn-comprimir" disabled>
-                        🗜 Comprimir PDF
-                    </button>
-                </div>
-
-                <!-- Progreso de procesamiento -->
-                <div class="processing-panel" id="progreso-proceso">
-                    <div class="progress-info-row">
-                        <span id="texto-proceso">Procesando...</span>
-                        <span id="porcentaje-proceso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-proceso"></div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- COLUMNA DERECHA -->
-            <div>
-                <div class="dropzone" id="zona-carga">
-                    <span class="dropzone-icon">📄</span>
-                    <div class="dropzone-title">Arrastra un archivo PDF aqui</div>
-                    <div class="dropzone-sub">o haz clic para seleccionar · <strong>maximo 1 GB</strong></div>
-                </div>
-
-                <!-- Progreso de carga -->
-                <div id="progreso-carga">
-                    <div class="progress-info-row">
-                        <span id="texto-progreso">Subiendo...</span>
-                        <span id="porcentaje-progreso">0%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-fill" id="barra-progreso"></div>
-                    </div>
-                </div>
-
-                <!-- Info archivo -->
-                <div class="file-info-card" id="info-archivo">
-                    <div class="file-info-header">
-                        <div class="file-icon-box">PDF</div>
-                        <div>
-                            <div class="file-name-text" id="nombre-archivo">documento.pdf</div>
-                            <div class="file-meta-text"><span id="num-paginas">0</span> paginas</div>
-                        </div>
-                    </div>
-                    <div class="file-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="tamano-actual">—</div>
-                            <div class="stat-label">Tamano actual</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="num-imagenes">—</div>
-                            <div class="stat-label">Imagenes</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="porcentaje-imagenes">—</div>
-                            <div class="stat-label">Contenido grafico</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Resultado de compresion -->
-                <div class="result-card" id="resultado-card">
-                    <div class="result-card-title">✓ Compresion completada</div>
-                    <div class="result-comparison">
-                        <div class="size-box">
-                            <div class="size-label">Original</div>
-                            <div class="size-value" id="resultado-original">—</div>
-                        </div>
-                        <div class="size-arrow">→</div>
-                        <div class="size-box">
-                            <div class="size-label">Comprimido</div>
-                            <div class="size-value" id="resultado-comprimido">—</div>
-                        </div>
-                    </div>
-                    <div style="text-align:center;">
-                        <span class="reduction-badge" id="resultado-reduccion">-0%</span>
-                    </div>
-                </div>
-
-                <!-- Mensaje de estado -->
-                <div class="status-message" id="mensaje-estado"></div>
-
-                <div class="info-strip">
-                    ⏱️ Los archivos se eliminan automaticamente despues de <strong>4 horas</strong>
-                </div>
-            </div>
-
+        <!-- Drop Zone -->
+        <div class="dropzone" id="zona-carga">
+            <span class="dropzone-icon">📄</span>
+            <div class="dropzone-title">Arrastra un PDF aquí o haz clic para seleccionar</div>
+            <div class="dropzone-sub">Máximo 1 GB · El análisis es automático al subir</div>
         </div>
+
+        <!-- Progreso de subida -->
+        <div class="progress-wrap" id="progreso-carga" hidden>
+            <div class="progress-info">
+                <span id="txt-subida">Subiendo...</span>
+                <span id="pct-subida">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="barra-subida"></div></div>
+        </div>
+
+        <!-- Progreso de análisis -->
+        <div class="progress-wrap" id="progreso-analisis" hidden>
+            <div class="progress-info">
+                <span>Analizando documento...</span>
+                <span id="pct-analisis">...</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="barra-analisis" style="width:60%;animation:pulse 1s infinite;"></div></div>
+        </div>
+
+        <!-- Info del archivo + análisis (visible tras subida) -->
+        <div id="panel-info" hidden>
+            <div class="file-info-bar">
+                <div class="file-icon">PDF</div>
+                <div class="file-info-text">
+                    <div class="file-nombre" id="nom-archivo">documento.pdf</div>
+                    <div class="file-meta"><span id="num-paginas">0</span> págs · <span id="tam-original">—</span></div>
+                </div>
+                <button class="btn-cambiar" id="btn-cambiar">Cambiar archivo</button>
+            </div>
+
+            <!-- Chips de análisis por categoría -->
+            <div class="analisis-strip" id="analisis-strip">
+                <div class="analisis-chip">🖼 Imágenes <span class="chip-val" id="chip-imagenes">—</span></div>
+                <div class="analisis-chip">🔤 Fuentes <span class="chip-val" id="chip-fuentes">—</span></div>
+                <div class="analisis-chip">📋 Metadatos <span class="chip-val" id="chip-meta">—</span></div>
+                <div class="analisis-chip">📌 Anotaciones <span class="chip-val" id="chip-anot">—</span></div>
+                <div class="analisis-chip">🔖 Marcadores <span class="chip-val" id="chip-marc">—</span></div>
+                <div class="analisis-chip">📦 Adjuntos <span class="chip-val" id="chip-adj">—</span></div>
+            </div>
+        </div>
+
+        <!-- Panel de opciones (visible tras análisis) -->
+        <div id="panel-opciones" hidden>
+
+            <!-- Presets -->
+            <div class="preset-row" id="preset-row">
+                <div class="preset-btn active" data-preset="estandar">
+                    <div class="preset-name">Estándar</div>
+                    <div class="preset-desc">Imágenes 150DPI 85% + metadatos + streams</div>
+                    <div class="preset-est" id="est-estandar">~20–50%</div>
+                </div>
+                <div class="preset-btn" data-preset="ligero">
+                    <div class="preset-name">Ligero</div>
+                    <div class="preset-desc">Solo metadatos, streams y garbage</div>
+                    <div class="preset-est" id="est-ligero">~5–15%</div>
+                </div>
+                <div class="preset-btn" data-preset="agresivo">
+                    <div class="preset-name">Agresivo</div>
+                    <div class="preset-desc">96DPI 60% + fuentes + interactivo</div>
+                    <div class="preset-est" id="est-agresivo">~50–80%</div>
+                </div>
+                <div class="preset-btn" data-preset="maximo">
+                    <div class="preset-name">Máximo</div>
+                    <div class="preset-desc">72DPI + grises + linearizar</div>
+                    <div class="preset-est" id="est-maximo">~60–90%</div>
+                </div>
+                <div class="preset-btn" data-preset="personalizado">
+                    <div class="preset-name">Personalizado</div>
+                    <div class="preset-desc">Configura cada opción manualmente</div>
+                    <div class="preset-est">&nbsp;</div>
+                </div>
+            </div>
+
+            <!-- ── A. Imágenes ─────────────────────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-imagenes', this)">
+                    <div class="cat-letter">A</div>
+                    <span class="cat-name">Imágenes</span>
+                    <span class="cat-savings" id="sav-imagenes"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body open" id="cat-imagenes">
+                    <div class="check-row">
+                        <input type="checkbox" id="reimagenes" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="reimagenes">Remuestrear y recomprimir imágenes</label>
+                            <div class="check-desc">Aplica DPI máximo y calidad JPEG — mayor impacto en el tamaño</div>
+                            <div class="check-controls" id="ctrl-imagenes">
+                                <span class="ctrl-label">DPI máx:</span>
+                                <select class="ctrl-select" id="dpi">
+                                    <option value="72">72 DPI</option>
+                                    <option value="96">96 DPI</option>
+                                    <option value="120">120 DPI</option>
+                                    <option value="150" selected>150 DPI</option>
+                                    <option value="300">300 DPI (sin cambio)</option>
+                                </select>
+                                <span class="ctrl-label">Calidad JPEG:</span>
+                                <select class="ctrl-select" id="calidad-jpeg">
+                                    <option value="60">60%</option>
+                                    <option value="75">75%</option>
+                                    <option value="85" selected>85%</option>
+                                    <option value="95">95%</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="grises">
+                        <div class="check-info">
+                            <label class="check-label" for="grises">Convertir a escala de grises</label>
+                            <div class="check-desc">Luma (0.299R + 0.587G + 0.114B) — reduce ~3× en documentos con color</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="dedup-imagenes">
+                        <div class="check-info">
+                            <label class="check-label" for="dedup-imagenes">Eliminar imágenes duplicadas</label>
+                            <div class="check-desc">Detecta streams idénticos (SHA-256) y unifica referencias</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── B. Fuentes ──────────────────────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-fuentes', this)">
+                    <div class="cat-letter">B</div>
+                    <span class="cat-name">Fuentes</span>
+                    <span class="cat-savings" id="sav-fuentes"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-fuentes">
+                    <div class="check-row">
+                        <input type="checkbox" id="subset-fuentes">
+                        <div class="check-info">
+                            <label class="check-label" for="subset-fuentes">Subconjunto de fuentes (font subsetting)</label>
+                            <div class="check-desc">Incluye solo los glifos usados en el documento — vía garbage=4 de PyMuPDF</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="dedup-fuentes">
+                        <div class="check-info">
+                            <label class="check-label" for="dedup-fuentes">Eliminar fuentes duplicadas</label>
+                            <div class="check-desc">Misma fuente referenciada múltiples veces → una sola copia</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── C. Metadatos ────────────────────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-meta', this)">
+                    <div class="cat-letter">C</div>
+                    <span class="cat-name">Metadatos</span>
+                    <span class="cat-savings" id="sav-meta"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-meta">
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-xmp" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-xmp">Eliminar stream XMP</label>
+                            <div class="check-desc">Borra el bloque completo de metadatos XMP del PDF</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-thumbnails" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-thumbnails">Eliminar thumbnails embebidos</label>
+                            <div class="check-desc">Imágenes miniatura de página almacenadas internamente en el PDF</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="limpiar-basicos">
+                        <div class="check-info">
+                            <label class="check-label" for="limpiar-basicos">Limpiar campos básicos</label>
+                            <div class="check-desc">Vacía Título, Autor, Asunto, Palabras clave, Creador, Productor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── D. Estructura ───────────────────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-estructura', this)">
+                    <div class="cat-letter">D</div>
+                    <span class="cat-name">Estructura interna</span>
+                    <span class="cat-savings" id="sav-estructura"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-estructura">
+                    <div class="check-row">
+                        <input type="checkbox" id="garbage" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="garbage">Garbage collection (objetos huérfanos)</label>
+                            <div class="check-desc">Elimina objetos no referenciados desde la raíz del PDF — siempre recomendado</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="comprimir-streams" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="comprimir-streams">Comprimir streams con Deflate</label>
+                            <div class="check-desc">Aplica zlib a todos los streams no comprimidos — sin pérdida de calidad</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="dedup-objetos" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="dedup-objetos">Deduplicar objetos idénticos</label>
+                            <div class="check-desc">Fusiona objetos con el mismo contenido en la tabla xref</div>
+                        </div>
+                    </div>
+                    <div class="check-row check-disabled">
+                        <input type="checkbox" id="bajar-version" disabled>
+                        <div class="check-info">
+                            <label class="check-label" for="bajar-version">Bajar versión PDF (experimental)</label>
+                            <div class="check-desc">1.7 → 1.4 — requiere Ghostscript externo; no disponible en esta versión</div>
+                        </div>
+                    </div>
+                    <div class="check-row check-disabled">
+                        <input type="checkbox" id="eliminar-tags" disabled>
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-tags">Eliminar árbol de estructura (tags)</label>
+                            <div class="check-desc">Elimina tags de accesibilidad — afecta lectores de pantalla; deshabilitado por seguridad</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── E. Elementos interactivos ──────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-interactivo', this)">
+                    <div class="cat-letter">E</div>
+                    <span class="cat-name">Elementos interactivos</span>
+                    <span class="cat-savings" id="sav-interactivo"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-interactivo">
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-anotaciones">
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-anotaciones">Eliminar anotaciones y comentarios</label>
+                            <div class="check-desc">Highlights, sticky notes, marcas de revisión, formas</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-js" checked>
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-js">Eliminar JavaScript embebido</label>
+                            <div class="check-desc">Elimina scripts JS del PDF — sin impacto en documentos normales</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="aplanar-formularios">
+                        <div class="check-info">
+                            <label class="check-label" for="aplanar-formularios">Eliminar campos de formulario</label>
+                            <div class="check-desc">Borra campos interactivos — perderás datos ingresados en el formulario</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-adjuntos">
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-adjuntos">Eliminar adjuntos embebidos</label>
+                            <div class="check-desc">Archivos embebidos (EmbeddedFiles / attachments) dentro del PDF</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-firmas">
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-firmas">Eliminar firmas digitales</label>
+                            <div class="check-desc">Borra objetos de firma — el PDF pierde validez legal de las firmas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── F. Navegación ───────────────────────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-navegacion', this)">
+                    <div class="cat-letter">F</div>
+                    <span class="cat-name">Navegación</span>
+                    <span class="cat-savings" id="sav-navegacion"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-navegacion">
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-marcadores">
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-marcadores">Eliminar marcadores (bookmarks)</label>
+                            <div class="check-desc">Borra la tabla de contenidos / outline del PDF</div>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="eliminar-ocg">
+                        <div class="check-info">
+                            <label class="check-label" for="eliminar-ocg">Eliminar capas opcionales (OCG)</label>
+                            <div class="check-desc">Borra capas de contenido opcional — el PDF queda con contenido fijo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── G. Optimización de transmisión ─────────── -->
+            <div class="cat-section">
+                <div class="cat-header" onclick="toggleCat('cat-transmision', this)">
+                    <div class="cat-letter">G</div>
+                    <span class="cat-name">Optimización de transmisión</span>
+                    <span class="cat-savings" id="sav-transmision"></span>
+                    <span class="cat-arrow">▼</span>
+                </div>
+                <div class="cat-body" id="cat-transmision">
+                    <div class="check-row">
+                        <input type="checkbox" id="linearizar">
+                        <div class="check-info">
+                            <label class="check-label" for="linearizar">Linearizar (Fast Web View)</label>
+                            <div class="check-desc">Optimiza el PDF para carga incremental en browser — best effort</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estimación total -->
+            <div class="estimacion-total" id="estimacion-total">
+                <div>
+                    <div class="est-label">Ahorro total estimado</div>
+                    <div class="est-sub" id="est-tamano-txt"></div>
+                </div>
+                <div class="est-valor" id="est-pct">—</div>
+            </div>
+
+            <!-- Botón -->
+            <div class="action-row">
+                <button class="btn btn-primary" id="btn-comprimir">
+                    🗜 Comprimir PDF
+                </button>
+            </div>
+
+            <!-- Progreso de procesado -->
+            <div class="progress-wrap" id="progreso-proceso" hidden>
+                <div class="progress-info">
+                    <span id="txt-proceso">Procesando...</span>
+                    <span id="pct-proceso">0%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="barra-proceso"></div></div>
+            </div>
+
+        </div><!-- /panel-opciones -->
+
+        <!-- Mensaje de estado -->
+        <div class="status-message" id="msg-estado" hidden></div>
+
+        <!-- Resultado -->
+        <div class="result-card" id="resultado-card" hidden>
+            <div class="result-title">✓ Compresión completada</div>
+            <div class="result-compare">
+                <div class="size-box">
+                    <div class="slbl">Original</div>
+                    <div class="sval" id="res-original">—</div>
+                </div>
+                <div class="size-arrow">→</div>
+                <div class="size-box">
+                    <div class="slbl">Comprimido</div>
+                    <div class="sval" id="res-final">—</div>
+                </div>
+            </div>
+            <div style="text-align:center;">
+                <span class="reduction-badge" id="res-reduccion">–0%</span>
+            </div>
+        </div>
+
+        <div class="info-strip">
+            ⏱️ Los archivos se eliminan automáticamente después de <strong>4 horas</strong>
+        </div>
+
     </main>
-    <div class="footer">PDF Export — Comprimir PDF (Etapa 7 · PyMuPDF)</div>
 
-    <!-- FOOTER -->
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-top">
-                <div class="footer-brand">
-                    <div class="footer-brand-icon">PDF</div>
-                    <span><strong>PDF-Export &amp; Import</strong> — Herramientas de conversion PDF para la Soberania Digital Empresarial</span>
-                </div>
-                <a href="/" class="footer-home-btn">🏠 Volver al inicio</a>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-version" id="app-version"></div>
-            <details class="footer-legal">
-                <summary>⚖️ Aviso de uso y alcance</summary>
-                <div class="footer-legal-body">
-                    <p>Esta aplicacion y su API estan destinadas a uso privado. No se implementan claves de acceso a nivel de aplicacion con el objetivo de mantener transparencia total sobre su funcionamiento y fomentar la conciencia respecto del tratamiento de documentos y datos compartidos.</p>
-                    <p>Se recomienda su despliegue dentro de una red local (LAN), preferentemente en una zona desmilitarizada (DMZ). En caso de habilitar acceso externo, se sugiere hacerlo mediante un proxy inverso con mecanismos de autenticacion.</p>
-                    <p>Este proyecto se presenta como un prototipo funcional, orientado a mejorar la eficiencia operativa y promover la soberania digital sobre los recursos informaticos utilizados para el procesamiento de documentos. El codigo y la aplicacion se distribuyen bajo una licencia de uso publico y amplio.</p>
-                </div>
-            </details>
-        </div>
-    </footer>
+    <div class="footer">
+        PDF-Export &amp; Import · ERF
+        &nbsp;|&nbsp; PDF Export — Comprimir PDF (Etapa 32 · PyMuPDF)
+        &nbsp;|&nbsp; <span id="app-version"></span>
+        &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+    </div>
 
-</div>
+</div><!-- /main -->
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>

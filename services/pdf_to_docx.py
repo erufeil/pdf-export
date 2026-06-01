@@ -18,7 +18,7 @@ from docx.oxml import OxmlElement
 
 import config
 import models
-from utils import file_manager, job_manager
+from utils import job_manager
 
 logger = logging.getLogger(__name__)
 
@@ -336,23 +336,9 @@ def procesar_to_docx(trabajo_id: str, archivo_id: str, parametros: dict) -> dict
     # Convertir
     ruta_docx = convertir_pdf_a_docx(ruta_pdf, parametros, trabajo_id)
 
-    job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo archivo")
-
-    # Crear ZIP
-    nombre_base = Path(archivo['nombre_original']).stem
-    nombre_docx = f"{nombre_base}.docx"
-    nombre_zip = f"{trabajo_id}_{nombre_base}_docx.zip"
-
-    archivos_para_zip = [(str(ruta_docx), nombre_docx)]
-    ruta_zip = file_manager.crear_zip(archivos_para_zip, nombre_zip)
-
-    # Limpiar archivo temporal
-    if ruta_docx.exists():
-        ruta_docx.unlink()
-
     return {
-        'ruta_resultado': str(ruta_zip),
-        'mensaje': f'Documento convertido a DOCX exitosamente'
+        'ruta_resultado': str(ruta_docx),
+        'mensaje': 'Documento convertido a DOCX exitosamente'
     }
 
 

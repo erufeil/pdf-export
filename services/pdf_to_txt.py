@@ -17,7 +17,7 @@ from pdfminer.pdfpage import PDFPage
 
 import config
 import models
-from utils import file_manager, job_manager
+from utils import job_manager
 
 logger = logging.getLogger(__name__)
 
@@ -288,23 +288,11 @@ def procesar_to_txt(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     with open(ruta_txt, 'w', encoding='utf-8') as f:
         f.write(texto)
 
-    # Crear ZIP
-    job_manager.actualizar_progreso(trabajo_id, 95, "Comprimiendo archivo")
-
-    nombre_zip = f"{trabajo_id}_{nombre_base}_texto.zip"
-    archivos_para_zip = [(str(ruta_txt), nombre_txt)]
-    ruta_zip = file_manager.crear_zip(archivos_para_zip, nombre_zip)
-
-    # Limpiar archivo temporal
-    if ruta_txt.exists():
-        ruta_txt.unlink()
-
-    # Contar lineas y caracteres para el mensaje
     num_lineas = texto.count('\n') + 1
     num_caracteres = len(texto)
 
     return {
-        'ruta_resultado': str(ruta_zip),
+        'ruta_resultado': str(ruta_txt),
         'mensaje': f'Texto extraido: {num_lineas} lineas, {num_caracteres} caracteres'
     }
 

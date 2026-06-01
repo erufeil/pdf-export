@@ -106,21 +106,35 @@ Opciones adicionales respecto a PNG:
 ---
 
 ### 📦 Comprimir PDF
-**Reduce el tamaño del PDF sin cambiar su contenido.**
+**Reduce el tamaño del PDF aplicando hasta 7 categorías de optimización.**
 
-Niveles de compresión:
-- **Baja:** mejor calidad, menor reducción (imágenes a 150 DPI)
-- **Media:** equilibrado (120 DPI) — recomendado para la mayoría de los casos
-- **Alta:** máxima reducción, calidad visiblemente menor (96 DPI)
-- **Personalizada:** definís vos el DPI y el porcentaje de calidad
+Al subir el PDF, la herramienta lo analiza automáticamente y te muestra cuántas imágenes tiene, cuántas fuentes, si tiene metadatos, etc. Después elegís un preset o personalizás cada opción:
 
-Opciones adicionales:
-- Eliminar metadatos (autor, programa que lo creó, fechas de edición)
-- Eliminar anotaciones (comentarios, marcas)
-- Eliminar bookmarks (índice/marcadores del PDF)
-- Convertir a escala de grises (elimina el color → reduce bastante el tamaño)
+**Presets disponibles:**
+- **Estándar** *(recomendado)*: imágenes a 150 DPI con 85% de calidad + metadatos + compresión interna. Reduce entre 20–50%.
+- **Ligero**: solo limpieza interna (metadatos, streams, objetos huérfanos). Reduce entre 5–15%. No toca las imágenes.
+- **Agresivo**: imágenes a 96 DPI con 60% de calidad + elimina anotaciones, adjuntos y capas. Reduce entre 50–80%.
+- **Máximo**: igual que Agresivo pero también convierte a escala de grises y lineariza. Reduce entre 60–90%.
+- **Personalizado**: activás o desactivás cada opción individualmente.
 
-**Útil para:** reducir PDFs pesados antes de enviarlos por mail, subirlos a portales que tienen límite de tamaño.
+**Las 7 categorías de opciones:**
+- **A. Imágenes:** reducir DPI y calidad JPEG, convertir a grises, eliminar duplicadas
+- **B. Fuentes:** subconjunto de glifos (font subsetting), eliminar fuentes duplicadas
+- **C. Metadatos:** eliminar XMP, thumbnails internos, limpiar autor/título/etc.
+- **D. Estructura:** garbage collection, comprimir streams internos, deduplicar objetos
+- **E. Elementos interactivos:** anotaciones, formularios, JavaScript, adjuntos, firmas
+- **F. Navegación:** marcadores (índice), capas opcionales (OCG)
+- **G. Transmisión:** linearizar para carga rápida en el navegador
+
+El resultado es un ZIP que contiene el PDF comprimido y un archivo `reporte.txt` con el tamaño original, el tamaño final y el porcentaje de reducción obtenido.
+
+**Aclaraciones importantes:**
+- Las imágenes son la mayor fuente de peso en la mayoría de los PDFs. Si el preset Estándar no reduce mucho, probá Agresivo.
+- Convertir a escala de grises elimina el color de las imágenes — el texto queda igual, las fotos quedan en blanco y negro.
+- Eliminar formularios borra los campos interactivos; si el PDF tenía datos ingresados, se pierden.
+- Eliminar firmas digitales invalida la firma legal del documento.
+
+**Útil para:** reducir PDFs pesados antes de enviarlos por mail, subirlos a portales con límite de tamaño, archivar documentos que ya no necesitan ser editables.
 
 ---
 
