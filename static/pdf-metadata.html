@@ -561,6 +561,26 @@ function renderizarResultado(d) {
     f('Capas OCG',      d.estructura.capas && d.estructura.capas.length > 0
         ? d.estructura.capas.join(', ') : 'Sin capas');
 
+    if (d.contenido_texto) {
+        sep('CONTENIDO DE TEXTO');
+        const ct = d.contenido_texto;
+        f('Caracteres',       ct.total_caracteres > 0
+            ? ct.total_caracteres.toLocaleString('es-AR')
+            : '0 (PDF de solo imágenes)');
+        f('Palabras',         ct.total_palabras > 0
+            ? ct.total_palabras.toLocaleString('es-AR')
+            : '0');
+        if (ct.ratio_bytes_por_caracter != null) {
+            const densidad = ct.ratio_bytes_por_caracter < 1   ? 'texto muy denso'
+                           : ct.ratio_bytes_por_caracter < 5   ? 'texto + algo de gráficos'
+                           : ct.ratio_bytes_por_caracter < 20  ? 'mixto texto/imágenes'
+                           : 'predominantemente imágenes';
+            f('Ratio bytes/caracter', ct.ratio_bytes_por_caracter.toFixed(2) + `  (${densidad})`);
+        } else {
+            f('Ratio bytes/caracter', '— (sin texto extraíble)');
+        }
+    }
+
     sep('PERMISOS');
     if (d.permisos.sin_restricciones) {
         lineas.push('Sin restricciones (documento no encriptado)');

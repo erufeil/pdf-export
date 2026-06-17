@@ -447,6 +447,37 @@ Respuesta `resp.data`:
 - Verificación Tika sync: `POST /api/v1/convert/img-to-txt/check` → `{ "tika_disponible": bool, "mensaje": "..." }`
 - Retorna TXT directo (sin ZIP), utf-8-bom
 
+### `POST /api/v1/convert/metadata/extract`  *(Etapa 25 — sync)*
+
+```json
+{ "file_id": "uuid" }
+```
+
+- **Retorna JSON directamente** (no job). Respuesta en `resp.data`:
+
+```json
+{
+  "nombre_archivo": "doc.pdf",
+  "tamano_bytes": 3059712,
+  "hashes": { "sha256": "...", "md5": "..." },
+  "basicos": { "titulo": "...", "autor": "...", "tema": "...", "palabras_clave": "...", "creador": "...", "productor": "...", "trapped": "" },
+  "fechas": { "creacion": "2024-01-15 10:30:00", "modificacion": "...", "formato_pdf": "PDF 1.7" },
+  "identidad": { "version_pdf": "1.7", "id_original": "HEX", "id_actual": "HEX", "fue_modificado": false,
+                 "encriptado": false, "cifrado_detalle": "", "linealizado": false, "num_revisiones": 1250 },
+  "estructura": { "num_paginas": 574, "tamano_pagina": "A4 (210.0×297.0 mm)", "tamanos_muestra": ["..."],
+                  "num_fuentes": 13, "fuentes": [{"nombre": "...", "tipo": "ttf", "incrustada": true}],
+                  "num_imagenes": 4, "num_anotaciones": 0, "num_marcadores": 48,
+                  "num_formularios": 0, "num_adjuntos": 0, "tiene_javascript": false,
+                  "num_firmas": 0, "capas": [] },
+  "contenido_texto": { "total_caracteres": 1445893, "total_palabras": 242869, "ratio_bytes_por_caracter": 2.12 },
+  "permisos": { "imprimir": true, "modificar": true, "copiar": true, "sin_restricciones": true, "valor_raw": -1 },
+  "xmp_xml": "<?xml version='1.0'?>..."
+}
+```
+
+- `contenido_texto.ratio_bytes_por_caracter`: tamaño_en_disco / total_caracteres. < 5 = texto puro, 5–20 = mixto, > 20 = imagen dominante.
+- `contenido_texto.total_caracteres = 0` cuando el PDF es de solo imágenes (escaneado sin OCR).
+
 ### `POST /api/v1/convert/img-metadata/extract`  *(Etapa 28 — sync)*
 
 ```json

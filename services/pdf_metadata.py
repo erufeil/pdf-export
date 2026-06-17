@@ -244,6 +244,22 @@ def _contar_formularios(doc: fitz.Document) -> int:
         return 0
 
 
+def _contar_texto(doc: fitz.Document, tamano_bytes: int) -> dict:
+    """Cuenta caracteres y palabras de todo el texto extraíble del PDF."""
+    total_chars = 0
+    total_words = 0
+    for pag in doc:
+        texto = pag.get_text()
+        total_chars += len(texto)
+        total_words += len(texto.split())
+    ratio = round(tamano_bytes / total_chars, 2) if total_chars > 0 else None
+    return {
+        'total_caracteres': total_chars,
+        'total_palabras':   total_words,
+        'ratio_bytes_por_caracter': ratio,
+    }
+
+
 def _contar_adjuntos(doc: fitz.Document) -> int:
     """Cuenta archivos adjuntos (EmbeddedFiles)."""
     try:
@@ -363,6 +379,9 @@ def extraer_metadatos(archivo_id: str) -> dict:
         # ── Hashes del archivo ────────────────────────────────────────────────
         hashes = _calcular_hashes(ruta_pdf)
 
+        # ── Contenido de texto ────────────────────────────────────────────────
+        contenido_texto = _contar_texto(doc, archivo['tamano_bytes'])
+
         return {
             'basicos':    basicos,
             'fechas':     fechas,
@@ -371,6 +390,7 @@ def extraer_metadatos(archivo_id: str) -> dict:
             'permisos':   permisos,
             'xmp_xml':    xmp_xml,
             'hashes':     hashes,
+            'contenido_texto': contenido_texto,
             'nombre_archivo': archivo['nombre_original'],
             'tamano_bytes':   archivo['tamano_bytes'],
         }
