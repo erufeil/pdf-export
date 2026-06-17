@@ -1,7 +1,8 @@
 /**
- * pdf-compress.js — Etapa 32 (Comprimir PDF avanzado)
+ * pdf-compress.js — Etapa 32 (Comprimir PDF avanzado) v1.1.48
  * Gestiona subida, análisis, selección de opciones y compresión con 7 categorías.
  */
+console.log('[pdf-compress v1.1.48] cargado');
 
 const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 
@@ -229,6 +230,7 @@ async function manejarArchivo(file) {
 }
 
 async function analizarArchivo(data) {
+    console.log('[compress] analizarArchivo inicio, id:', data?.id);
     estado.archivoId = data.id;
     estado.nombreArchivo = data.nombre_original;
     estado.tamanoOriginal = data.tamano_bytes;
@@ -242,25 +244,28 @@ async function analizarArchivo(data) {
             body: JSON.stringify({ file_id: estado.archivoId }),
         });
         const j = await r.json();
+        console.log('[compress] analyze response:', j?.success, 'data keys:', j?.data ? Object.keys(j.data) : null);
         if (j.success && j.data) {
             estado.analisis = j.data;
         } else {
-            console.warn('Analyze sin datos:', j);
+            console.warn('[compress] Analyze sin datos:', j);
             estado.analisis = null;
         }
     } catch (e) {
-        console.error('Error en petición de análisis:', e);
+        console.error('[compress] Error en petición de análisis:', e);
         estado.analisis = null;
     } finally {
         ocultar('progreso-analisis');
     }
 
+    console.log('[compress] mostrando paneles...');
     // Siempre mostrar la UI, con o sin análisis
-    try { mostrarPanelInfo(data, estado.analisis); } catch (e) { console.error('mostrarPanelInfo:', e); }
-    try { aplicarPreset(estado.preset); } catch (e) { console.error('aplicarPreset:', e); }
-    try { actualizarEstimacion(); } catch (e) { console.error('actualizarEstimacion:', e); }
+    try { mostrarPanelInfo(data, estado.analisis); } catch (e) { console.error('[compress] mostrarPanelInfo:', e); }
+    try { aplicarPreset(estado.preset); } catch (e) { console.error('[compress] aplicarPreset:', e); }
+    try { actualizarEstimacion(); } catch (e) { console.error('[compress] actualizarEstimacion:', e); }
     mostrar('panel-info');
     mostrar('panel-opciones');
+    console.log('[compress] panel-info hidden:', document.getElementById('panel-info')?.hidden, 'panel-opciones hidden:', document.getElementById('panel-opciones')?.hidden);
 
     if (!estado.analisis) {
         mostrarMensaje('Análisis no disponible — se usarán valores por defecto.', 'info');
