@@ -233,7 +233,6 @@ async function analizarArchivo(data) {
     estado.nombreArchivo = data.nombre_original;
     estado.tamanoOriginal = data.tamano_bytes;
 
-    // Mostrar barra de análisis
     mostrar('progreso-analisis');
 
     try {
@@ -243,26 +242,28 @@ async function analizarArchivo(data) {
             body: JSON.stringify({ file_id: estado.archivoId }),
         });
         const j = await r.json();
-        ocultar('progreso-analisis');
-
-        if (!j.success) throw new Error(j.error?.message || 'Error en análisis');
-
-        estado.analisis = j.data;
-        mostrarPanelInfo(data, j.data);
-        aplicarPreset(estado.preset);
-        actualizarEstimacion();
-        mostrar('panel-info');
-        mostrar('panel-opciones');
-
+        if (j.success && j.data) {
+            estado.analisis = j.data;
+        } else {
+            console.warn('Analyze sin datos:', j);
+            estado.analisis = null;
+        }
     } catch (e) {
-        ocultar('progreso-analisis');
-        // Si el análisis falla, igual mostramos la UI con defaults
+        console.error('Error en petición de análisis:', e);
         estado.analisis = null;
-        mostrarPanelInfo(data, null);
-        aplicarPreset(estado.preset);
-        mostrar('panel-info');
-        mostrar('panel-opciones');
-        mostrarMensaje('Análisis parcial — el análisis rápido falló, se usarán valores por defecto.', 'info');
+    } finally {
+        ocultar('progreso-analisis');
+    }
+
+    // Siempre mostrar la UI, con o sin análisis
+    try { mostrarPanelInfo(data, estado.analisis); } catch (e) { console.error('mostrarPanelInfo:', e); }
+    try { aplicarPreset(estado.preset); } catch (e) { console.error('aplicarPreset:', e); }
+    try { actualizarEstimacion(); } catch (e) { console.error('actualizarEstimacion:', e); }
+    mostrar('panel-info');
+    mostrar('panel-opciones');
+
+    if (!estado.analisis) {
+        mostrarMensaje('Análisis no disponible — se usarán valores por defecto.', 'info');
     }
 }
 
@@ -510,7 +511,7 @@ function mostrarResultado(resultado) {
         }
     }
 
-    mostrarMensaje('PDF comprimido. Descargando ZIP con reporte...', 'success');
+    mostrarMensaje('PDF comprimido. Descargando...', 'success');
 }
 
 
