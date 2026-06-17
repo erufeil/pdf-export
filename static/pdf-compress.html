@@ -498,11 +498,11 @@
                             <div class="check-desc">Fusiona objetos con el mismo contenido en la tabla xref</div>
                         </div>
                     </div>
-                    <div class="check-row check-disabled">
-                        <input type="checkbox" id="bajar-version" disabled>
+                    <div class="check-row">
+                        <input type="checkbox" id="bajar-version">
                         <div class="check-info">
-                            <label class="check-label" for="bajar-version">Bajar versión PDF (experimental)</label>
-                            <div class="check-desc">1.7 → 1.4 — requiere Ghostscript externo; no disponible en esta versión</div>
+                            <label class="check-label" for="bajar-version">Bajar versión PDF a 1.4</label>
+                            <div class="check-desc">Reescribe el PDF con Ghostscript en formato 1.4 — elimina características modernas y reduce overhead estructural; mínima pérdida de calidad</div>
                         </div>
                     </div>
                     <div class="check-row check-disabled">
@@ -680,6 +680,6 @@
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
-<script src="/static/js/pdf-compress.js?v=1.1.50"></script>
+<script src="/static/js/pdf-compress.js?v=1.1.51"></script>
 </body>
 </html>

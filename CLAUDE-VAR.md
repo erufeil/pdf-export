@@ -236,12 +236,15 @@ interactivo, navegacion, optimizacion) con `ahorro_estimado_pct` por categoría.
     "eliminar_marcadores": false,
     "eliminar_ocg": false,
     "linearizar": false,
-    "usar_ghostscript": false
+    "usar_ghostscript": false,
+    "bajar_version": false
   }
 }
 ```
 - `preset`: `'ligero'|'estandar'|'agresivo'|'maximo'|'personalizado'`
-- `usar_ghostscript`: activa recompresión con Ghostscript tras PyMuPDF — solo efectivo si GS está instalado. El preset `maximo` lo activa por defecto.
+- `usar_ghostscript`: recomprime con GS tras PyMuPDF usando calidad del preset (`/ebook`, `/printer`, etc.) — efectivo para fuentes COLR/emoji. El preset `maximo` lo activa.
+- `bajar_version`: reescribe el PDF en formato 1.4 con GS usando `/default` (sin degradar imágenes) — elimina características PDF 1.5+ que pueden añadir overhead. El preset `maximo` lo activa.
+- Cuando ambos están activos, GS corre una sola vez con la calidad del preset (más agresivo).
 - Retorna **PDF directo** (`{stem} - Comprimido.pdf`)
 - Compat. API antigua: acepta también `nivel`, `dpi_maximo`, `calidad_jpg`, `eliminar_metadatos`, `eliminar_bookmarks`, `escala_grises`
 

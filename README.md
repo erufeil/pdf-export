@@ -549,6 +549,7 @@ Parametros clave de opciones:
 | `garbage` | bool | true | Garbage collection de objetos huerfanos |
 | `comprimir_streams` | bool | true | Comprimir streams con Deflate |
 | `linearizar` | bool | false | Linearizar para Fast Web View (On en maximo) |
+| `bajar_version` | bool | false | Reescribir en PDF 1.4 con GS, sin degradar imágenes (On en maximo) |
 | `usar_ghostscript` | bool | false | Recomprimir fuentes COLR/emoji con Ghostscript (On en maximo) |
 
 Resultado: **PDF directo** (sin ZIP).

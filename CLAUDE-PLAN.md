@@ -928,7 +928,8 @@ def procesar_compress(trabajo_id: str, archivo_id: str, parametros: dict) -> dic
 | `eliminar_marcadores` | bool | False | Eliminar marcadores (bookmarks) |
 | `eliminar_ocg` | bool | False | Eliminar capas opcionales OCG (On en Agresivo) |
 | `linearizar` | bool | False | Linearizar para Fast Web View (On en Máximo) |
-| `usar_ghostscript` | bool | False | Recomprimir con Ghostscript tras PyMuPDF (On en Máximo) |
+| `bajar_version` | bool | False | Reescribir PDF en formato 1.4 con GS `/default` — sin degradar imágenes (On en Máximo) |
+| `usar_ghostscript` | bool | False | Recomprimir con Ghostscript tras PyMuPDF (On en Máximo). Si `bajar_version` también está activo, GS corre una sola vez con calidad del preset. |
 
 ---
 

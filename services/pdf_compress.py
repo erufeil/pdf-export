@@ -61,7 +61,7 @@ PRESETS: Dict[str, dict] = {
         'subset_fuentes': True, 'dedup_fuentes': True,
         'eliminar_xmp': True, 'limpiar_basicos': False, 'eliminar_thumbnails': True,
         'garbage': True, 'comprimir_streams': True, 'dedup_objetos': True,
-        'bajar_version': False, 'eliminar_tags': False,
+        'bajar_version': True, 'eliminar_tags': False,
         'eliminar_anotaciones': True, 'aplanar_formularios': False,
         'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': True,
         'eliminar_marcadores': False, 'eliminar_ocg': True,
@@ -609,12 +609,21 @@ def comprimir_pdf(ruta_pdf: Path, parametros: dict, trabajo_id: str,
 
         tamano_final = ruta_salida.stat().st_size
 
-        # G — Ghostscript: reprocesa fuentes COLR/complejas que PyMuPDF no puede reducir
-        if opts.get('usar_ghostscript', False):
-            job_manager.actualizar_progreso(trabajo_id, 90, "Recomprimiendo fuentes con Ghostscript")
+        # G — Ghostscript: bajar versión PDF y/o recomprimir fuentes COLR
+        usar_gs = opts.get('usar_ghostscript', False)
+        bajar_version = opts.get('bajar_version', False)
+        if usar_gs or bajar_version:
+            msg = "Recomprimiendo con Ghostscript"
+            if bajar_version and not usar_gs:
+                msg = "Bajando versión PDF a 1.4 con Ghostscript"
+            elif bajar_version and usar_gs:
+                msg = "Recomprimiendo fuentes y bajando versión PDF con Ghostscript"
+            job_manager.actualizar_progreso(trabajo_id, 90, msg)
             ruta_gs = config.OUTPUT_FOLDER / f"{trabajo_id}_{stem} - Comprimido_gs.pdf"
-            preset_nombre = opts.get('preset', 'estandar')
-            ok = _comprimir_con_ghostscript(ruta_salida, ruta_gs, preset=preset_nombre)
+            # bajar_version solo → /default (mínima pérdida de calidad, solo reescribe estructura)
+            # usar_ghostscript → preset quality (/ebook, /printer, etc.)
+            preset_gs = opts.get('preset', 'estandar') if usar_gs else 'ligero'
+            ok = _comprimir_con_ghostscript(ruta_salida, ruta_gs, preset=preset_gs)
             if ok and ruta_gs.stat().st_size < tamano_final:
                 ruta_salida.unlink(missing_ok=True)
                 ruta_gs.rename(ruta_salida)

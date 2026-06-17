@@ -124,7 +124,7 @@ Al subir el PDF, la herramienta lo analiza automáticamente y te muestra cuánta
 - **D. Estructura:** garbage collection, comprimir streams internos, deduplicar objetos
 - **E. Elementos interactivos:** anotaciones, formularios, JavaScript, adjuntos, firmas
 - **F. Navegación:** marcadores (índice), capas opcionales (OCG)
-- **G. Transmisión:** linearizar para carga rápida en el navegador; recomprimir fuentes con Ghostscript
+- **G. Transmisión:** linearizar para carga rápida en el navegador; bajar versión a PDF 1.4; recomprimir fuentes con Ghostscript
 
 El resultado es el **PDF comprimido directamente** (sin ZIP).
 
