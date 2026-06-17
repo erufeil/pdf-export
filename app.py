@@ -26,12 +26,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Log de inicio: confirma version del codigo y configuracion clave
-logger.info(f"=== PDFexport v{config.VERSION} iniciando ===")
-logger.info(f"[config] NLM_INGESTOR_URL = '{config.NLM_INGESTOR_URL}' "
-            f"({'habilitado' if config.NLM_INGESTOR_URL else 'DESHABILITADO'})")
-logger.info(f"[config] TIKA_URL = '{config.TIKA_URL}' "
-            f"({'habilitado' if config.TIKA_URL else 'DESHABILITADO'})")
+import os as _os
+# Log de inicio: versión, variables de entorno y configuración clave
+logger.info("=" * 60)
+logger.info(f"  PDFexport v{config.VERSION} — arranque")
+logger.info("=" * 60)
+logger.info(f"  HOST               = {config.HOST}:{config.PORT}")
+logger.info(f"  DEBUG              = {config.DEBUG}")
+logger.info(f"  FILE_RETENTION_HOURS = {config.FILE_RETENTION_HOURS} h")
+logger.info(f"  MAX_FILE_SIZE      = {config.MAX_CONTENT_LENGTH // (1024*1024)} MB")
+logger.info(f"  UPLOAD_FOLDER      = {config.UPLOAD_FOLDER}")
+logger.info(f"  OUTPUT_FOLDER      = {config.OUTPUT_FOLDER}")
+logger.info(f"  DATABASE_PATH      = {config.DATABASE_PATH}")
+logger.info(f"  NLM_INGESTOR_URL   = {config.NLM_INGESTOR_URL or '(deshabilitado)'}")
+logger.info(f"  TIKA_URL           = {config.TIKA_URL or '(deshabilitado)'}")
+# Variables de entorno relevantes (sin exponer secretos)
+_env_vars = ['APP_VERSION', 'HOST', 'PORT', 'DEBUG', 'FILE_RETENTION_HOURS',
+             'MAX_FILE_SIZE', 'NLM_INGESTOR_URL', 'TIKA_URL']
+logger.info("  Variables de entorno activas:")
+for _k in _env_vars:
+    _v = _os.environ.get(_k)
+    logger.info(f"    {_k:25s} = {_v!r}" if _v is not None else f"    {_k:25s} = (default)")
+logger.info("=" * 60)
 
 # Silenciar loggers extremadamente verbosos que generan miles de lineas por pagina
 # pdfminer registra cada token, caracter y operacion de bajo nivel en DEBUG
@@ -64,10 +80,23 @@ def crear_app():
     def index():
         return send_from_directory('.', 'index.html')
 
-    # Ruta para servir config.js desde la raiz
+    # Ruta para servir config.js con la version inyectada
     @app.route('/config.js')
     def config_js():
-        return send_from_directory('.', 'config.js', mimetype='application/javascript')
+        from flask import Response
+        js = f"""window.AppConfig = {{
+    API_BASE_URL: window.location.origin + '/api/v1',
+    APP_VERSION: '{config.VERSION}',
+    version: '{config.VERSION}',
+    timeout: 10000,
+    retryAttempts: 3,
+    maxFileSize: {config.MAX_CONTENT_LENGTH},
+    allowedExtensions: ['pdf', 'ndm2', 'json'],
+    configLoaded: true
+}};
+"""
+        return Response(js, mimetype='application/javascript',
+                        headers={'Cache-Control': 'no-store'})
 
     # Ruta para archivos estaticos adicionales en la raiz
     @app.route('/<path:filename>')

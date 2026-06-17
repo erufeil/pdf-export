@@ -493,12 +493,12 @@ def comprimir_pdf(ruta_pdf: Path, parametros: dict, trabajo_id: str,
         ruta_salida = config.OUTPUT_FOLDER / nombre_salida
 
         # D + B + G — flags de save PyMuPDF
+        deflate = opts.get('comprimir_streams', True)
         doc.save(
             str(ruta_salida),
             garbage=4 if opts.get('garbage', True) else 0,
-            compress=opts.get('comprimir_streams', True),
-            deflate=opts.get('comprimir_streams', True),
-            deflate_images=opts.get('comprimir_streams', True),
+            deflate=deflate,
+            deflate_images=deflate,
             clean=True,
             linear=opts.get('linearizar', False),
         )
