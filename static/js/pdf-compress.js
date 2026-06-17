@@ -2,7 +2,7 @@
  * pdf-compress.js — Etapa 32 (Comprimir PDF avanzado) v1.1.48
  * Gestiona subida, análisis, selección de opciones y compresión con 7 categorías.
  */
-console.log('[pdf-compress v1.1.48] cargado');
+console.log('[pdf-compress v1.1.53] cargado');
 
 const API = window.AppConfig?.API_BASE_URL || '/api/v1';
 
@@ -441,46 +441,50 @@ async function ejecutarCompresion() {
 }
 
 function monitorearTrabajo(jobId) {
-    if (window.PDFExport?.monitorearProgreso) {
-        window.PDFExport.monitorearProgreso(
-            jobId,
-            (pct, msg) => _setProgreso(pct, msg),
-            (id, resultado) => {
-                _finProceso();
-                mostrarResultado(resultado);
-                window.PDFExport.descargarResultado(id);
-            },
-            (err) => { _finProceso(); mostrarMensaje(err, 'error'); }
-        );
-        return;
+    let terminado = false;
+
+    function completar(job) {
+        if (terminado) return;
+        terminado = true;
+        _finProceso();
+        mostrarResultado({ mensaje: job.mensaje });
+        window.location.href = `${API}/download/${jobId}`;
     }
 
-    // Fallback polling manual
+    function fallar(msg) {
+        if (terminado) return;
+        terminado = true;
+        _finProceso();
+        mostrarMensaje(msg || 'Error en la compresión', 'error');
+    }
+
+    // SSE para actualizaciones en tiempo real
+    const sse = new EventSource(`${API}/jobs/${jobId}/progress`);
+    sse.addEventListener('message', (ev) => {
+        try {
+            const d = JSON.parse(ev.data);
+            if (d.error) { sse.close(); fallar(d.error); return; }
+            _setProgreso(d.progreso, d.mensaje);
+            if (d.estado === 'completado') { sse.close(); completar(d); }
+            else if (d.estado === 'error') { sse.close(); fallar(d.mensaje); }
+        } catch (_) {}
+    });
+    // SSE error: cerrar sin fallar — el polling detectará el estado final
+    sse.addEventListener('error', () => sse.close());
+
+    // Polling de respaldo: garantiza finalización aunque SSE falle o se pierda
     const intervalo = setInterval(async () => {
+        if (terminado) { clearInterval(intervalo); return; }
         try {
             const r = await fetch(`${API}/jobs/${jobId}`);
             const j = await r.json();
             if (!j.success) return;
             const job = j.data;
-
             _setProgreso(job.progreso || 0, job.mensaje || 'Procesando...');
-
-            if (job.estado === 'completado') {
-                clearInterval(intervalo);
-                _finProceso();
-                mostrarResultado({ mensaje: job.mensaje });
-                window.location.href = `${API}/download/${jobId}`;
-            } else if (job.estado === 'error') {
-                clearInterval(intervalo);
-                _finProceso();
-                mostrarMensaje(job.mensaje || 'Error en la compresión', 'error');
-            }
-        } catch (e) {
-            clearInterval(intervalo);
-            _finProceso();
-            mostrarMensaje(e.message, 'error');
-        }
-    }, 1500);
+            if (job.estado === 'completado') { clearInterval(intervalo); sse.close(); completar(job); }
+            else if (job.estado === 'error') { clearInterval(intervalo); sse.close(); fallar(job.mensaje); }
+        } catch (_) { /* ignorar errores de red temporales en polling */ }
+    }, 2000);
 }
 
 function _setProgreso(pct, msg) {
@@ -511,7 +515,7 @@ function mostrarResultado(resultado) {
         mostrar('resultado-card');
     } else if (resultado?.mensaje) {
         // Parsear del mensaje "X → Y (Z% reducción)"
-        const m = resultado.mensaje.match(/([^\s]+)\s*→\s*([^\s]+)\s*\(([0-9.]+)%/);
+        const m = resultado.mensaje.match(/(.+?)\s*→\s*(.+?)\s*\(([0-9.]+)%/);
         if (m) {
             document.getElementById('res-original').textContent = m[1];
             document.getElementById('res-final').textContent = m[2];

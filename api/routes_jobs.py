@@ -114,6 +114,7 @@ def obtener_progreso_sse(trabajo_id):
     def generar_eventos():
         ultimo_progreso = -1
         ultimo_estado = None
+        ciclos_sin_cambio = 0
 
         while True:
             trabajo = models.obtener_trabajo(trabajo_id)
@@ -126,6 +127,7 @@ def obtener_progreso_sse(trabajo_id):
             if trabajo['progreso'] != ultimo_progreso or trabajo['estado'] != ultimo_estado:
                 ultimo_progreso = trabajo['progreso']
                 ultimo_estado = trabajo['estado']
+                ciclos_sin_cambio = 0
 
                 evento = {
                     'estado': trabajo['estado'],
@@ -134,6 +136,11 @@ def obtener_progreso_sse(trabajo_id):
                 }
 
                 yield f"data: {json.dumps(evento)}\n\n"
+            else:
+                ciclos_sin_cambio += 1
+                # Keepalive cada 10s sin cambios para mantener conexión viva
+                if ciclos_sin_cambio % 10 == 0:
+                    yield ": keepalive\n\n"
 
             # Si el trabajo termino, cerrar conexion
             if trabajo['estado'] in ('completado', 'error', 'cancelado'):
