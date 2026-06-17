@@ -114,7 +114,7 @@ Al subir el PDF, la herramienta lo analiza automáticamente y te muestra cuánta
 - **Estándar** *(recomendado)*: imágenes a 150 DPI con 85% de calidad + metadatos + compresión interna. Reduce entre 20–50%.
 - **Ligero**: solo limpieza interna (metadatos, streams, objetos huérfanos). Reduce entre 5–15%. No toca las imágenes.
 - **Agresivo**: imágenes a 96 DPI con 60% de calidad + elimina anotaciones, adjuntos y capas. Reduce entre 50–80%.
-- **Máximo**: igual que Agresivo pero también convierte a escala de grises y lineariza. Reduce entre 60–90%.
+- **Máximo**: igual que Agresivo pero también convierte a escala de grises, lineariza y activa Ghostscript para fuentes. Reduce entre 60–90%.
 - **Personalizado**: activás o desactivás cada opción individualmente.
 
 **Las 7 categorías de opciones:**
@@ -124,15 +124,16 @@ Al subir el PDF, la herramienta lo analiza automáticamente y te muestra cuánta
 - **D. Estructura:** garbage collection, comprimir streams internos, deduplicar objetos
 - **E. Elementos interactivos:** anotaciones, formularios, JavaScript, adjuntos, firmas
 - **F. Navegación:** marcadores (índice), capas opcionales (OCG)
-- **G. Transmisión:** linearizar para carga rápida en el navegador
+- **G. Transmisión:** linearizar para carga rápida en el navegador; recomprimir fuentes con Ghostscript
 
-El resultado es un ZIP que contiene el PDF comprimido y un archivo `reporte.txt` con el tamaño original, el tamaño final y el porcentaje de reducción obtenido.
+El resultado es el **PDF comprimido directamente** (sin ZIP).
 
 **Aclaraciones importantes:**
 - Las imágenes son la mayor fuente de peso en la mayoría de los PDFs. Si el preset Estándar no reduce mucho, probá Agresivo.
 - Convertir a escala de grises elimina el color de las imágenes — el texto queda igual, las fotos quedan en blanco y negro.
 - Eliminar formularios borra los campos interactivos; si el PDF tenía datos ingresados, se pierden.
 - Eliminar firmas digitales invalida la firma legal del documento.
+- **PDFs con emojis de color** (como emojis de Windows 🎯😀): las fuentes de emoji COLR son muy pesadas y las herramientas normales no las pueden reducir. La opción "Recomprimir fuentes con Ghostscript" (en la sección G, activa por defecto en el preset Máximo) es el único método efectivo — convierte los emojis vectoriales en imágenes comprimidas dentro del PDF.
 
 **Útil para:** reducir PDFs pesados antes de enviarlos por mail, subirlos a portales con límite de tamaño, archivar documentos que ya no necesitan ser editables.
 

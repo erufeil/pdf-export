@@ -291,7 +291,94 @@ La sección Forensis va al final del sidebar-nav:
 
 ---
 
-## 11. Patrón: valores EXIF de Pillow (IFDRational)
+## 11. Patrón: PyMuPDF `Document.save()` — parámetros válidos (v1.23.7)
+
+```python
+doc.save(
+    str(ruta_salida),
+    garbage=4,          # 0-4: eliminar objetos no referenciados (4 = agresivo)
+    deflate=True,       # comprimir streams
+    deflate_images=True,  # comprimir imágenes
+    deflate_fonts=True,   # comprimir fuentes embebidas
+    clean=True,         # limpiar y sanitizar estructura
+    linear=False,       # linearizar para web (fast web view)
+)
+# ⚠ NO existe 'compress=' — usar 'deflate='
+# ⚠ 'deflate_fonts' es necesario — no se añade automáticamente con deflate=True
+```
+
+`doc.subset_fonts()` — subsettear fuentes para incluir solo glifos usados:
+```python
+doc.subset_fonts()   # sin parámetros en v1.23.7 (no tiene 'fallback=')
+```
+
+**Limitación COLR:** Fuentes emoji de color (SegoeUIEmoji, NotoColorEmoji) usan la tabla
+`COLR`. PyMuPDF no puede reducir datos COLR. `subset_fonts()` y `deflate_fonts=True`
+no tienen efecto en el tamaño de la fuente. Solo Ghostscript puede recomprimir estos datos.
+
+---
+
+## 12. Patrón: Ghostscript para compresión agresiva de fuentes
+
+Ghostscript rasteriza fuentes COLR/emoji en bitmaps comprimidos. Ya está disponible en el
+contenedor Docker (instalado para `eps-to-png`).
+
+```python
+import shutil, subprocess
+
+def _buscar_ghostscript() -> str | None:
+    for nombre in ('gs', 'gswin64c', 'gswin32c'):
+        ruta = shutil.which(nombre)
+        if ruta:
+            return ruta
+    return None
+
+_GS_CALIDAD = {
+    'ligero': '/default', 'estandar': '/printer',
+    'agresivo': '/ebook', 'maximo': '/ebook', 'personalizado': '/ebook',
+}
+
+def _comprimir_con_ghostscript(ruta_entrada, ruta_salida, preset='estandar') -> bool:
+    gs = _buscar_ghostscript()
+    if not gs:
+        logger.warning("Ghostscript no encontrado — omitiendo compresión GS")
+        return False
+    calidad = _GS_CALIDAD.get(preset, '/ebook')
+    cmd = [gs, '-dNOPAUSE', '-dBATCH', '-dQUIET', '-sDEVICE=pdfwrite',
+           '-dCompatibilityLevel=1.4', f'-dPDFSETTINGS={calidad}',
+           '-dEmbedAllFonts=true', '-dSubsetFonts=true',
+           f'-sOutputFile={ruta_salida}', str(ruta_entrada)]
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=120)
+        if result.returncode != 0:
+            logger.warning(f"GS error: {result.stderr.decode(errors='replace')[:300]}")
+            return False
+        return ruta_salida.exists() and ruta_salida.stat().st_size > 0
+    except subprocess.TimeoutExpired:
+        logger.warning("Ghostscript tardó demasiado — timeout")
+        return False
+    except Exception as e:
+        logger.warning(f"Error invocando Ghostscript: {e}")
+        return False
+```
+
+Patrón de uso: aplicar GS después de PyMuPDF y conservar el más pequeño:
+```python
+if opts.get('usar_ghostscript', False):
+    ruta_gs = config.OUTPUT_FOLDER / f"{trabajo_id}_{stem}_gs.pdf"
+    ok = _comprimir_con_ghostscript(ruta_salida, ruta_gs, preset=opts.get('preset', 'estandar'))
+    if ok and ruta_gs.stat().st_size < ruta_salida.stat().st_size:
+        ruta_salida.unlink(missing_ok=True)
+        ruta_gs.rename(ruta_salida)
+    else:
+        ruta_gs.unlink(missing_ok=True)
+```
+
+**`-dPDFSETTINGS` niveles**: `/screen` (72dpi) < `/ebook` (150dpi) < `/printer` (300dpi) < `/default`
+
+---
+
+## 12. Patrón: valores EXIF de Pillow (IFDRational)
 
 `PIL.Image.getexif()` puede devolver valores `IFDRational` (subclase de `Fraction`) para tags de tipo *rational* (FocalLength, XResolution, DigitalZoomRatio, dpi, etc.).  
 `round(IFDRational, 1)` devuelve `Fraction` → **no serializable a JSON**.

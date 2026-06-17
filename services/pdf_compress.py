@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import logging
+import shutil
+import subprocess
+import tempfile
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, Tuple
@@ -63,8 +66,68 @@ PRESETS: Dict[str, dict] = {
         'eliminar_js': True, 'eliminar_firmas': False, 'eliminar_adjuntos': True,
         'eliminar_marcadores': False, 'eliminar_ocg': True,
         'linearizar': True,
+        'usar_ghostscript': True,
     },
 }
+
+
+# ─── Ghostscript ─────────────────────────────────────────────────────────────
+
+def _buscar_ghostscript() -> str | None:
+    """Devuelve la ruta a gs/gswin64c o None si no está disponible."""
+    for nombre in ('gs', 'gswin64c', 'gswin32c'):
+        ruta = shutil.which(nombre)
+        if ruta:
+            return ruta
+    return None
+
+
+# Mapeo preset → configuración de Ghostscript
+_GS_CALIDAD = {
+    'ligero':      '/default',
+    'estandar':    '/printer',   # 300dpi, alta calidad
+    'agresivo':    '/ebook',     # 150dpi, balance
+    'maximo':      '/ebook',     # 150dpi — text sigue siendo texto; emoji rasteriza
+    'personalizado': '/ebook',
+}
+
+
+def _comprimir_con_ghostscript(ruta_entrada: Path, ruta_salida: Path,
+                                preset: str = 'estandar') -> bool:
+    """
+    Llama a Ghostscript para recomprimir el PDF.
+    Especialmente efectivo para PDFs con fuentes COLR (emoji color).
+    Devuelve True si tuvo éxito.
+    """
+    gs = _buscar_ghostscript()
+    if not gs:
+        logger.warning("Ghostscript no encontrado — omitiendo compresión GS")
+        return False
+
+    calidad = _GS_CALIDAD.get(preset, '/ebook')
+    cmd = [
+        gs,
+        '-dNOPAUSE', '-dBATCH', '-dQUIET',
+        '-sDEVICE=pdfwrite',
+        '-dCompatibilityLevel=1.4',
+        f'-dPDFSETTINGS={calidad}',
+        '-dEmbedAllFonts=true',
+        '-dSubsetFonts=true',
+        f'-sOutputFile={ruta_salida}',
+        str(ruta_entrada),
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=120)
+        if result.returncode != 0:
+            logger.warning(f"Ghostscript error: {result.stderr.decode(errors='replace')[:300]}")
+            return False
+        return ruta_salida.exists() and ruta_salida.stat().st_size > 0
+    except subprocess.TimeoutExpired:
+        logger.warning("Ghostscript tardó demasiado — timeout")
+        return False
+    except Exception as e:
+        logger.warning(f"Error invocando Ghostscript: {e}")
+        return False
 
 
 # ─── Helpers internos ───────────────────────────────────────────────────────
@@ -255,19 +318,46 @@ def analizar_pdf(archivo_id: str) -> dict:
         ahorro_img = int(pct_img * 0.45)
 
         # ── B. Fuentes ───────────────────────────────────────────────────
-        fuentes_nombres: set = set()
+        fuentes_xrefs: dict = {}
         fuentes_embebidas = 0
         fuentes_subseteadas = 0
+        total_bytes_fuentes = 0
+        fuentes_colr = 0  # fuentes con tabla COLR (emoji color)
         for pag in doc:
             for f in pag.get_fonts(full=True):
+                xref = f[0]
                 nombre = f[3] or f[4] or ''
-                if nombre and nombre not in fuentes_nombres:
-                    fuentes_nombres.add(nombre)
-                    if f[2]:  # tipo de fuente (no vacío → embebida probable)
+                if xref not in fuentes_xrefs:
+                    fuentes_xrefs[xref] = nombre
+                    if f[2]:
                         fuentes_embebidas += 1
-                    if '+' in nombre:  # nombre subseteado: "ABCDEF+FontName"
+                    if '+' in nombre:
                         fuentes_subseteadas += 1
-        ahorro_fuentes = 5 if fuentes_embebidas > 2 else (2 if fuentes_embebidas > 0 else 0)
+                    try:
+                        raw = doc.extract_font(xref)
+                        if raw and raw[3]:
+                            data = raw[3]
+                            total_bytes_fuentes += len(data)
+                            # Detectar tabla COLR (fuentes emoji color)
+                            if b'COLR' in data[:1000] or b'CBDT' in data[:1000]:
+                                fuentes_colr += 1
+                    except Exception:
+                        pass
+
+        fuentes_nombres = set(fuentes_xrefs.values())
+        pct_fuentes = int(total_bytes_fuentes / tamano_bytes * 100) if tamano_bytes > 0 else 0
+        pct_fuentes = min(pct_fuentes, 200)  # puede > 100 por compresión interna
+
+        # Si hay fuentes COLR y GS disponible, el ahorro puede ser enorme
+        gs_disponible = _buscar_ghostscript() is not None
+        if fuentes_colr > 0 and gs_disponible:
+            ahorro_fuentes = min(60, int(pct_fuentes * 0.5))  # GS puede reducir mucho
+        elif fuentes_embebidas > 2:
+            ahorro_fuentes = 5
+        elif fuentes_embebidas > 0:
+            ahorro_fuentes = 2
+        else:
+            ahorro_fuentes = 0
 
         # ── C. Metadatos ─────────────────────────────────────────────────
         meta = doc.metadata or {}
@@ -348,6 +438,11 @@ def analizar_pdf(archivo_id: str) -> dict:
                 'total': len(fuentes_nombres),
                 'embebidas': fuentes_embebidas,
                 'subseteadas': fuentes_subseteadas,
+                'tiene_colr': fuentes_colr > 0,
+                'fuentes_colr': fuentes_colr,
+                'tamanio_estimado_bytes': total_bytes_fuentes,
+                'porcentaje_del_pdf': pct_fuentes,
+                'gs_disponible': gs_disponible,
                 'ahorro_estimado_pct': ahorro_fuentes,
             },
             'metadatos': {
@@ -486,24 +581,50 @@ def comprimir_pdf(ruta_pdf: Path, parametros: dict, trabajo_id: str,
         if opts.get('eliminar_ocg', False):
             _eliminar_ocg(doc)
 
+        # B — Fuentes: subsetting agresivo con PyMuPDF
+        if opts.get('subset_fuentes', False) or opts.get('dedup_fuentes', False):
+            job_manager.actualizar_progreso(trabajo_id, 78, "Subsetteando fuentes")
+            try:
+                doc.subset_fonts()
+            except Exception as e:
+                logger.warning(f"Error en subset_fonts: {e}")
+
         job_manager.actualizar_progreso(trabajo_id, 85, "Guardando y optimizando")
 
         stem = Path(nombre_original).stem
         nombre_salida = f"{trabajo_id}_{stem} - Comprimido.pdf"
         ruta_salida = config.OUTPUT_FOLDER / nombre_salida
 
-        # D + B + G — flags de save PyMuPDF
+        # D + B + G — flags de save PyMuPDF (deflate_fonts comprime streams de fuentes)
         deflate = opts.get('comprimir_streams', True)
         doc.save(
             str(ruta_salida),
             garbage=4 if opts.get('garbage', True) else 0,
             deflate=deflate,
             deflate_images=deflate,
+            deflate_fonts=deflate,
             clean=True,
             linear=opts.get('linearizar', False),
         )
 
         tamano_final = ruta_salida.stat().st_size
+
+        # G — Ghostscript: reprocesa fuentes COLR/complejas que PyMuPDF no puede reducir
+        if opts.get('usar_ghostscript', False):
+            job_manager.actualizar_progreso(trabajo_id, 90, "Recomprimiendo fuentes con Ghostscript")
+            ruta_gs = config.OUTPUT_FOLDER / f"{trabajo_id}_{stem} - Comprimido_gs.pdf"
+            preset_nombre = opts.get('preset', 'estandar')
+            ok = _comprimir_con_ghostscript(ruta_salida, ruta_gs, preset=preset_nombre)
+            if ok and ruta_gs.stat().st_size < tamano_final:
+                ruta_salida.unlink(missing_ok=True)
+                ruta_gs.rename(ruta_salida)
+                tamano_final = ruta_salida.stat().st_size
+                logger.info(f"Ghostscript redujo a {tamano_final/1024:.0f} KB")
+            else:
+                ruta_gs.unlink(missing_ok=True)
+                if ok:
+                    logger.info("Ghostscript no mejoró — se conserva resultado PyMuPDF")
+
         return ruta_salida, tamano_original, tamano_final
 
     finally:

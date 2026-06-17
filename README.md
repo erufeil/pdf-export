@@ -7,7 +7,7 @@ Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autoconten
 - **PDF a TXT**: Extrae texto plano, removiendo encabezados y pies de pagina
 - **PDF a DOCX**: Convierte a documento Word preservando formato
 - **PDF a PNG/JPG**: Convierte paginas a imagenes con DPI configurable
-- **Comprimir PDF**: Reduce el tamanio con niveles de compresion seleccionables
+- **Comprimir PDF**: Reduce el tamanio con 7 categorias de optimizacion y 4 presets — incluye soporte Ghostscript para fuentes emoji COLR
 - **Extraer imagenes**: Extrae imagenes incrustadas del PDF
 - **Cortar PDF**: Divide el PDF en partes con hasta 20 cortes
 - **Rotar PDF**: Rota paginas individuales o todas
@@ -47,7 +47,7 @@ Las variables se pasan directamente en `docker-compose.yml`:
 ```yaml
 environment:
   - PORT=5000
-  - APP_VERSION=1.1.44     # version que aparece en el footer
+  - APP_VERSION=1.1.50     # version que aparece en el footer
   - FILE_RETENTION_HOURS=4  # horas de retencion de archivos
   - TIMEOUT=30000           # timeout en ms para peticiones del frontend
   - RETRY_ATTEMPTS=3
@@ -154,7 +154,7 @@ python app.py
 La version visible en el footer se define en `config.py`:
 
 ```python
-VERSION = os.getenv('APP_VERSION', '1.1.12')
+VERSION = os.getenv('APP_VERSION', '1.1.50')
 ```
 
 Para cambiarla sin recompilar la imagen Docker, pasar la variable de entorno `APP_VERSION` en `docker-compose.yml`. Para cambiarla en el codigo, editar `config.py` y reconstruir la imagen.
@@ -483,49 +483,77 @@ Parametros disponibles:
 
 ### 10. Comprimir PDF
 
+Antes de comprimir se puede llamar al endpoint de analisis para ver estadisticas del PDF:
+
 ```bash
-# Nivel predefinido
+# Analisis previo (sincrono)
+curl -X POST http://localhost:5000/api/v1/convert/compress/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": "FILE_ID"}'
+
+# Comprimir con preset estandar
 curl -X POST http://localhost:5000/api/v1/convert/compress \
   -H "Content-Type: application/json" \
   -d '{
     "file_id": "FILE_ID",
     "opciones": {
-      "nivel": "media",
-      "eliminar_metadatos": true,
-      "eliminar_anotaciones": false,
-      "eliminar_bookmarks": false,
-      "escala_grises": false
+      "preset": "estandar"
     }
   }'
 
-# Compresion personalizada
+# Preset maximo con Ghostscript (para PDFs con emojis de color)
 curl -X POST http://localhost:5000/api/v1/convert/compress \
   -H "Content-Type: application/json" \
   -d '{
     "file_id": "FILE_ID",
     "opciones": {
-      "nivel": "personalizada",
-      "dpi_maximo": 100,
-      "calidad_jpg": 70,
-      "eliminar_metadatos": true,
-      "eliminar_anotaciones": true,
-      "eliminar_bookmarks": false,
-      "escala_grises": true
+      "preset": "maximo",
+      "usar_ghostscript": true
+    }
+  }'
+
+# Personalizado
+curl -X POST http://localhost:5000/api/v1/convert/compress \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_id": "FILE_ID",
+    "opciones": {
+      "preset": "personalizado",
+      "reimagenes": true, "dpi": 96, "calidad_jpeg": 60,
+      "grises": false, "dedup_imagenes": true,
+      "subset_fuentes": true, "dedup_fuentes": true,
+      "eliminar_xmp": true, "eliminar_thumbnails": true,
+      "garbage": true, "comprimir_streams": true, "dedup_objetos": true,
+      "eliminar_anotaciones": false, "eliminar_js": true,
+      "eliminar_adjuntos": false, "eliminar_marcadores": false,
+      "eliminar_ocg": false, "linearizar": false,
+      "usar_ghostscript": false
     }
   }'
 ```
 
-Parametros disponibles:
+Presets disponibles: `ligero` | `estandar` | `agresivo` | `maximo` | `personalizado`
 
-| Parametro | Tipo | Opciones / Descripcion | Default |
-|-----------|------|------------------------|---------|
-| `nivel` | string | `baja` (150dpi/90%), `media` (120dpi/75%), `alta` (96dpi/60%), `personalizada` | `media` |
-| `dpi_maximo` | int | Solo para nivel `personalizada` | `120` |
-| `calidad_jpg` | int | Solo para nivel `personalizada`, rango 1-100 | `75` |
-| `eliminar_metadatos` | bool | Elimina autor, titulo, etc. | `true` |
-| `eliminar_anotaciones` | bool | Elimina comentarios y marcas | `false` |
-| `eliminar_bookmarks` | bool | Elimina marcadores | `false` |
-| `escala_grises` | bool | Convierte todo a blanco y negro | `false` |
+Parametros clave de opciones:
+
+| Parametro | Tipo | Default Estandar | Descripcion |
+|-----------|------|-----------------|-------------|
+| `preset` | string | `'estandar'` | Preset a aplicar |
+| `reimagenes` | bool | true | Recomprimir imagenes |
+| `dpi` | int | 150 | DPI maximo de imagenes |
+| `calidad_jpeg` | int | 85 | Calidad JPEG (60-95) |
+| `grises` | bool | false | Convertir a escala de grises (On en maximo) |
+| `subset_fuentes` | bool | false | Subconjunto de fuentes (On en agresivo) |
+| `eliminar_xmp` | bool | true | Eliminar stream XMP |
+| `eliminar_thumbnails` | bool | true | Eliminar thumbnails embebidos |
+| `garbage` | bool | true | Garbage collection de objetos huerfanos |
+| `comprimir_streams` | bool | true | Comprimir streams con Deflate |
+| `linearizar` | bool | false | Linearizar para Fast Web View (On en maximo) |
+| `usar_ghostscript` | bool | false | Recomprimir fuentes COLR/emoji con Ghostscript (On en maximo) |
+
+Resultado: **PDF directo** (sin ZIP).
+
+Nota: `usar_ghostscript` requiere que Ghostscript este instalado (`gs` disponible en PATH). El contenedor Docker ya lo incluye. Si no esta disponible, el paso se omite silenciosamente.
 
 ---
 

@@ -601,15 +601,16 @@ Visor con renderizado completo de Markdown: headings, párrafos, listas, tablas,
 
 ----
 
-### Etapa 32 — Comprimir PDF (avanzado)
+### Etapa 32 — Comprimir PDF (avanzado) ✅ COMPLETADA (v1.1.50)
 
 **Página:** `static/pdf-compress.html`
-**Servicio:** `services/pdf_compress.py` (ampliar el existente de Etapa 7)
-**Endpoint:** `POST /api/v1/convert/compress` (ya existe — ampliar parámetros)
-**Endpoint análisis:** `POST /api/v1/convert/compress/analyze` (nuevo, síncrono)
+**JS:** `static/js/pdf-compress.js`
+**Servicio:** `services/pdf_compress.py` (reescrito completo)
+**Endpoint:** `POST /api/v1/convert/compress` (async)
+**Endpoint análisis:** `POST /api/v1/convert/compress/analyze` (síncrono)
 **Categoría sidebar:** Tengo un PDF...
 **Acento UI:** `#E63946` (rojo)
-**Retorna:** PDF sin comprimir
+**Retorna:** PDF directo (sin ZIP)
 
 #### Objetivo
 
@@ -707,7 +708,9 @@ Respuesta:
 | Eliminar fuentes duplicadas | Misma fuente referenciada múltiples veces → una sola | Off | On |
 | Eliminar fuentes de familias estándar | Helvetica, Times, Courier, Symbol no necesitan embeberse | Off | Off |
 
-**Nota:** PyMuPDF aplica subsetting automáticamente con `garbage=4`. Para subsetting preciso se requiere Ghostscript.
+**Nota COLR:** Fuentes emoji de color (SegoeUIEmoji, NotoColorEmoji) usan la tabla COLR. PyMuPDF no puede reducirlas — `subset_fonts()` y `deflate_fonts=True` no tienen efecto. Solo Ghostscript puede recomprimir estos datos rasterizando los glifos a bitmap.
+
+**Subsetting:** Se llama `doc.subset_fonts()` (sin argumentos, v1.23.7) antes del `save()` cuando `subset_fuentes` o `dedup_fuentes` están activos.
 
 ---
 
@@ -772,8 +775,9 @@ Respuesta:
 | Opción | Descripción | Estándar | Máximo |
 |--------|------------|---------|-------|
 | Linearizar (Fast Web View) | Optimiza para carga incremental en browser — best effort | Off | On |
+| Recomprimir fuentes con Ghostscript | Rasteriza fuentes COLR/emoji a bitmaps comprimidos — único método efectivo para emoji | Off | On |
 
-**Librería:** PyMuPDF — `doc.save(..., linear=True)`
+**Librería:** PyMuPDF — `doc.save(..., linear=True)` + `subprocess.run(['gs', ...])` para Ghostscript.
 
 ---
 
@@ -866,14 +870,31 @@ def procesar_compress(trabajo_id: str, archivo_id: str, parametros: dict) -> dic
     if opciones.get('eliminar_ocg', False):
         _eliminar_ocg(doc)
 
-    # D + B + G — save con flags PyMuPDF
+    # B — subconjunto de fuentes (antes de save)
+    if opciones.get('subset_fuentes', False) or opciones.get('dedup_fuentes', False):
+        doc.subset_fonts()   # sin argumentos en PyMuPDF 1.23.7
+
+    # D + G — save con flags PyMuPDF
+    deflate = opciones.get('comprimir_streams', True)
     doc.save(str(ruta_salida),
         garbage=4 if opciones.get('garbage', True) else 0,
-        compress=opciones.get('comprimir_streams', True),
-        deflate=opciones.get('comprimir_streams', True),
+        deflate=deflate,
+        deflate_images=deflate,
+        deflate_fonts=deflate,   # necesario explícitamente
         clean=True,
         linear=opciones.get('linearizar', False),
     )
+    # ⚠ NO usar compress= — no existe en PyMuPDF. Usar deflate=
+
+    # G — Ghostscript (después de PyMuPDF, conserva el más pequeño)
+    if opciones.get('usar_ghostscript', False):
+        ruta_gs = config.OUTPUT_FOLDER / f"{trabajo_id}_{stem}_gs.pdf"
+        ok = _comprimir_con_ghostscript(ruta_salida, ruta_gs, preset=opciones.get('preset', 'estandar'))
+        if ok and ruta_gs.stat().st_size < ruta_salida.stat().st_size:
+            ruta_salida.unlink(missing_ok=True)
+            ruta_gs.rename(ruta_salida)
+        else:
+            ruta_gs.unlink(missing_ok=True)
 ```
 
 ---
@@ -907,6 +928,7 @@ def procesar_compress(trabajo_id: str, archivo_id: str, parametros: dict) -> dic
 | `eliminar_marcadores` | bool | False | Eliminar marcadores (bookmarks) |
 | `eliminar_ocg` | bool | False | Eliminar capas opcionales OCG (On en Agresivo) |
 | `linearizar` | bool | False | Linearizar para Fast Web View (On en Máximo) |
+| `usar_ghostscript` | bool | False | Recomprimir con Ghostscript tras PyMuPDF (On en Máximo) |
 
 ---
 

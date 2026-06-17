@@ -235,13 +235,45 @@ interactivo, navegacion, optimizacion) con `ahorro_estimado_pct` por categoría.
     "eliminar_firmas": false,
     "eliminar_marcadores": false,
     "eliminar_ocg": false,
-    "linearizar": false
+    "linearizar": false,
+    "usar_ghostscript": false
   }
 }
 ```
 - `preset`: `'ligero'|'estandar'|'agresivo'|'maximo'|'personalizado'`
-- Retorna **ZIP** con `{stem} - Comprimido.pdf` + `reporte.txt`
+- `usar_ghostscript`: activa recompresión con Ghostscript tras PyMuPDF — solo efectivo si GS está instalado. El preset `maximo` lo activa por defecto.
+- Retorna **PDF directo** (`{stem} - Comprimido.pdf`)
 - Compat. API antigua: acepta también `nivel`, `dpi_maximo`, `calidad_jpg`, `eliminar_metadatos`, `eliminar_bookmarks`, `escala_grises`
+
+### `POST /api/v1/convert/compress/analyze` *(Etapa 32 — análisis previo, síncrono)*
+```json
+{ "file_id": "uuid" }
+```
+Respuesta `resp.data`:
+```json
+{
+  "paginas": 5,
+  "tamano_bytes": 4200000,
+  "imagenes": { "cantidad": 3, "tamano_estimado_bytes": 800000, "ahorro_estimado_pct": 40 },
+  "fuentes": {
+    "cantidad": 4,
+    "tamanio_estimado_bytes": 7700000,
+    "porcentaje_del_pdf": 92,
+    "tiene_colr": true,
+    "fuentes_colr": ["SegoeUIEmoji"],
+    "gs_disponible": true,
+    "ahorro_estimado_pct": 5
+  },
+  "metadatos": { "tiene_xmp": true, "tiene_thumbnails": false, "ahorro_estimado_pct": 1 },
+  "estructura": { "objetos": 120, "streams": 45, "ahorro_estimado_pct": 5 },
+  "interactivo": { "anotaciones": 0, "js_embebido": false, "adjuntos": 0, "ahorro_estimado_pct": 0 },
+  "navegacion": { "marcadores": 12, "ocg": 0, "ahorro_estimado_pct": 2 },
+  "optimizacion": { "es_linearizado": false, "version_pdf": "1.7", "ahorro_estimado_pct": 1 }
+}
+```
+- `fuentes.tiene_colr`: `true` si hay fuentes emoji COLR que PyMuPDF no puede reducir
+- `fuentes.gs_disponible`: `true` si Ghostscript está instalado en el servidor
+- Si `tiene_colr=true` y `gs_disponible=true` → recomendar activar `usar_ghostscript`
 
 ### `POST /api/v1/convert/split`
 ```json

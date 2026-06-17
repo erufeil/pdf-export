@@ -61,6 +61,7 @@ const PRESETS = {
         aplanar_formularios: false, eliminar_adjuntos: true, eliminar_firmas: false,
         eliminar_marcadores: false, eliminar_ocg: true,
         linearizar: true,
+        usar_ghostscript: true,
     },
 };
 
@@ -85,6 +86,7 @@ const CHECKBOXES = {
     'eliminar-marcadores':  'eliminar_marcadores',
     'eliminar-ocg':         'eliminar_ocg',
     'linearizar':           'linearizar',
+    'usar-ghostscript':     'usar_ghostscript',
 };
 
 

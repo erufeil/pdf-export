@@ -604,6 +604,13 @@
                             <div class="check-desc">Optimiza el PDF para carga incremental en browser — best effort</div>
                         </div>
                     </div>
+                    <div class="check-row" id="row-ghostscript">
+                        <input type="checkbox" id="usar-ghostscript">
+                        <div class="check-info">
+                            <label class="check-label" for="usar-ghostscript">Recomprimir fuentes con Ghostscript</label>
+                            <div class="check-desc" id="desc-ghostscript">Reprocesa fuentes COLR/emoji que PyMuPDF no puede reducir — muy efectivo en PDFs con emojis de color</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -673,6 +680,6 @@
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
-<script src="/static/js/pdf-compress.js?v=1.1.48"></script>
+<script src="/static/js/pdf-compress.js?v=1.1.50"></script>
 </body>
 </html>
