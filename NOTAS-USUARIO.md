@@ -453,6 +453,33 @@ El EPUB es internamente un ZIP con páginas HTML. La herramienta:
 
 ---
 
+### 🎬 YouTube CC a Markdown
+
+**Descarga los subtítulos o CC de un video de YouTube y los convierte a Markdown.**
+
+Solo pegás la URL del video y elegís el idioma:
+
+- **Auto** (recomendado): toma los subtítulos manuales si existen; si no, usa los generados automáticamente por YouTube
+- **Español / English**: busca subtítulos en ese idioma; si no los encuentra, intenta traducir automáticamente
+
+El resultado es un archivo **.md** con:
+
+- Título, canal y keywords del video
+- Descripción (si está disponible)
+- Transcripción completa como texto continuo
+
+**No hace falta subir ningún archivo** — solo pegás la URL y hacés clic en "Convertir a MD".
+
+**Útil para:** tomar notas de tutoriales o charlas, pasar el contenido de un video a una IA, crear resúmenes de conferencias.
+
+**Limitaciones:**
+
+- Solo funciona si el video tiene subtítulos o CC activados. Videos sin subtítulos de ningún tipo mostrarán un error
+- Los efectos de sonido entre corchetes como `[música]` o `[aplausos]` se eliminan automáticamente
+- No descarga el audio ni el video — solo el texto de los subtítulos
+
+---
+
 Las siguientes herramientas de Markdown están **próximamente**:
 
 | Herramienta | Qué hace |

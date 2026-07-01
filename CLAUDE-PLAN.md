@@ -623,37 +623,56 @@ audio_file → multipart POST {WHISPER_URL}/v1/audio/transcriptions
 
 ---
 
-### Etapa 43 — YouTube CC→MD (planificada)
+### Etapa 43 — YouTube CC→MD (v1.1.63 — COMPLETADA)
+
 **Página:** `static/youtube-to-md.html`
 **Servicio:** `services/youtube_to_md.py`
-**Endpoint:** `POST /youtube-to-md` (async)
-**Librería:** `youtube-transcript-api` (agregar a requirements.txt)
-**Entrada:** URL de YouTube (`https://www.youtube.com/watch?v=...`)
+**Endpoint:** `POST /api/v1/convert/youtube-to-md` (async)
+**Librería:** `youtube-transcript-api==1.2.4` (instalado; trae `defusedxml` como dependencia)
+**Entrada:** URL de YouTube en body JSON — no hay archivo subido (`archivo_id=None`)
 **Retorna:** `.md` directo (sin ZIP)
 **Acento UI:** violeta `#A371F7`
 
-**Pipeline:**
-1. Validar que la URL sea `youtube.com/watch?v=...` y extraer `video_id`
-2. `requests.get(url)` → BeautifulSoup → extraer metadatos de meta tags y `ytInitialData` JSON (título, views, keywords, duración, descripción)
-3. `YouTubeTranscriptApi().list(video_id)` → listar transcripciones disponibles
-4. `ytt_api.fetch(video_id, languages=[idioma_pedido, 'es', 'en'])` con retry (3 intentos, 2s)
-5. Si idioma exacto no disponible → `find_transcript(langs).translate(target).fetch()`
-6. Output Markdown:
-   ```markdown
-   # {título}
-   **URL:** {url}  **Views:** {views}  **Duración:** {duración}
-   **Keywords:** {keywords}
-   ---
-   ## Descripción
-   {descripción}
-   ---
-   ## Transcripción
-   {texto_cc_continuo}
-   ```
+**Nota API v1.2.4:** La librería usa instancias (`YouTubeTranscriptApi()`), no classmethods.
+Métodos: `.list(video_id)` → `TranscriptList`; `.fetch(video_id, languages=[...])` → `FetchedTranscript`.
+`FetchedTranscript.to_raw_data()` → `[{'text', 'start', 'duration'}, ...]`.
 
-**UI:** Campo URL → selector idioma preferido [es|en|auto] → convertir → `.md` directo.
-**Nota:** Si el video no tiene CC disponibles → error claro "Este video no tiene subtítulos disponibles".
-**Config:** No requiere API key de YouTube — `youtube-transcript-api` usa el endpoint público de YouTube.
+**Pipeline implementado:**
+
+1. Validar URL → extraer `video_id` (soporta `watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`)
+2. `requests.get(url)` → BeautifulSoup `lxml` → meta tags `og:title`, `og:description`, `keywords`, `itemprop=author`
+3. Selector idioma: `auto` | `es` | `en`
+4. `idioma=auto`: `list().find_manually_created_transcript(['es','en'])` → fallback `find_generated_transcript`
+5. `idioma=es/en`: `fetch(video_id, languages=[idioma])` → fallback `find_transcript().translate(idioma).fetch()`
+6. Retry 3 intentos (2s) para `CouldNotRetrieveTranscript`; errores claros para `TranscriptsDisabled` / `NoTranscriptFound`
+7. Limpiar artefactos `[música]`, `[aplausos]` con regex `\[.*?\]`
+8. Naming resultado: `{job_id}_{titulo_sanitizado_60chars}.md`
+
+**Output MD:**
+
+```markdown
+# Título del video
+
+**URL:** https://...
+**Canal:** Nombre Canal
+**Idioma transcripción:** es
+**Keywords:** ...
+
+---
+
+## Descripción
+
+...
+
+---
+
+## Transcripción
+
+Texto continuo de los subtítulos...
+```
+
+**UI:** Campo URL + selector Auto/Español/English + Enter o botón → SSE + fallback polling → descarga directa.
+**No requiere API key** — usa endpoint público de YouTube.
 
 ---
 

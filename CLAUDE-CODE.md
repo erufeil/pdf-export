@@ -265,6 +265,7 @@ img.src = `${API}/files/${archivoId}/thumbnail/${totalPaginas - 1}`;
 | `'to-md'`             | pdf_to_md                  | MD directo                           |
 | `'excel-to-md'`       | xlsx_to_md                 | MD directo (todas las hojas unidas)  |
 | `'epub-to-md'`        | epub_to_md                 | MD directo (todos los capítulos)     |
+| `'youtube-to-md'`     | youtube_to_md              | MD directo (URL en parametros, sin archivo_id) |
 
 **Regla:** Si el resultado siempre es un único archivo → retornar directo. ZIP solo cuando se generan múltiples archivos.
 

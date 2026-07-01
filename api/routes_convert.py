@@ -1775,6 +1775,58 @@ def convertir_to_md():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/youtube-to-md', methods=['POST'])
+def convertir_youtube_to_md():
+    """
+    Descarga subtítulos/CC de un video de YouTube y los convierte a Markdown (Etapa 43).
+    No requiere archivo subido — la URL viene en el body JSON.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - url: URL del video de YouTube
+      - idioma: 'auto' | 'es' | 'en' (default 'auto')
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    url = (datos.get('url') or '').strip()
+    if not url:
+        return respuesta_error('MISSING_URL', 'Se requiere URL de YouTube')
+
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        host = (parsed.hostname or '').lower()
+        if parsed.scheme not in ('http', 'https') or not any(
+            h in host for h in ('youtube.com', 'youtu.be')
+        ):
+            return respuesta_error('INVALID_URL', 'La URL debe ser de YouTube')
+    except Exception:
+        return respuesta_error('INVALID_URL', 'URL inválida')
+
+    idioma = datos.get('idioma', 'auto')
+    if idioma not in ('auto', 'es', 'en'):
+        idioma = 'auto'
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=None,
+            tipo_conversion='youtube-to-md',
+            parametros={'url': url, 'idioma': idioma}
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Descarga de subtítulos iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo youtube-to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/epub-to-md', methods=['POST'])
 def convertir_epub_to_md():
     """

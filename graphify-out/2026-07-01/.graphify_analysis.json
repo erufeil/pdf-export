@@ -8,7 +8,6 @@
       "api_routes_convert_contar_imagenes",
       "api_routes_convert_convertir_compress",
       "api_routes_convert_convertir_eps_to_png",
-      "api_routes_convert_convertir_epub_to_md",
       "api_routes_convert_convertir_excel_to_md",
       "api_routes_convert_convertir_extract_images",
       "api_routes_convert_convertir_extract_pages",
@@ -40,7 +39,6 @@
       "api_routes_convert_obtener_info_compresion",
       "api_routes_convert_obtener_info_rotacion",
       "api_routes_convert_preview_from_html",
-      "api_routes_convert_preview_scrape_url",
       "api_routes_convert_preview_to_docx",
       "api_routes_convert_preview_to_txt",
       "api_routes_convert_rationale_1044",
@@ -63,7 +61,6 @@
       "api_routes_convert_rationale_1655",
       "api_routes_convert_rationale_1729",
       "api_routes_convert_rationale_1780",
-      "api_routes_convert_rationale_1821",
       "api_routes_convert_rationale_199",
       "api_routes_convert_rationale_20",
       "api_routes_convert_rationale_248",
@@ -85,11 +82,14 @@
       "api_routes_convert_rationale_815",
       "api_routes_convert_rationale_871",
       "api_routes_convert_rationale_921",
-      "api_routes_convert_rationale_980",
       "api_routes_convert_respuesta_error",
       "api_routes_convert_respuesta_exitosa",
       "api_routes_convert_validar_archivo",
-      "api_routes_convert_verificar_tika_img"
+      "api_routes_convert_verificar_tika_img",
+      "services_pdf_rotate_obtener_info_paginas",
+      "services_pdf_rotate_rationale_87",
+      "services_xlsx_to_csv_analizar_xlsx",
+      "services_xlsx_to_csv_rationale_32"
     ],
     "1": [
       "services_pdf_metadata",
@@ -169,6 +169,37 @@
       "services_pdf_to_csv_rationale_905"
     ],
     "3": [
+      "models",
+      "models_actualizar_trabajo",
+      "models_buscar_archivo_existente",
+      "models_cancelar_trabajo",
+      "models_crear_archivo",
+      "models_crear_trabajo",
+      "models_eliminar_archivo",
+      "models_eliminar_archivos_expirados",
+      "models_eliminar_trabajos_expirados",
+      "models_inicializar_db",
+      "models_listar_archivos",
+      "models_listar_trabajos",
+      "models_obtener_archivo",
+      "models_obtener_conexion",
+      "models_obtener_trabajo",
+      "models_rationale_110",
+      "models_rationale_119",
+      "models_rationale_136",
+      "models_rationale_150",
+      "models_rationale_162",
+      "models_rationale_190",
+      "models_rationale_20",
+      "models_rationale_210",
+      "models_rationale_225",
+      "models_rationale_265",
+      "models_rationale_292",
+      "models_rationale_304",
+      "models_rationale_35",
+      "models_rationale_88"
+    ],
+    "4": [
       "services_pdf_scanned_to_csv",
       "services_pdf_scanned_to_csv_analizar_pdf_escaneado",
       "services_pdf_scanned_to_csv_buscar_titulo_antes",
@@ -198,7 +229,7 @@
       "services_pdf_scanned_to_csv_url_tika",
       "services_pdf_scanned_to_csv_verificar_tika"
     ],
-    "4": [
+    "5": [
       "js_pdf_compress",
       "js_pdf_compress_actualizarestimacion",
       "js_pdf_compress_analizararchivo",
@@ -227,7 +258,7 @@
       "js_pdf_compress_setprogreso",
       "js_pdf_compress_togglecat"
     ],
-    "5": [
+    "6": [
       "services_pdf_compress",
       "services_pdf_compress_analizar_pdf",
       "services_pdf_compress_aplanar_formularios",
@@ -256,7 +287,7 @@
       "services_pdf_compress_recomprimir_imagenes",
       "services_pdf_compress_resolver_opts"
     ],
-    "6": [
+    "7": [
       "image",
       "services_img_metadata",
       "services_img_metadata_analizar_colores",
@@ -284,7 +315,61 @@
       "services_img_metadata_rationale_91",
       "services_img_metadata_safe"
     ],
-    "7": [
+    "8": [
+      "utils_file_manager",
+      "utils_file_manager_buscar_archivo_duplicado",
+      "utils_file_manager_crear_zip",
+      "utils_file_manager_eliminar_archivo_fisico",
+      "utils_file_manager_extension_permitida",
+      "utils_file_manager_formatear_tamano",
+      "utils_file_manager_generar_hash_archivo",
+      "utils_file_manager_generar_miniatura",
+      "utils_file_manager_guardar_archivo",
+      "utils_file_manager_limpiar_archivos_expirados",
+      "utils_file_manager_obtener_info_pdf",
+      "utils_file_manager_obtener_ruta_archivo",
+      "utils_file_manager_py_path",
+      "utils_file_manager_rationale_143",
+      "utils_file_manager_rationale_163",
+      "utils_file_manager_rationale_186",
+      "utils_file_manager_rationale_208",
+      "utils_file_manager_rationale_26",
+      "utils_file_manager_rationale_269",
+      "utils_file_manager_rationale_311",
+      "utils_file_manager_rationale_319",
+      "utils_file_manager_rationale_32",
+      "utils_file_manager_rationale_43",
+      "utils_file_manager_rationale_52",
+      "utils_file_manager_rationale_71",
+      "utils_file_manager_sanitizar_nombre"
+    ],
+    "9": [
+      "api_routes_convert_preview_scrape_url",
+      "api_routes_convert_rationale_980",
+      "services_web_scraper",
+      "services_web_scraper_descargar_pagina",
+      "services_web_scraper_eliminar_enlaces_markdown",
+      "services_web_scraper_extraer_contenido_body",
+      "services_web_scraper_extraer_footer",
+      "services_web_scraper_extraer_links",
+      "services_web_scraper_extraer_metadatos",
+      "services_web_scraper_formatear_salida_txt",
+      "services_web_scraper_procesar_scrape_url",
+      "services_web_scraper_py_path",
+      "services_web_scraper_rationale_151",
+      "services_web_scraper_rationale_290",
+      "services_web_scraper_rationale_331",
+      "services_web_scraper_rationale_357",
+      "services_web_scraper_rationale_435",
+      "services_web_scraper_rationale_46",
+      "services_web_scraper_rationale_490",
+      "services_web_scraper_rationale_549",
+      "services_web_scraper_rationale_55",
+      "services_web_scraper_rationale_73",
+      "services_web_scraper_scrapear_url",
+      "services_web_scraper_verificar_dependencias"
+    ],
+    "10": [
       "page",
       "services_pdf_to_docx",
       "services_pdf_to_docx_agregar_tabla_docx",
@@ -310,7 +395,7 @@
       "services_pdf_to_docx_rationale_35",
       "services_pdf_to_docx_rationale_68"
     ],
-    "8": [
+    "11": [
       "js_pdf_to_jpg",
       "js_pdf_to_jpg_actualizarestimacion",
       "js_pdf_to_jpg_calcularpaginasseleccionadas",
@@ -335,31 +420,53 @@
       "js_pdf_to_jpg_ocultarmensaje",
       "js_pdf_to_jpg_verificarestadofinal"
     ],
-    "9": [
-      "services_web_scraper",
-      "services_web_scraper_descargar_pagina",
-      "services_web_scraper_eliminar_enlaces_markdown",
-      "services_web_scraper_extraer_contenido_body",
-      "services_web_scraper_extraer_footer",
-      "services_web_scraper_extraer_links",
-      "services_web_scraper_extraer_metadatos",
-      "services_web_scraper_formatear_salida_txt",
-      "services_web_scraper_procesar_scrape_url",
-      "services_web_scraper_py_path",
-      "services_web_scraper_rationale_151",
-      "services_web_scraper_rationale_290",
-      "services_web_scraper_rationale_331",
-      "services_web_scraper_rationale_357",
-      "services_web_scraper_rationale_435",
-      "services_web_scraper_rationale_46",
-      "services_web_scraper_rationale_490",
-      "services_web_scraper_rationale_549",
-      "services_web_scraper_rationale_55",
-      "services_web_scraper_rationale_73",
-      "services_web_scraper_scrapear_url",
-      "services_web_scraper_verificar_dependencias"
+    "12": [
+      "api_routes_files",
+      "api_routes_files_eliminar_archivo",
+      "api_routes_files_eliminar_todos_archivos",
+      "api_routes_files_listar_archivos",
+      "api_routes_files_obtener_archivo",
+      "api_routes_files_obtener_ayuda",
+      "api_routes_files_obtener_miniatura",
+      "api_routes_files_rationale_104",
+      "api_routes_files_rationale_126",
+      "api_routes_files_rationale_149",
+      "api_routes_files_rationale_163",
+      "api_routes_files_rationale_184",
+      "api_routes_files_rationale_223",
+      "api_routes_files_rationale_24",
+      "api_routes_files_rationale_266",
+      "api_routes_files_rationale_33",
+      "api_routes_files_rationale_45",
+      "api_routes_files_respuesta_error",
+      "api_routes_files_respuesta_exitosa",
+      "api_routes_files_subir_archivo",
+      "api_routes_files_verificar_duplicado"
     ],
-    "10": [
+    "13": [
+      "js_common",
+      "js_common_descargarresultado",
+      "js_common_dropzone",
+      "js_common_dropzone_constructor",
+      "js_common_dropzone_handlefile",
+      "js_common_dropzone_init",
+      "js_common_eschtml",
+      "js_common_fileuploader",
+      "js_common_fileuploader_constructor",
+      "js_common_fileuploader_subirarchivo",
+      "js_common_fileuploader_verificarduplicado",
+      "js_common_formatbytes",
+      "js_common_formatearfecha",
+      "js_common_formateartamano",
+      "js_common_generarminiaturalocal",
+      "js_common_iniciarconversion",
+      "js_common_monitorearprogreso",
+      "js_common_mostrarmensaje",
+      "js_common_obtenerminiatura",
+      "js_common_ocultarmensaje",
+      "js_common_togglesidebar"
+    ],
+    "14": [
       "js_pdf_rotate",
       "js_pdf_rotate_actualizarcontadorcambios",
       "js_pdf_rotate_actualizarminiatura",
@@ -382,7 +489,7 @@
       "js_pdf_rotate_rotarpagina",
       "js_pdf_rotate_rotartodas"
     ],
-    "11": [
+    "15": [
       "js_pdf_to_png",
       "js_pdf_to_png_actualizarestimacion",
       "js_pdf_to_png_calcularpaginasseleccionadas",
@@ -405,28 +512,30 @@
       "js_pdf_to_png_ocultarmensaje",
       "js_pdf_to_png_verificarestadofinal"
     ],
-    "12": [
-      "api_routes_files_py",
-      "app",
-      "claudef-code_md",
-      "pdfexport_services_pdf_extract_images_py",
-      "pdfexport_services_pdf_to_images_py",
-      "services_eps_to_png",
-      "services_eps_to_png_procesar_eps_to_png",
-      "services_eps_to_png_rationale_29",
-      "services_pdf_merge",
-      "services_pdf_merge_obtener_info_archivos",
-      "services_pdf_merge_rationale_21",
-      "services_pdf_to_txt",
-      "services_svg_to_png",
-      "services_svg_to_png_procesar_svg_to_png",
-      "services_svg_to_png_rationale_26",
-      "services_webp_to_png",
-      "services_webp_to_png_procesar_webp_to_png",
-      "services_webp_to_png_rationale_21",
-      "utils_file_manager_py"
+    "16": [
+      "utils_job_manager",
+      "utils_job_manager_actualizar_progreso",
+      "utils_job_manager_detener_worker_graceful",
+      "utils_job_manager_encolar_trabajo",
+      "utils_job_manager_iniciar_worker",
+      "utils_job_manager_liberar_memoria",
+      "utils_job_manager_obtener_estado_cola",
+      "utils_job_manager_procesar_trabajo",
+      "utils_job_manager_rationale_159",
+      "utils_job_manager_rationale_172",
+      "utils_job_manager_rationale_193",
+      "utils_job_manager_rationale_202",
+      "utils_job_manager_rationale_208",
+      "utils_job_manager_rationale_23",
+      "utils_job_manager_rationale_230",
+      "utils_job_manager_rationale_49",
+      "utils_job_manager_rationale_61",
+      "utils_job_manager_rationale_90",
+      "utils_job_manager_reencolar_trabajos_pendientes",
+      "utils_job_manager_registrar_procesador",
+      "utils_job_manager_worker_procesador"
     ],
-    "13": [
+    "17": [
       "api_routes_jobs",
       "api_routes_jobs_descargar_resultado",
       "api_routes_jobs_eliminar_trabajo",
@@ -447,7 +556,7 @@
       "api_routes_jobs_respuesta_error",
       "api_routes_jobs_respuesta_exitosa"
     ],
-    "14": [
+    "18": [
       "js_pdf_extract_images",
       "js_pdf_extract_images_actualizarcontadorseleccion",
       "js_pdf_extract_images_analizarimagenes",
@@ -468,7 +577,7 @@
       "js_pdf_extract_images_seleccionartodas",
       "js_pdf_extract_images_toggleseleccion"
     ],
-    "15": [
+    "19": [
       "js_pdf_split",
       "js_pdf_split_actualizarbotonejecutar",
       "js_pdf_split_actualizarcorte",
@@ -489,28 +598,9 @@
       "js_pdf_split_mostrarinfo",
       "js_pdf_split_renderizarcortes"
     ],
-    "16": [
-      "services_epub_to_md",
-      "services_epub_to_md_encabezado_meta",
-      "services_epub_to_md_extraer_meta",
-      "services_epub_to_md_extraer_spine",
-      "services_epub_to_md_find_text",
-      "services_epub_to_md_html_a_md",
-      "services_epub_to_md_leer_entrada",
-      "services_epub_to_md_obtener_opf_path",
-      "services_epub_to_md_procesar_epub_to_md",
-      "services_epub_to_md_rationale_118",
-      "services_epub_to_md_rationale_145",
-      "services_epub_to_md_rationale_160",
-      "services_epub_to_md_rationale_24",
-      "services_epub_to_md_rationale_37",
-      "services_epub_to_md_rationale_51",
-      "services_epub_to_md_rationale_62",
-      "services_epub_to_md_rationale_85",
-      "zipfile"
-    ],
-    "17": [
+    "20": [
       "ltpage",
+      "services_pdf_to_txt",
       "services_pdf_to_txt_detectar_encabezados_pies",
       "services_pdf_to_txt_detectar_numeros_pagina",
       "services_pdf_to_txt_extraer_texto_pagina",
@@ -527,24 +617,25 @@
       "services_pdf_to_txt_rationale_307",
       "services_pdf_to_txt_rationale_58"
     ],
-    "18": [
-      "claudef_plan_md",
-      "claudeflow_var",
-      "config",
-      "docs_1_jpeg",
-      "entrypoint_generar_config_js",
-      "entrypoint_py_entrypoint",
-      "entrypoint_rationale_15",
-      "models_py",
-      "pdfexport_dockerfile",
-      "pdfexport_env_development",
-      "pdfexport_env_produccion",
-      "pdfexport_index_html",
-      "requirements_txt",
-      "services_pdf_nuevo_servicio_py",
-      "utils_job_manager_py"
+    "21": [
+      "app",
+      "app_crear_app",
+      "app_iniciar_scheduler",
+      "app_main",
+      "app_rationale_137",
+      "app_rationale_159",
+      "app_rationale_63",
+      "services_eps_to_png",
+      "services_eps_to_png_procesar_eps_to_png",
+      "services_eps_to_png_rationale_29",
+      "services_svg_to_png",
+      "services_svg_to_png_procesar_svg_to_png",
+      "services_svg_to_png_rationale_26",
+      "services_webp_to_png",
+      "services_webp_to_png_procesar_webp_to_png",
+      "services_webp_to_png_rationale_21"
     ],
-    "19": [
+    "22": [
       "services_pdf_extract_images",
       "services_pdf_extract_images_contar_imagenes_pdf",
       "services_pdf_extract_images_extraer_imagen_xref",
@@ -561,7 +652,7 @@
       "services_pdf_extract_images_rationale_88",
       "services_pdf_extract_images_recolectar_xrefs_imagenes"
     ],
-    "20": [
+    "23": [
       "js_pdf_to_docx",
       "js_pdf_to_docx_cargararchivo",
       "js_pdf_to_docx_cargarpreview",
@@ -577,7 +668,7 @@
       "js_pdf_to_docx_obtenerinfodocumento",
       "js_pdf_to_docx_obteneropciones"
     ],
-    "21": [
+    "24": [
       "js_pdf_to_txt",
       "js_pdf_to_txt_cargararchivo",
       "js_pdf_to_txt_ejecutarextraccion",
@@ -593,7 +684,7 @@
       "js_pdf_to_txt_mostrarinfo",
       "js_pdf_to_txt_obteneropciones"
     ],
-    "22": [
+    "25": [
       "services_html_to_pdf",
       "services_html_to_pdf_convertir_url_a_pdf",
       "services_html_to_pdf_crear_url_fetcher",
@@ -609,7 +700,7 @@
       "services_html_to_pdf_rationale_383",
       "services_html_to_pdf_verificar_weasyprint"
     ],
-    "23": [
+    "26": [
       "services_pdf_to_images",
       "services_pdf_to_images_convertir_pdf_a_imagenes",
       "services_pdf_to_images_estimar_tamano",
@@ -625,23 +716,23 @@
       "services_pdf_to_images_rationale_31",
       "services_pdf_to_images_rationale_76"
     ],
-    "24": [
-      "static_xlsx_to_csv_html_drop_zone",
-      "static_xlsx_to_csv_html_file_info_card",
-      "static_xlsx_to_csv_html_footer",
-      "static_xlsx_to_csv_html_main",
-      "static_xlsx_to_csv_html_options_col",
-      "static_xlsx_to_csv_html_processing_panel",
-      "static_xlsx_to_csv_html_script_common_js",
-      "static_xlsx_to_csv_html_script_config_js",
-      "static_xlsx_to_csv_html_server_files_list",
-      "static_xlsx_to_csv_html_server_toggle",
-      "static_xlsx_to_csv_html_sheet_list",
-      "static_xlsx_to_csv_html_sidebar",
-      "static_xlsx_to_csv_html_status_message",
-      "static_xlsx_to_csv_html_upload_progress"
+    "27": [
+      "xlsx_to_csv_html_drop_zone",
+      "xlsx_to_csv_html_file_info_card",
+      "xlsx_to_csv_html_footer",
+      "xlsx_to_csv_html_main",
+      "xlsx_to_csv_html_options_col",
+      "xlsx_to_csv_html_processing_panel",
+      "xlsx_to_csv_html_script_common_js",
+      "xlsx_to_csv_html_script_config_js",
+      "xlsx_to_csv_html_server_files_list",
+      "xlsx_to_csv_html_server_toggle",
+      "xlsx_to_csv_html_sheet_list",
+      "xlsx_to_csv_html_sidebar",
+      "xlsx_to_csv_html_status_message",
+      "xlsx_to_csv_html_upload_progress"
     ],
-    "25": [
+    "28": [
       "codeimg_pdf_extract_images",
       "codeimg_pdf_extract_images_contar_imagenes_pdf",
       "codeimg_pdf_extract_images_extraer_imagenes_pdf",
@@ -656,7 +747,7 @@
       "docs_codeimg_pdf_extract_images_py_document",
       "docs_codeimg_pdf_extract_images_py_path"
     ],
-    "26": [
+    "29": [
       "codeimg_pdf_to_images",
       "codeimg_pdf_to_images_convertir_pdf_a_imagenes",
       "codeimg_pdf_to_images_estimar_tamano",
@@ -671,7 +762,7 @@
       "codeimg_pdf_to_images_rationale_76",
       "docs_codeimg_pdf_to_images_py_path"
     ],
-    "27": [
+    "30": [
       "js_html_to_pdf",
       "js_html_to_pdf_convertirapdf",
       "js_html_to_pdf_elementos",
@@ -685,7 +776,21 @@
       "js_html_to_pdf_obteneropciones",
       "js_html_to_pdf_validarurl"
     ],
-    "28": [
+    "31": [
+      "pdf-to-txt_html_sidebar",
+      "pdf-to-txt_html_sidebar_logo",
+      "pdf-to-txt_html_sidebar_logo_icon",
+      "pdf-to-txt_html_sidebar_logo_link",
+      "pdf-to-txt_html_sidebar_logo_sub",
+      "pdf-to-txt_html_sidebar_logo_text",
+      "pdf-to-txt_html_sidebar_nav_item_active",
+      "pdf-to-txt_html_sidebar_nav_item_icon",
+      "pdf-to-txt_html_sidebar_nav_item_label",
+      "pdf-to-txt_html_sidebar_nav_item_tooltip",
+      "pdf-to-txt_html_sidebar_nav_section",
+      "pdf-to-txt_html_sidebar_nav_section_label"
+    ],
+    "32": [
       "services_ndm_to_tables_seq",
       "services_ndm_to_tables_seq_cargar_ndm",
       "services_ndm_to_tables_seq_extraer_tablas_y_fks",
@@ -699,7 +804,7 @@
       "services_ndm_to_tables_seq_rationale_34",
       "services_ndm_to_tables_seq_rationale_71"
     ],
-    "29": [
+    "33": [
       "services_pdf_to_md",
       "services_pdf_to_md_aplicar_opciones_texto",
       "services_pdf_to_md_es_numero_pagina",
@@ -713,33 +818,7 @@
       "services_pdf_to_md_tabla_a_md",
       "services_pdf_to_md_texto_fuera_tablas"
     ],
-    "30": [
-      "static_pdf_to_txt_html_sidebar",
-      "static_pdf_to_txt_html_sidebar_logo",
-      "static_pdf_to_txt_html_sidebar_logo_icon",
-      "static_pdf_to_txt_html_sidebar_logo_link",
-      "static_pdf_to_txt_html_sidebar_logo_sub",
-      "static_pdf_to_txt_html_sidebar_logo_text",
-      "static_pdf_to_txt_html_sidebar_nav_item_active",
-      "static_pdf_to_txt_html_sidebar_nav_item_icon",
-      "static_pdf_to_txt_html_sidebar_nav_item_label",
-      "static_pdf_to_txt_html_sidebar_nav_item_tooltip",
-      "static_pdf_to_txt_html_sidebar_nav_section",
-      "static_pdf_to_txt_html_sidebar_nav_section_label"
-    ],
-    "31": [
-      "claude_codes_of_error",
-      "claude_diccionarios_contexto_claud_code_md",
-      "claude_diccionarios_contexto_claud_plan_md",
-      "claude_diccionarios_contexto_claud_var_md",
-      "claude_diccionarios_contexto_rta1_md",
-      "claude_notas_usuario_md_faq",
-      "claude_var_codes_of_error",
-      "claude_var_config_py",
-      "claude_var_contracts_rest",
-      "claude_var_schema_bd"
-    ],
-    "32": [
+    "34": [
       "codeimg_pdf_extract_images_primera_version",
       "codeimg_pdf_extract_images_primera_version_contar_imagenes_pdf",
       "codeimg_pdf_extract_images_primera_version_extraer_imagenes_pdf",
@@ -751,7 +830,7 @@
       "codeimg_pdf_extract_images_primera_version_rationale_44",
       "docs_codeimg_pdf_extract_images_primera_version_py_path"
     ],
-    "33": [
+    "35": [
       "docker_compose_yml",
       "ghostscript_system",
       "nlm_ingestor_service",
@@ -763,7 +842,19 @@
       "tesseract_ocr_system",
       "tika_service"
     ],
-    "34": [
+    "36": [
+      "eps_to_png_html_drop_zone",
+      "eps_to_png_html_file_info_card",
+      "eps_to_png_html_footer",
+      "eps_to_png_html_main",
+      "eps_to_png_html_processing_panel",
+      "eps_to_png_html_script_common_js",
+      "eps_to_png_html_server_files",
+      "eps_to_png_html_sidebar",
+      "eps_to_png_html_status_message",
+      "eps_to_png_html_upload_progress"
+    ],
+    "37": [
       "services_img_to_txt",
       "services_img_to_txt_enviar_imagen_tika",
       "services_img_to_txt_procesar_img_to_txt",
@@ -775,7 +866,7 @@
       "services_img_to_txt_url_tika",
       "services_img_to_txt_verificar_tika_img"
     ],
-    "35": [
+    "38": [
       "services_pdf_split",
       "services_pdf_split_calcular_cortes_iguales",
       "services_pdf_split_ejecutar_corte",
@@ -787,30 +878,18 @@
       "services_pdf_split_rationale_72",
       "services_pdf_split_validar_cortes"
     ],
-    "36": [
-      "static_eps_to_png_html_drop_zone",
-      "static_eps_to_png_html_file_info_card",
-      "static_eps_to_png_html_footer",
-      "static_eps_to_png_html_main",
-      "static_eps_to_png_html_processing_panel",
-      "static_eps_to_png_html_script_common_js",
-      "static_eps_to_png_html_server_files",
-      "static_eps_to_png_html_sidebar",
-      "static_eps_to_png_html_status_message",
-      "static_eps_to_png_html_upload_progress"
+    "39": [
+      "webp_to_png_html_btn_convertir",
+      "webp_to_png_html_btn_descarga",
+      "webp_to_png_html_btn_secondary",
+      "webp_to_png_html_content",
+      "webp_to_png_html_dropzone",
+      "webp_to_png_html_file_info_card",
+      "webp_to_png_html_header",
+      "webp_to_png_html_preview_wrap",
+      "webp_to_png_html_progress_bar"
     ],
-    "37": [
-      "static_webp_to_png_html_btn_convertir",
-      "static_webp_to_png_html_btn_descarga",
-      "static_webp_to_png_html_btn_secondary",
-      "static_webp_to_png_html_content",
-      "static_webp_to_png_html_dropzone",
-      "static_webp_to_png_html_file_info_card",
-      "static_webp_to_png_html_header",
-      "static_webp_to_png_html_preview_wrap",
-      "static_webp_to_png_html_progress_bar"
-    ],
-    "38": [
+    "40": [
       "services_pdf_extract_pages",
       "services_pdf_extract_pages_extraer_paginas",
       "services_pdf_extract_pages_parsear_paginas",
@@ -820,27 +899,35 @@
       "services_pdf_extract_pages_rationale_22",
       "services_pdf_extract_pages_rationale_64"
     ],
-    "39": [
-      "services_pdf_rotate",
-      "services_pdf_rotate_obtener_info_paginas",
-      "services_pdf_rotate_procesar_rotate",
-      "services_pdf_rotate_py_path",
-      "services_pdf_rotate_rationale_134",
-      "services_pdf_rotate_rationale_24",
-      "services_pdf_rotate_rationale_87",
-      "services_pdf_rotate_rotar_paginas_pdf"
-    ],
-    "40": [
-      "services_xlsx_to_csv",
-      "services_xlsx_to_csv_analizar_xlsx",
-      "services_xlsx_to_csv_engine_para",
-      "services_xlsx_to_csv_procesar_xlsx_to_csv",
-      "services_xlsx_to_csv_rationale_27",
-      "services_xlsx_to_csv_rationale_32",
-      "services_xlsx_to_csv_rationale_56",
-      "services_xlsx_to_csv_sanitizar_nombre"
-    ],
     "41": [
+      "services_pdf_merge",
+      "services_pdf_merge_obtener_info_archivos",
+      "services_pdf_merge_procesar_merge",
+      "services_pdf_merge_py_path",
+      "services_pdf_merge_rationale_101",
+      "services_pdf_merge_rationale_21",
+      "services_pdf_merge_rationale_45",
+      "services_pdf_merge_unir_pdfs"
+    ],
+    "42": [
+      "claudie_code_api_routes_convert_py",
+      "claudie_code_api_routes_files_py",
+      "claudie_code_app_py",
+      "claudie_code_models_py",
+      "claudie_code_services_pdf_nuevo_servicio_py",
+      "claudie_code_utils_file_manager_py",
+      "claudie_code_utils_job_manager_py"
+    ],
+    "43": [
+      "claudie_plan_md_1_arquitectura_del_sistema",
+      "claudie_plan_md_2_estructura_de_carpetas",
+      "claudie_plan_md_3_tabla_de_etapas_implementadas",
+      "claudie_plan_md_4_specs_por_etapa",
+      "claudie_plan_md_5_dise\u00f1o_visual_tema_ibm_plex",
+      "claudie_plan_md_6_etapas_futuras_planificaci\u00f3n",
+      "claudie_plan_md_arquitectura_y_planificacion_de_etapas"
+    ],
+    "44": [
       "dataframe",
       "services_xlsx_to_md",
       "services_xlsx_to_md_df_a_md_table",
@@ -849,7 +936,7 @@
       "services_xlsx_to_md_rationale_24",
       "services_xlsx_to_md_rationale_57"
     ],
-    "42": [
+    "45": [
       "services_img_to_1pdf",
       "services_img_to_1pdf_imagen_a_pagina",
       "services_img_to_1pdf_procesar_img_to_1pdf",
@@ -858,15 +945,15 @@
       "services_img_to_1pdf_rationale_36",
       "services_img_to_1pdf_rationale_94"
     ],
-    "43": [
-      "app_crear_app",
-      "app_iniciar_scheduler",
-      "app_main",
-      "app_rationale_137",
-      "app_rationale_159",
-      "app_rationale_63"
+    "46": [
+      "pdf-extract-pages_html_btn_ejecutar",
+      "pdf-extract-pages_html_format_card",
+      "pdf-extract-pages_html_format_option_separados",
+      "pdf-extract-pages_html_format_option_unico",
+      "pdf-extract-pages_html_layout",
+      "pdf-extract-pages_html_options_col"
     ],
-    "44": [
+    "47": [
       "services_pdf_reorder",
       "services_pdf_reorder_procesar_reorder",
       "services_pdf_reorder_py_path",
@@ -874,246 +961,255 @@
       "services_pdf_reorder_rationale_80",
       "services_pdf_reorder_reordenar_paginas_pdf"
     ],
-    "45": [
-      "static_pdf_extract_pages_html_btn_ejecutar",
-      "static_pdf_extract_pages_html_format_card",
-      "static_pdf_extract_pages_html_format_option_separados",
-      "static_pdf_extract_pages_html_format_option_unico",
-      "static_pdf_extract_pages_html_layout",
-      "static_pdf_extract_pages_html_options_col"
-    ],
-    "46": [
-      "services_pdf_merge_procesar_merge",
-      "services_pdf_merge_py_path",
-      "services_pdf_merge_rationale_101",
-      "services_pdf_merge_rationale_45",
-      "services_pdf_merge_unir_pdfs"
-    ],
-    "47": [
-      "docs_pdf_a_csv_md_nlm_ingestor",
-      "docs_pdf_export_redesign_html_cards_grid_csv_card_desc",
-      "docs_pdf_export_redesign_html_cards_grid_csv_card_icon",
-      "docs_pdf_export_redesign_html_cards_grid_csv_card_title"
-    ],
     "48": [
-      "static_pdf_compress_html_content",
-      "static_pdf_compress_html_dropzone",
-      "static_pdf_compress_html_header"
+      "services_pdf_rotate",
+      "services_pdf_rotate_procesar_rotate",
+      "services_pdf_rotate_py_path",
+      "services_pdf_rotate_rationale_134",
+      "services_pdf_rotate_rationale_24",
+      "services_pdf_rotate_rotar_paginas_pdf"
     ],
     "49": [
-      "static_pdf_merge_html_content",
-      "static_pdf_merge_html_footer",
-      "static_pdf_merge_html_header"
+      "services_xlsx_to_csv",
+      "services_xlsx_to_csv_engine_para",
+      "services_xlsx_to_csv_procesar_xlsx_to_csv",
+      "services_xlsx_to_csv_rationale_27",
+      "services_xlsx_to_csv_rationale_56",
+      "services_xlsx_to_csv_sanitizar_nombre"
     ],
     "50": [
+      "pdf-a-csv_md_nlm_ingestor",
+      "pdf_export_redesign_html_cards_grid_csv_card_desc",
+      "pdf_export_redesign_html_cards_grid_csv_card_icon",
+      "pdf_export_redesign_html_cards_grid_csv_card_title"
+    ],
+    "51": [
+      "claudef-rta1_md",
+      "claudef-var_md",
+      "claudef_md"
+    ],
+    "52": [
+      "entrypoint_generar_config_js",
+      "entrypoint_py_entrypoint",
+      "entrypoint_rationale_15"
+    ],
+    "53": [
+      "pdf-compress_html_content",
+      "pdf-compress_html_dropzone",
+      "pdf-compress_html_header"
+    ],
+    "54": [
+      "pdf_merge_html_content",
+      "pdf_merge_html_footer",
+      "pdf_merge_html_header"
+    ],
+    "55": [
       "d_github_erf_pdfexport_entrypoint_sh__entry",
       "entrypoint_sh_entrypoint"
     ],
-    "51": [
-      "docs_codeimg_docker_compose_local_yml",
-      "docs_pdf_to_txt_redesign_html"
-    ],
-    "52": [
-      "static_html_to_pdf_html_nav_item",
-      "static_html_to_pdf_html_sidebar"
-    ],
-    "53": [
-      "static_pdf_compress_html_main",
-      "static_pdf_compress_html_sidebar"
-    ],
-    "54": [
-      "static_pdf_extract_pages_html_content",
-      "static_pdf_extract_pages_html_topbar"
-    ],
-    "55": [
-      "static_pdf_extract_pages_html_main",
-      "static_pdf_extract_pages_html_sidebar"
-    ],
     "56": [
-      "static_pdf_merge_html_main",
-      "static_pdf_merge_html_sidebar"
+      "docker-compose-local_yml",
+      "pdf-to-txt-redesign_html"
     ],
     "57": [
-      "static_webp_to_png_html_main",
-      "static_webp_to_png_html_sidebar"
+      "html_to_pdf_html_nav_item",
+      "html_to_pdf_html_sidebar"
     ],
     "58": [
-      "api_init"
+      "index_html",
+      "orden_secuenca_migra_sql_md"
     ],
     "59": [
-      "claude_notas_usuario_md"
+      "pdf-compress_html_main",
+      "pdf-compress_html_sidebar"
     ],
     "60": [
-      "claudef-rta1_md"
+      "pdf-extract-pages_html_content",
+      "pdf-extract-pages_html_topbar"
     ],
     "61": [
-      "config_js_config"
+      "pdf-extract-pages_html_main",
+      "pdf-extract-pages_html_sidebar"
     ],
     "62": [
-      "docs_orden_secuenca_migra_sql_md"
+      "pdf_merge_html_main",
+      "pdf_merge_html_sidebar"
     ],
     "63": [
-      "docs_orden_secuenca_migra_sql_salida_txt"
+      "webp_to_png_html_main",
+      "webp_to_png_html_sidebar"
     ],
     "64": [
-      "docs_pdf_export_redesign_html_cards_grid"
+      "api_init"
     ],
     "65": [
-      "docs_pdf_export_redesign_html_cards_grid_csv_card"
+      "claudie_code_common_js"
     ],
     "66": [
-      "docs_pdf_export_redesign_html_main"
+      "config_js_config"
     ],
     "67": [
-      "docs_pdf_export_redesign_html_sidebar"
+      "config_py_config"
     ],
     "68": [
-      "pdfexport_utils_thumbnail_py"
+      "help_html"
     ],
     "69": [
-      "readme_pdfexport"
+      "img-metadata_html"
     ],
     "70": [
-      "services_init"
+      "img-to-1pdf_html"
     ],
     "71": [
-      "static_epub-to-md_html"
+      "img-to-txt_html"
     ],
     "72": [
-      "static_help_html"
+      "json_viewer_html"
     ],
     "73": [
-      "static_img_metadata_html"
+      "md-viewer_html"
     ],
     "74": [
-      "static_img_to_1pdf_html"
+      "ndm_to_tables_seq_html"
     ],
     "75": [
-      "static_img_to_txt_html"
+      "notas_usuario_pdf_export"
     ],
     "76": [
-      "static_js_common_js"
+      "orden_secuenca_migra_sql_salida_txt"
     ],
     "77": [
-      "static_json_viewer_html"
+      "pdf-export-redesign_html_main"
     ],
     "78": [
-      "static_md_viewer_html"
+      "pdf-export-redesign_html_sidebar"
     ],
     "79": [
-      "static_ndm_to_tables_seq_html"
+      "pdf-metadata_html"
     ],
     "80": [
-      "static_pdf_extract_images_html"
+      "pdf-reorder_html"
     ],
     "81": [
-      "static_pdf_metadata_html"
+      "pdf-scanned-to-csv_html"
     ],
     "82": [
-      "static_pdf_reorder_html"
+      "pdf-split_html"
     ],
     "83": [
-      "static_pdf_rotate_html"
+      "pdf-to-csv_html"
     ],
     "84": [
-      "static_pdf_scanned_to_csv_html"
+      "pdf-to-docx_html"
     ],
     "85": [
-      "static_pdf_split_html"
+      "pdf-to-jpg_html"
     ],
     "86": [
-      "static_pdf_to_csv_html"
+      "pdf-to-md_html"
     ],
     "87": [
-      "static_pdf_to_docx_html"
+      "pdf-to-png_html"
     ],
     "88": [
-      "static_pdf_to_jpg_html"
+      "pdf-to-txt_html_sidebar_nav_item_active_icon"
     ],
     "89": [
-      "static_pdf_to_md_html"
+      "pdf-to-txt_html_sidebar_nav_item_active_label"
     ],
     "90": [
-      "static_pdf_to_png_html"
+      "pdf_export_redesign_html_cards_grid"
     ],
     "91": [
-      "static_pdf_to_txt_html_sidebar_nav_item_active_icon"
+      "pdf_export_redesign_html_cards_grid_csv_card"
     ],
     "92": [
-      "static_pdf_to_txt_html_sidebar_nav_item_active_label"
+      "pdf_extract_images_html"
     ],
     "93": [
-      "static_svg_to_png_html"
+      "pdf_rotate_html"
     ],
     "94": [
-      "static_txt_invisible_html"
+      "readme_pdfexport"
     ],
     "95": [
-      "static_web_scraper_html"
+      "requirements_txt"
     ],
     "96": [
-      "static_xlsx_to_md_html"
+      "services_init"
     ],
     "97": [
+      "svg_to_png_html"
+    ],
+    "98": [
+      "txt-invisible_html"
+    ],
+    "99": [
       "utils_init"
+    ],
+    "100": [
+      "web-scraper_html"
+    ],
+    "101": [
+      "xlsx_to_md_html"
     ]
   },
   "cohesion": {
-    "0": 0.05362614913176711,
+    "0": 0.05311542390194075,
     "1": 0.0945945945945946,
     "2": 0.09523809523809523,
-    "3": 0.11375661375661375,
-    "4": 0.15669515669515668,
-    "5": 0.13105413105413105,
-    "6": 0.13538461538461538,
-    "7": 0.13043478260869565,
-    "8": 0.15810276679841898,
-    "9": 0.12987012987012986,
-    "10": 0.18571428571428572,
-    "11": 0.1619047619047619,
-    "12": 0.18128654970760233,
-    "13": 0.1695906432748538,
-    "14": 0.18128654970760233,
-    "15": 0.19883040935672514,
-    "16": 0.1830065359477124,
-    "17": 0.14166666666666666,
-    "18": 0.14285714285714285,
-    "19": 0.22857142857142856,
-    "20": 0.2087912087912088,
-    "21": 0.21978021978021978,
-    "22": 0.21978021978021978,
-    "23": 0.23076923076923078,
-    "24": 0.14285714285714285,
-    "25": 0.24358974358974358,
-    "26": 0.2692307692307692,
-    "27": 0.25757575757575757,
-    "28": 0.24242424242424243,
-    "29": 0.24242424242424243,
-    "30": 0.16666666666666666,
-    "31": 0.2,
-    "32": 0.3111111111111111,
-    "33": 0.2,
+    "3": 0.10098522167487685,
+    "4": 0.11375661375661375,
+    "5": 0.15669515669515668,
+    "6": 0.13105413105413105,
+    "7": 0.13538461538461538,
+    "8": 0.1076923076923077,
+    "9": 0.13768115942028986,
+    "10": 0.13043478260869565,
+    "11": 0.15810276679841898,
+    "12": 0.1619047619047619,
+    "13": 0.10476190476190476,
+    "14": 0.18571428571428572,
+    "15": 0.1619047619047619,
+    "16": 0.10476190476190476,
+    "17": 0.1695906432748538,
+    "18": 0.18128654970760233,
+    "19": 0.19883040935672514,
+    "20": 0.17647058823529413,
+    "21": 0.14166666666666666,
+    "22": 0.22857142857142856,
+    "23": 0.2087912087912088,
+    "24": 0.21978021978021978,
+    "25": 0.21978021978021978,
+    "26": 0.23076923076923078,
+    "27": 0.14285714285714285,
+    "28": 0.24358974358974358,
+    "29": 0.2692307692307692,
+    "30": 0.25757575757575757,
+    "31": 0.16666666666666666,
+    "32": 0.24242424242424243,
+    "33": 0.24242424242424243,
     "34": 0.3111111111111111,
-    "35": 0.28888888888888886,
+    "35": 0.2,
     "36": 0.2,
-    "37": 0.2222222222222222,
-    "38": 0.32142857142857145,
-    "39": 0.35714285714285715,
+    "37": 0.3111111111111111,
+    "38": 0.28888888888888886,
+    "39": 0.2222222222222222,
     "40": 0.32142857142857145,
-    "41": 0.38095238095238093,
-    "42": 0.38095238095238093,
-    "43": 0.3333333333333333,
-    "44": 0.4666666666666667,
-    "45": 0.4,
+    "41": 0.2857142857142857,
+    "42": 0.2857142857142857,
+    "43": 0.2857142857142857,
+    "44": 0.38095238095238093,
+    "45": 0.38095238095238093,
     "46": 0.4,
-    "47": 0.5,
-    "48": 0.6666666666666666,
-    "49": 0.6666666666666666,
-    "50": 1.0,
-    "51": 1.0,
-    "52": 1.0,
-    "53": 1.0,
-    "54": 1.0,
+    "47": 0.4666666666666667,
+    "48": 0.4666666666666667,
+    "49": 0.4666666666666667,
+    "50": 0.5,
+    "51": 0.6666666666666666,
+    "52": 0.6666666666666666,
+    "53": 0.6666666666666666,
+    "54": 0.6666666666666666,
     "55": 1.0,
     "56": 1.0,
     "57": 1.0,
@@ -1156,33 +1252,47 @@
     "94": 1.0,
     "95": 1.0,
     "96": 1.0,
-    "97": 1.0
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0
   },
   "gods": [
     {
       "id": "api_routes_convert_respuesta_error",
       "label": "respuesta_error()",
-      "degree": 45
+      "degree": 44
     },
     {
       "id": "api_routes_convert_respuesta_exitosa",
       "label": "respuesta_exitosa()",
-      "degree": 43
+      "degree": 42
     },
     {
       "id": "api_routes_convert_validar_archivo",
       "label": "validar_archivo()",
-      "degree": 39
+      "degree": 38
     },
     {
       "id": "services_pdf_metadata_extraer_metadatos",
       "label": "extraer_metadatos()",
-      "degree": 18
+      "degree": 20
     },
     {
-      "id": "static_xlsx_to_csv_html_main",
+      "id": "models_obtener_conexion",
+      "label": "obtener_conexion()",
+      "degree": 15
+    },
+    {
+      "id": "xlsx_to_csv_html_main",
       "label": "Main Content",
       "degree": 13
+    },
+    {
+      "id": "services_img_metadata_extraer_metadatos_imagen",
+      "label": "extraer_metadatos_imagen()",
+      "degree": 12
     },
     {
       "id": "services_pdf_compress_comprimir_pdf",
@@ -1198,77 +1308,67 @@
       "id": "services_web_scraper_scrapear_url",
       "label": "scrapear_url()",
       "degree": 12
-    },
-    {
-      "id": "services_img_metadata_extraer_metadatos_imagen",
-      "label": "extraer_metadatos_imagen()",
-      "degree": 11
-    },
-    {
-      "id": "services_pdf_metadata_py_document",
-      "label": "Document",
-      "degree": 11
     }
   ],
   "surprises": [
     {
-      "source": "PDF Export Service",
-      "target": "PyTesseract Library",
+      "source": "preview_to_txt()",
+      "target": "obtener_preview_texto()",
       "source_files": [
-        "docker-compose.yml",
-        "Rta1.md"
+        "api/routes_convert.py",
+        "services/pdf_to_txt.py"
       ],
       "confidence": "EXTRACTED",
-      "relation": "uses",
-      "why": "connects across different repos/directories; peripheral node `PyTesseract Library` unexpectedly reaches hub `PDF Export Service`"
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "PDF Export Service",
-      "target": "Tesseract OCR System",
+      "source": "preview_to_docx()",
+      "target": "obtener_preview_docx()",
       "source_files": [
-        "docker-compose.yml",
-        "Rta1.md"
+        "api/routes_convert.py",
+        "services/pdf_to_docx.py"
       ],
       "confidence": "EXTRACTED",
-      "relation": "uses",
-      "why": "connects across different repos/directories; peripheral node `Tesseract OCR System` unexpectedly reaches hub `PDF Export Service`"
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "PDF Export Service",
-      "target": "PyMuPDF Library",
+      "source": "info_to_png()",
+      "target": "obtener_info_conversion()",
       "source_files": [
-        "docker-compose.yml",
-        "Rta1.md"
+        "api/routes_convert.py",
+        "services/pdf_to_images.py"
       ],
       "confidence": "EXTRACTED",
-      "relation": "uses",
-      "why": "connects across different repos/directories; peripheral node `PyMuPDF Library` unexpectedly reaches hub `PDF Export Service`"
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "PDF Export Service",
-      "target": "OpenPyXL Library",
+      "source": "analizar_compresion()",
+      "target": "analizar_pdf()",
       "source_files": [
-        "docker-compose.yml",
-        "Rta1.md"
+        "api/routes_convert.py",
+        "services/pdf_compress.py"
       ],
       "confidence": "EXTRACTED",
-      "relation": "uses",
-      "why": "connects across different repos/directories; peripheral node `OpenPyXL Library` unexpectedly reaches hub `PDF Export Service`"
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "PDF Export Service",
-      "target": "Ghostscript System",
+      "source": "contar_imagenes()",
+      "target": "obtener_conteo_imagenes()",
       "source_files": [
-        "docker-compose.yml",
-        "Rta1.md"
+        "api/routes_convert.py",
+        "services/pdf_extract_images.py"
       ],
       "confidence": "EXTRACTED",
-      "relation": "uses",
-      "why": "connects across different repos/directories; peripheral node `Ghostscript System` unexpectedly reaches hub `PDF Export Service`"
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     }
   ],
   "tokens": {
-    "input": 46090,
-    "output": 9064
+    "input": 274124,
+    "output": 18932
   }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EPUB a Markdown — PDF Export</title>
+  <title>YouTube CC a Markdown — PDF Export</title>
   <link rel="icon" type="image/x-icon" href="/static/fav.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,10 +15,8 @@
       --card:     #1C2128;
       --border:   #30363D;
       --red:      #E63946;
-      --orange:   #F4A261;
       --blue:     #58A6FF;
       --green:    #3FB950;
-      --purple:   #A371F7;
       --text:     #E6EDF3;
       --muted:    #8B949E;
       --accent:   #A371F7;
@@ -114,56 +112,28 @@
       background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
       margin-bottom: 14px;
     }
-    .card:last-child { margin-bottom: 0; }
     .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
 
-    /* ── Drop zone ── */
-    .dropzone {
-      border: 2px dashed var(--border); border-radius: 10px; padding: 36px 20px;
-      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    /* ── URL input ── */
+    .url-row { display: flex; gap: 10px; }
+    .url-input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; color: var(--text); font-size: 13px; font-family: 'IBM Plex Mono', monospace;
+      outline: none; transition: border-color 0.15s;
     }
-    .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(163,113,247,0.04); }
-    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
-    .dropzone-text { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .dropzone-text strong { color: var(--accent); }
-    .hidden { display: none; }
+    .url-input:focus { border-color: var(--accent); }
+    .url-input::placeholder { color: var(--muted); }
 
-    /* ── Upload progress ── */
-    .upload-progress { display: none; margin-top: 12px; }
-    .upload-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-    .upload-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
-    .upload-label { font-size: 11px; color: var(--muted); text-align: center; }
-
-    /* ── Server files ── */
-    .server-toggle {
-      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
-      color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 12px;
-      display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
-      transition: border-color 0.15s, color 0.15s;
+    /* ── Language selector ── */
+    .lang-row { display: flex; gap: 8px; margin-top: 14px; }
+    .lang-label { font-size: 12px; color: var(--muted); align-self: center; white-space: nowrap; }
+    .lang-btn {
+      padding: 5px 14px; background: transparent; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
-    .server-toggle:hover { border-color: var(--accent); color: var(--text); }
-    .server-files-list { display: none; margin-top: 8px; }
-    .server-files-list.open { display: block; }
-    .server-file-btn {
-      width: 100%; text-align: left; background: transparent; border: 1px solid var(--border);
-      color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 12px;
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .server-file-btn:hover { border-color: var(--accent); background: rgba(163,113,247,0.05); }
-    .server-file-btn .sf-name { font-weight: 500; }
-    .server-file-btn .sf-meta { font-size: 11px; color: var(--muted); }
-
-    /* ── File info ── */
-    .file-info-card { display: none; }
-    .file-info-card.visible { display: flex; align-items: center; gap: 12px; }
-    .file-icon {
-      width: 40px; height: 40px; background: rgba(163,113,247,0.12); border: 1px solid rgba(163,113,247,0.25);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--accent); flex-shrink: 0;
-    }
-    .file-meta h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-    .file-meta p { font-size: 11.5px; color: var(--muted); }
+    .lang-btn:hover { border-color: var(--accent); color: var(--text); }
+    .lang-btn.active { border-color: var(--accent); background: rgba(163,113,247,0.12); color: var(--accent); }
 
     /* ── Action button ── */
     .btn-action {
@@ -226,9 +196,9 @@
     <div class="nav-section-label">Quiero un MD…</div>
     <a class="nav-item" href="/pdf-to-md.html"><span class="nav-badge">PDF</span><span>PDF a MD</span></a>
     <a class="nav-item" href="/xlsx-to-md.html"><span class="nav-badge">XLS</span><span>Excel a MD</span></a>
-    <a class="nav-item active" href="/epub-to-md.html"><span class="nav-badge">EPB</span><span>EPUB a MD</span></a>
+    <a class="nav-item" href="/epub-to-md.html"><span class="nav-badge">EPB</span><span>EPUB a MD</span></a>
     <a class="nav-item" href="/audio-to-md.html"><span class="nav-badge">AUD</span><span>Audio a MD</span></a>
-    <a class="nav-item" href="/youtube-to-md.html"><span class="nav-badge">YT</span><span>YouTube a MD</span></a>
+    <a class="nav-item active" href="/youtube-to-md.html"><span class="nav-badge">YT</span><span>YouTube a MD</span></a>
     <a class="nav-item" href="/web-to-md.html"><span class="nav-badge">WEB</span><span>Web a MD</span></a>
     <div class="nav-section-label">Utilidades</div>
     <a class="nav-item" href="/web-scraper.html"><span class="nav-badge">SCR</span><span>Scraper Web</span></a>
@@ -260,61 +230,47 @@
       <span class="sep">›</span>
       <span>Quiero un MD</span>
       <span class="sep">›</span>
-      <span class="current">EPUB a Markdown</span>
+      <span class="current">YouTube CC a Markdown</span>
     </div>
-    <span class="topbar-badge">EPUB→MD</span>
+    <span class="topbar-badge">YT→MD</span>
   </div>
 
   <div class="content">
     <div class="page-header">
-      <h1>EPUB a Markdown</h1>
-      <p>Extrae todos los capítulos del EPUB en orden y los une en un único archivo Markdown.</p>
+      <h1>YouTube CC a Markdown</h1>
+      <p>Descarga los subtítulos/CC de un video de YouTube y los convierte a Markdown.</p>
     </div>
 
-    <!-- Drop zone -->
+    <!-- URL + opciones -->
     <div class="card">
-      <div class="dropzone" id="drop-zone">
-        <div class="dropzone-icon">📖</div>
-        <div class="dropzone-text">
-          <strong>Haz clic</strong> o arrastra un EPUB aquí<br>
-          <small>Solo archivos .epub</small>
-        </div>
-        <input type="file" id="file-input" accept=".epub" class="hidden">
+      <div class="card-title">URL del video</div>
+      <div class="url-row">
+        <input
+          type="url"
+          id="input-url"
+          class="url-input"
+          placeholder="https://www.youtube.com/watch?v=..."
+          autocomplete="off"
+          spellcheck="false"
+        >
       </div>
 
-      <div class="upload-progress" id="progreso-carga">
-        <div class="upload-bar-bg"><div class="upload-bar-fill" id="barra-carga"></div></div>
-        <div class="upload-label" id="texto-carga">Subiendo...</div>
+      <div class="lang-row">
+        <span class="lang-label">Idioma:</span>
+        <button type="button" class="lang-btn active" data-lang="auto" onclick="seleccionarIdioma('auto')">Auto</button>
+        <button type="button" class="lang-btn" data-lang="es" onclick="seleccionarIdioma('es')">Español</button>
+        <button type="button" class="lang-btn" data-lang="en" onclick="seleccionarIdioma('en')">English</button>
       </div>
 
-      <button type="button" class="server-toggle" onclick="toggleServerFiles()">
-        <span>Archivos en servidor</span><span id="server-arrow">▸</span>
-      </button>
-      <div class="server-files-list" id="server-files">
-        <div id="server-files-contenido"></div>
-      </div>
-    </div>
-
-    <!-- File info -->
-    <div class="card file-info-card" id="file-info-card">
-      <div class="file-icon">EPB</div>
-      <div class="file-meta">
-        <h3 id="nombre-archivo">—</h3>
-        <p id="info-archivo">—</p>
-      </div>
-    </div>
-
-    <!-- Action -->
-    <div class="card" id="action-card" style="display:none">
       <button type="button" class="btn-action" id="btn-ejecutar" onclick="ejecutar()">
         Convertir a MD
       </button>
-      <div class="action-note">Descarga directa · archivo .md · un solo archivo con todos los capítulos</div>
+      <div class="action-note">Descarga directa · archivo .md · título + descripción + transcripción</div>
     </div>
 
     <!-- Processing -->
     <div class="card processing-panel" id="processing-panel">
-      <div class="card-title">Convirtiendo</div>
+      <div class="card-title">Procesando</div>
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-proceso"></div></div>
       <div class="progress-meta">
         <span id="texto-proceso">Iniciando...</span>
@@ -326,140 +282,58 @@
     <div class="status-message" id="mensaje-estado"></div>
 
     <div class="info-strip">
-      <p>Lee el archivo EPUB como ZIP y sigue el orden del <strong>spine</strong> del OPF.</p>
-      <p>Convierte cada capítulo (XHTML) a Markdown usando <strong>BeautifulSoup + markdownify</strong>.</p>
-      <p>El resultado es un único <code>.md</code> con metadatos del libro al inicio y capítulos separados por <code>---</code>.</p>
+      <p>No requiere API key — usa el endpoint público de YouTube (CC automáticos o manuales).</p>
+      <p><strong>Auto</strong>: toma subtítulos manuales primero; si no hay, usa los generados automáticamente.</p>
+      <p>Si el video no tiene subtítulos disponibles, se mostrará un error claro.</p>
+      <p>Funciona con: <code>youtube.com/watch?v=...</code> · <code>youtu.be/...</code> · <code>/shorts/...</code></p>
     </div>
   </div>
 
-  <footer>PDF Export — EPUB a Markdown (Etapa 40 · bs4+markdownify)</footer>
+  <footer>PDF Export — YouTube CC a Markdown (Etapa 43 · youtube-transcript-api)</footer>
 </div>
 
 <script src="/config.js"></script>
 <script src="/static/js/common.js"></script>
 <script>
-  const estado = {
-    archivoId: null,
-    trabajoId: null,
-  };
-
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+  let idiomaSeleccionado = 'auto';
+  let trabajoId = null;
 
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('collapsed');
     document.getElementById('main').classList.toggle('expanded');
   }
 
-  // ── Drop zone ──
-  const dropZone  = document.getElementById('drop-zone');
-  const fileInput = document.getElementById('file-input');
-  dropZone.addEventListener('click', () => fileInput.click());
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault(); dropZone.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f) subirArchivo(f);
+  function seleccionarIdioma(lang) {
+    idiomaSeleccionado = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+  }
+
+  // Enter en el campo URL lanza la conversión
+  document.getElementById('input-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') ejecutar();
   });
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) subirArchivo(fileInput.files[0]); });
 
-  // ── Server files ──
-  let serverOpen = false;
-  function toggleServerFiles() {
-    serverOpen = !serverOpen;
-    document.getElementById('server-files').classList.toggle('open', serverOpen);
-    document.getElementById('server-arrow').textContent = serverOpen ? '▾' : '▸';
-    if (serverOpen) cargarArchivosServidor();
-  }
-
-  async function cargarArchivosServidor() {
-    try {
-      const r = await fetch(`${API}/files`);
-      const d = await r.json();
-      if (!d.success || !d.data.length) return;
-      const cont = document.getElementById('server-files-contenido');
-      cont.innerHTML = '';
-      d.data
-        .filter(a => /\.epub$/i.test(a.nombre_original))
-        .forEach(a => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'server-file-btn';
-          btn.innerHTML = `<span class="sf-name">${escHtml(a.nombre_original)}</span><span class="sf-meta">${formatBytes(a.tamano_bytes)}</span>`;
-          btn.onclick = () => inicializarConArchivo(a);
-          cont.appendChild(btn);
-        });
-      if (!cont.children.length)
-        cont.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--muted)">No hay EPUBs en servidor</div>';
-    } catch(e) { console.warn('Error archivos servidor:', e); }
-  }
-
-  // ── Upload ──
-  async function subirArchivo(archivo) {
-    try {
-      const r = await fetch(`${API}/files`);
-      const d = await r.json();
-      if (d.success) {
-        const dup = d.data.find(f => f.nombre_original === archivo.name && f.tamano_bytes === archivo.size);
-        if (dup) { inicializarConArchivo(dup); return; }
-      }
-    } catch(e) {}
-
-    const progDiv = document.getElementById('progreso-carga');
-    const barra   = document.getElementById('barra-carga');
-    const texto   = document.getElementById('texto-carga');
-    progDiv.style.display = 'block';
-
-    const fd = new FormData();
-    fd.append('archivo', archivo);
-    fd.append('nombre', archivo.name);
-    fd.append('tamano', archivo.size);
-    fd.append('fecha_modificacion', new Date(archivo.lastModified).toISOString());
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API}/upload`);
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) {
-        const pct = Math.round(e.loaded / e.total * 100);
-        barra.style.width = pct + '%';
-        texto.textContent = `Subiendo... ${pct}%`;
-      }
-    };
-    xhr.onload = () => {
-      progDiv.style.display = 'none';
-      try {
-        const d = JSON.parse(xhr.responseText);
-        if (d.success) inicializarConArchivo(d.data);
-        else mostrarMensaje('error', 'Error al subir: ' + (d.error?.message || 'Error'));
-      } catch(e) { mostrarMensaje('error', 'Error al procesar respuesta'); }
-    };
-    xhr.onerror = () => { progDiv.style.display = 'none'; mostrarMensaje('error', 'Error de conexión'); };
-    xhr.send(fd);
-  }
-
-  function inicializarConArchivo(arch) {
-    estado.archivoId = arch.id;
-    document.getElementById('nombre-archivo').textContent = arch.nombre_original;
-    document.getElementById('info-archivo').textContent = formatBytes(arch.tamano_bytes);
-    document.getElementById('file-info-card').classList.add('visible');
-    document.getElementById('action-card').style.display = 'block';
-    ocultarMensaje();
-  }
-
-  // ── Ejecutar ──
   async function ejecutar() {
-    if (!estado.archivoId) return;
+    const url = document.getElementById('input-url').value.trim();
+    if (!url) {
+      mostrarMensaje('error', 'Ingresá la URL del video de YouTube');
+      return;
+    }
+
     const btn = document.getElementById('btn-ejecutar');
     btn.disabled = true;
-    btn.textContent = 'Convirtiendo...';
+    btn.textContent = 'Procesando...';
     ocultarMensaje();
     mostrarProcesando(5, 'Enviando solicitud...');
 
     try {
-      const r = await fetch(`${API}/convert/epub-to-md`, {
+      const r = await fetch(`${API}/convert/youtube-to-md`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: estado.archivoId })
+        body: JSON.stringify({ url, idioma: idiomaSeleccionado })
       });
       const d = await r.json();
 
@@ -468,8 +342,8 @@
         ocultarProcesando(); resetBoton(); return;
       }
 
-      estado.trabajoId = d.data.job_id;
-      monitorearProgreso(estado.trabajoId);
+      trabajoId = d.data.job_id;
+      monitorearProgreso(trabajoId);
 
     } catch(e) {
       mostrarMensaje('error', 'Error de conexión: ' + e.message);
@@ -510,7 +384,7 @@
       window.PDFExport.descargarResultado(jobId);
       ocultarProcesando();
       resetBoton();
-      mostrarMensaje('success', 'Conversión completada. Archivo .md descargado.');
+      mostrarMensaje('success', 'Transcripción descargada correctamente.');
     }, 600);
   }
 

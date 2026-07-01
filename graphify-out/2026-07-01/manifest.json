@@ -1,8 +1,8 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1782933888.0,
-    "ast_hash": "45907f50152a4daa9291612f295951da",
-    "semantic_hash": "45907f50152a4daa9291612f295951da"
+    "mtime": 1772480196.0,
+    "ast_hash": "fa47371d70ece7b94dec647d48d5428b",
+    "semantic_hash": "fa47371d70ece7b94dec647d48d5428b"
   },
   "api/__init__.py": {
     "mtime": 1770168934.0,
@@ -10,9 +10,9 @@
     "semantic_hash": "911b4abd88292c98a910e298c00f9b2b"
   },
   "api/routes_convert.py": {
-    "mtime": 1782824034.0,
-    "ast_hash": "aefe4b0d8bc2599cd3559ec6b6da37da",
-    "semantic_hash": "aefe4b0d8bc2599cd3559ec6b6da37da"
+    "mtime": 1782778994.0,
+    "ast_hash": "7b4e7613fbee5b8be889c5cc64fff662",
+    "semantic_hash": "7b4e7613fbee5b8be889c5cc64fff662"
   },
   "api/routes_files.py": {
     "mtime": 1775845568.0,
@@ -25,9 +25,9 @@
     "semantic_hash": "ae8e7be16df6f6ca8a697b9c95425520"
   },
   "app.py": {
-    "mtime": 1782824046.0,
-    "ast_hash": "3fb549aec48664f68d479bd429e1acac",
-    "semantic_hash": "3fb549aec48664f68d479bd429e1acac"
+    "mtime": 1782779000.0,
+    "ast_hash": "2f9bfd1de1ce7778dfe4f2765bd429f9",
+    "semantic_hash": "2f9bfd1de1ce7778dfe4f2765bd429f9"
   },
   "config.js": {
     "mtime": 1772447914.0,
@@ -35,9 +35,9 @@
     "semantic_hash": "b3708546dff4cf6979e47dbabb0a72b1"
   },
   "config.py": {
-    "mtime": 1782824042.0,
-    "ast_hash": "9b4be48550e2d489f1137545195c9476",
-    "semantic_hash": "9b4be48550e2d489f1137545195c9476"
+    "mtime": 1782779112.0,
+    "ast_hash": "3d964289edd871cf8bb60121231e85e9",
+    "semantic_hash": "3d964289edd871cf8bb60121231e85e9"
   },
   "docs/codeimg/pdf_extract_images-primera version.py": {
     "mtime": 1772821592.0,
@@ -263,85 +263,5 @@
     "mtime": 1772563478.0,
     "ast_hash": "638f5f9e3fc4f4d8bed025ca2ac28cbd",
     "semantic_hash": "638f5f9e3fc4f4d8bed025ca2ac28cbd"
-  },
-  ".claude/settings.json": {
-    "mtime": 1782934114.0,
-    "ast_hash": "598cb075410bcd95220ac90bbb60344a",
-    "semantic_hash": "598cb075410bcd95220ac90bbb60344a"
-  },
-  "services/epub_to_md.py": {
-    "mtime": 1782823886.0,
-    "ast_hash": "c2fa533269e0e3c6c93e92af68d1da06",
-    "semantic_hash": "c2fa533269e0e3c6c93e92af68d1da06"
-  },
-  "CLAUDE-rta1.md": {
-    "mtime": 1782760630.0,
-    "ast_hash": "8096c80141c15f56bc8c49554884fcb1",
-    "semantic_hash": "8096c80141c15f56bc8c49554884fcb1"
-  },
-  "Rta1.md": {
-    "mtime": 1773691266.0,
-    "ast_hash": "aa466a6c967f6af227d3d4e6fed9bb07",
-    "semantic_hash": "aa466a6c967f6af227d3d4e6fed9bb07"
-  },
-  "docker-compose.yml": {
-    "mtime": 1776526384.0,
-    "ast_hash": "9bb8f699c813527fe1cf554a5ee7990d",
-    "semantic_hash": "9bb8f699c813527fe1cf554a5ee7990d"
-  },
-  "docs/pdf-a-csv.md": {
-    "mtime": 1775735940.0,
-    "ast_hash": "826917cbf311d6fb381028a3f898a495",
-    "semantic_hash": "826917cbf311d6fb381028a3f898a495"
-  },
-  "docs/pdf-export-redesign.html": {
-    "mtime": 1772802924.0,
-    "ast_hash": "58c33b9d1c692b6bf1477dbb713affe2",
-    "semantic_hash": "58c33b9d1c692b6bf1477dbb713affe2"
-  },
-  "docs/pdf-to-txt-redesign.html": {
-    "mtime": 1772803786.0,
-    "ast_hash": "5e7e99eada08fe79c78cd698dfe27fa3",
-    "semantic_hash": "5e7e99eada08fe79c78cd698dfe27fa3"
-  },
-  "static/eps-to-png.html": {
-    "mtime": 1776708160.0,
-    "ast_hash": "dabe12dcb0bea4501e72379ae37118d1",
-    "semantic_hash": "dabe12dcb0bea4501e72379ae37118d1"
-  },
-  "static/html-to-pdf.html": {
-    "mtime": 1776707896.0,
-    "ast_hash": "0413c7045f89e153e8bc45d90725ef37",
-    "semantic_hash": "0413c7045f89e153e8bc45d90725ef37"
-  },
-  "static/pdf-compress.html": {
-    "mtime": 1781715488.0,
-    "ast_hash": "ae7edf7908915eb9df42e3f2c6ba77bb",
-    "semantic_hash": "ae7edf7908915eb9df42e3f2c6ba77bb"
-  },
-  "static/pdf-extract-pages.html": {
-    "mtime": 1776723316.0,
-    "ast_hash": "360af078c6caf0d758b10cbf8add4a55",
-    "semantic_hash": "360af078c6caf0d758b10cbf8add4a55"
-  },
-  "static/pdf-merge.html": {
-    "mtime": 1776708004.0,
-    "ast_hash": "df49e1bdbeff3a3a57da89fa38d9954a",
-    "semantic_hash": "df49e1bdbeff3a3a57da89fa38d9954a"
-  },
-  "static/pdf-to-txt.html": {
-    "mtime": 1778528814.0,
-    "ast_hash": "8ba8593d598f6199736103610dcb9d82",
-    "semantic_hash": "8ba8593d598f6199736103610dcb9d82"
-  },
-  "static/webp-to-png.html": {
-    "mtime": 1776708108.0,
-    "ast_hash": "1b3d49eb6e9b2523b9f4fe12f5a110b6",
-    "semantic_hash": "1b3d49eb6e9b2523b9f4fe12f5a110b6"
-  },
-  "static/xlsx-to-csv.html": {
-    "mtime": 1782776062.0,
-    "ast_hash": "940fbbfc1f159d7bb2be01518b961349",
-    "semantic_hash": "940fbbfc1f159d7bb2be01518b961349"
   }
 }

@@ -494,6 +494,21 @@ Respuesta `resp.data`:
 - Retorna: `.md` directo (sin ZIP). Naming: `{stem}.md`
 - PDFs escaneados (sin capa de texto) → error con sugerencia de usar OCR
 
+### `POST /api/v1/convert/youtube-to-md`  *(Etapa 43)*
+
+```json
+{ "url": "https://www.youtube.com/watch?v=VIDEO_ID", "idioma": "auto" }
+```
+
+- `idioma`: `'auto'` (default) | `'es'` | `'en'`
+- `archivo_id=None` — no hay archivo subido; URL viene en `parametros`
+- Soporta: `youtube.com/watch?v=...`, `youtu.be/...`, `/shorts/...`
+- Auto = subtítulos manuales primero; si no hay, auto-generados
+- Si idioma exacto no disponible → intenta traducción vía `.translate(lang).fetch()`
+- Retorna: `.md` directo. Naming: `{job_id}_{titulo_sanitizado}.md`
+- Excepciones: `TranscriptsDisabled` → error claro; `NoTranscriptFound` → sugiere 'auto'
+- No requiere API key. Librería: `youtube-transcript-api==1.2.4`
+
 ### `POST /api/v1/convert/epub-to-md`  *(Etapa 40)*
 
 ```json
