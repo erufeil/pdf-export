@@ -20,6 +20,7 @@
         --blue:      #58A6FF;
         --green:     #3FB950;
         --purple:    #A371F7;
+        --violet:    #9B59B6;
         --text:      #E6EDF3;
         --text-muted:#8B949E;
         --sidebar-w: 240px;
@@ -404,6 +405,8 @@
       .card.cat-misc:hover { border-color: var(--purple); box-shadow: 0 8px 24px rgba(163,113,247,.15); }
       .card.cat-viewer { border-left-color: var(--blue); }
       .card.cat-viewer:hover { border-color: var(--blue); box-shadow: 0 8px 24px rgba(88,166,255,.15); }
+      .card.cat-md { border-left-color: var(--violet); }
+      .card.cat-md:hover { border-color: var(--violet); box-shadow: 0 8px 24px rgba(155,89,182,.15); }
 
       .card-badge {
         position: absolute;
@@ -417,6 +420,7 @@
       }
       .badge-new { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
       .badge-popular { background: rgba(230,57,70,.15); color: var(--red); border: 1px solid rgba(230,57,70,.3); }
+      .badge-pronto { background: rgba(155,89,182,.15); color: var(--violet); border: 1px solid rgba(155,89,182,.3); }
 
       .card-icon {
         font-size: 13px;
@@ -435,6 +439,7 @@
       .card.cat-create .card-icon { color: var(--orange); border-color: rgba(244,162,97,.3); }
       .card.cat-misc .card-icon { color: var(--purple); border-color: rgba(163,113,247,.3); }
       .card.cat-viewer .card-icon { color: var(--blue); border-color: rgba(88,166,255,.3); }
+      .card.cat-md .card-icon { color: var(--violet); border-color: rgba(155,89,182,.3); }
 
       .card-title {
         font-size: 14px;
@@ -708,6 +713,11 @@
             <span class="nav-label">Quiero un PDF</span>
         </div>
 
+        <div class="nav-item" data-tooltip="Quiero un MD" onclick="mostrarVista('md')">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">Quiero un MD</span>
+        </div>
+
         <div class="nav-item" data-tooltip="Forensis" onclick="mostrarVista('forensis')">
             <span class="nav-icon">🔍</span>
             <span class="nav-label">Forensis</span>
@@ -881,6 +891,49 @@
             </div>
         </div>
 
+        <!-- ── QUIERO UN MD ── -->
+        <div class="view" id="view-md">
+            <div class="section-header">
+                <div class="section-icon">📝</div>
+                <div>
+                    <div class="section-title">Quiero un MD</div>
+                    <div class="section-desc">Convierte cualquier fuente a Markdown — ideal para IA y documentación</div>
+                </div>
+                <div class="section-count">5 próximamente</div>
+            </div>
+            <div class="cards-grid">
+                <a href="/pdf-to-md.html" class="card cat-md">
+                    <span class="card-badge badge-pronto">Pronto</span>
+                    <div class="card-icon">PDF</div>
+                    <div class="card-title">PDF a MD</div>
+                    <div class="card-desc">Extrae texto estructurado del PDF en Markdown</div>
+                </a>
+                <a href="/xlsx-to-md.html" class="card cat-md">
+                    <span class="card-badge badge-pronto">Pronto</span>
+                    <div class="card-icon">XLS</div>
+                    <div class="card-title">Excel a MD</div>
+                    <div class="card-desc">Convierte hojas de cálculo a tablas Markdown</div>
+                </a>
+                <a href="/epub-to-md.html" class="card cat-md">
+                    <div class="card-icon">EPUB</div>
+                    <div class="card-title">EPUB a MD</div>
+                    <div class="card-desc">Extrae capítulos de ebooks en Markdown</div>
+                </a>
+                <a href="/audio-to-md.html" class="card cat-md">
+                    <span class="card-badge badge-pronto">Pronto</span>
+                    <div class="card-icon">AUD</div>
+                    <div class="card-title">Audio a MD</div>
+                    <div class="card-desc">Transcripción de audio vía Whisper</div>
+                </a>
+                <a href="/web-to-md.html" class="card cat-md">
+                    <span class="card-badge badge-pronto">Pronto</span>
+                    <div class="card-icon">WEB</div>
+                    <div class="card-title">Web a MD</div>
+                    <div class="card-desc">Convierte páginas web a Markdown limpio</div>
+                </a>
+            </div>
+        </div>
+
         <!-- ── MISCELANEOS ── -->
         <div class="view" id="view-misc">
             <div class="section-header">
@@ -889,7 +942,7 @@
                     <div class="section-title">Miscelaneos</div>
                     <div class="section-desc">Herramientas de utilidad general</div>
                 </div>
-                <div class="section-count">6 herramientas</div>
+                <div class="section-count">7 herramientas</div>
             </div>
             <div class="cards-grid">
                 <a href="/ndm-to-tables-seq.html" class="card cat-misc">
@@ -925,6 +978,12 @@
                     <div class="card-icon">OCR</div>
                     <div class="card-title">IMG a TXT</div>
                     <div class="card-desc">OCR: extrae texto de imágenes</div>
+                </a>
+                <a href="/xlsx-to-csv.html" class="card cat-misc">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">XLS</div>
+                    <div class="card-title">Excel a CSV</div>
+                    <div class="card-desc">Convierte .xlsx y .xls a CSV por hoja</div>
                 </a>
             </div>
         </div>
@@ -962,7 +1021,7 @@
                     <div class="section-title">Viewers</div>
                     <div class="section-desc">Visualizadores interactivos de archivos de datos</div>
                 </div>
-                <div class="section-count">2 herramientas</div>
+                <div class="section-count">3 herramientas</div>
             </div>
             <div class="cards-grid">
                 <a href="/json-viewer.html" class="card cat-viewer">
@@ -976,6 +1035,12 @@
                     <div class="card-icon">MD</div>
                     <div class="card-title">Markdown Viewer</div>
                     <div class="card-desc">Renderiza archivos .md con headings, tablas, código y listas</div>
+                </a>
+                <a href="/txt-invisible.html" class="card cat-viewer">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">INV</div>
+                    <div class="card-title">Caracteres Invisibles</div>
+                    <div class="card-desc">Detecta y elimina caracteres invisibles, BOM, zero-width y no estándar</div>
                 </a>
             </div>
         </div>
@@ -1104,11 +1169,12 @@
     const VISTAS = {
         export:   { label: 'Tengo un PDF...',    navIdx: 0 },
         create:   { label: 'Quiero un PDF',      navIdx: 1 },
-        forensis: { label: 'Forensis',           navIdx: 2 },
-        viewers:  { label: 'Viewers',            navIdx: 3 },
-        misc:     { label: 'Miscelaneos',        navIdx: 4 },
-        cache:    { label: 'Archivos en Cache',  navIdx: 5 },
-        about:    { label: 'Acerca de',          navIdx: 6 },
+        md:       { label: 'Quiero un MD',       navIdx: 2 },
+        forensis: { label: 'Forensis',           navIdx: 3 },
+        viewers:  { label: 'Viewers',            navIdx: 4 },
+        misc:     { label: 'Miscelaneos',        navIdx: 5 },
+        cache:    { label: 'Archivos en Cache',  navIdx: 6 },
+        about:    { label: 'Acerca de',          navIdx: 7 },
         search:   { label: 'Busqueda',           navIdx: -1 },
     };
 

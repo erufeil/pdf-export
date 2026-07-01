@@ -21,6 +21,7 @@ Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autoconten
 - **IMG a PDF**: Convierte multiples imagenes (JPG, PNG, WEBP, etc.) en un unico PDF
 - **WEBP a PNG**: Convierte imagenes WEBP a PNG sin perdida de calidad
 - **EPS a PNG**: Rasteriza archivos EPS a PNG con escala configurable (requiere Ghostscript)
+- **Excel a CSV**: Convierte .xlsx/.xls a CSV por hoja (1 hoja → CSV directo, N hojas → ZIP)
 - **Metadatos PDF**: Extrae huella forense completa del PDF (estructura, permisos, XMP, fuentes, IDs)
 - **Metadatos Imagen**: Extrae EXIF, GPS, IPTC/XMP, hashes y colores dominantes de imagenes
 

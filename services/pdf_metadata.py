@@ -257,6 +257,7 @@ def _contar_texto(doc: fitz.Document, tamano_bytes: int) -> dict:
         'total_caracteres': total_chars,
         'total_palabras':   total_words,
         'ratio_bytes_por_caracter': ratio,
+        'pdf_escaneado': total_chars == 0,
     }
 
 

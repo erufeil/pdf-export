@@ -55,7 +55,7 @@ Opciones disponibles:
 
 **Útil para:** copiar texto de un PDF para editar, procesar con IA, buscar dentro del contenido.
 
-**Limitación:** PDFs escaneados (fotos de documentos) no tienen texto extraíble. El resultado saldrá vacío o con basura.
+**Limitación:** PDFs escaneados (fotos de documentos) no tienen texto extraíble. Si el sistema detecta que no hay texto, te avisa con un error y te sugiere usar "PDF escaneado a CSV" (que sí hace OCR).
 
 ---
 
@@ -297,6 +297,24 @@ El resultado es un archivo PNG (sin ZIP).
 
 ---
 
+### 📊 Excel a CSV
+
+**Convierte archivos Excel (.xlsx y .xls) a formato CSV, una hoja por archivo.**
+
+Al subir el Excel, la herramienta detecta automáticamente cuántas hojas tiene y te muestra sus nombres antes de convertir.
+
+Opciones disponibles:
+- **Separador:** punto y coma `;` (recomendado, compatible con Excel en español) o coma `,`
+- **Codificación:** UTF-8 con BOM (recomendado, Excel lo reconoce automáticamente), UTF-8 sin BOM, o Latin-1
+
+**Resultado:**
+- 1 hoja → descarga directa del CSV
+- Múltiples hojas → ZIP con un CSV por cada hoja
+
+**Útil para:** convertir datos de Excel a un formato universal que puedan leer otros programas, bases de datos, o herramientas de análisis.
+
+---
+
 ## Herramientas forenses
 
 ### 🔍 Metadatos PDF
@@ -307,6 +325,7 @@ Muestra datos que no se ven al abrir el PDF normalmente: quién lo creó, con qu
 
 - Detecta si el PDF fue modificado externamente (los IDs de documento difieren)
 - Permite editar los metadatos básicos (título, autor, tema) y guardar un nuevo PDF
+- Ahora indica si el PDF es escaneado (sin texto extraíble) mediante el campo "PDF escaneado"
 
 **Útil para:** verificar la autenticidad de documentos, auditorías, análisis forense.
 
@@ -369,6 +388,77 @@ Para cargar: arrastrá el archivo al área marcada, o pegá el texto directament
 **No requiere subir archivos al servidor** — todo se procesa en tu navegador.
 
 **Útil para:** leer documentación, revisar archivos README, visualizar notas escritas en Markdown.
+
+---
+
+## Convertir a Markdown
+
+La sección **"Quiero un MD"** convierte documentos al formato Markdown, ideal para alimentar herramientas de IA, crear documentación o tomar notas estructuradas.
+
+### 📝 PDF a Markdown
+
+**Convierte un PDF a texto Markdown, preservando tablas cuando las hay.**
+
+La herramienta analiza el PDF automáticamente:
+- Si detecta tablas, las convierte a formato tabla Markdown (filas y columnas con `|`)
+- Si no hay tablas, extrae el texto con mayor fidelidad de prosa
+
+Opciones disponibles:
+- **Incluir tablas**: ON por defecto. Activa la detección y conversión de tablas a formato Markdown
+- **Detectar encabezados**: ON por defecto. Intenta reconocer títulos (texto en MAYÚSCULAS corto → título nivel 2; frases cortas tipo título → nivel 3)
+- **Limpiar números de página**: ON por defecto. Elimina líneas que son solo un número de página
+
+El resultado es un archivo **.md** (texto plano con marcas Markdown).
+
+**Limitación importante:** PDFs escaneados (fotos de documentos sin capa de texto) no funcionan con esta herramienta. En ese caso, usá "PDF Escaneado a CSV" que sí hace OCR.
+
+**Útil para:** preparar contenido de un PDF para copiarlo a una IA, crear notas a partir de documentos, migrar contenido de PDFs a wikis o documentación.
+
+---
+
+### 📊 Excel a Markdown
+
+**Convierte hojas de cálculo .xlsx y .xls a tablas Markdown.**
+
+Al subir el archivo, la herramienta detecta automáticamente las hojas y las muestra como una lista de casillas de verificación. Podés seleccionar cuáles hojas incluir (por defecto todas están seleccionadas).
+
+El resultado es un único archivo **.md** con todas las hojas seleccionadas:
+- Si seleccionás 1 hoja → el .md contiene solo esa tabla
+- Si seleccionás varias hojas → el .md tiene un título por hoja (`## Nombre de hoja`) y la tabla debajo de cada uno
+
+**Útil para:** pegar tablas en documentos de IA, convertir datos a formato que pueda leer cualquier editor de Markdown, migrar reportes de Excel a wikis o documentación.
+
+---
+
+### 📖 EPUB a Markdown
+
+**Extrae todos los capítulos de un libro digital (.epub) en un único archivo Markdown.**
+
+El EPUB es internamente un ZIP con páginas HTML. La herramienta:
+
+1. Lee la estructura interna del EPUB para saber el orden correcto de los capítulos
+2. Extrae los metadatos del libro (título, autores, idioma, editorial, fecha) y los pone al inicio
+3. Convierte cada capítulo de HTML a Markdown
+4. Une todo en un único archivo **.md**, con cada capítulo separado por una línea `---`
+
+**No hay opciones que configurar** — simplemente subí el EPUB y hacé clic en "Convertir a MD".
+
+**Útil para:** cargar el contenido completo de un libro en una IA, tomar notas sobre libros digitales, migrar libros a wikis o sistemas de documentación.
+
+**Limitaciones:**
+
+- Las imágenes del libro no se extraen (el .md contendrá solo el texto)
+- Los links internos del libro (notas al pie, índices, referencias cruzadas) se convierten a texto plano sin URL, ya que no son válidos fuera del EPUB
+- EPUBs con protección DRM (derechos digitales) no pueden abrirse
+
+---
+
+Las siguientes herramientas de Markdown están **próximamente**:
+
+| Herramienta | Qué hace |
+|-------------|----------|
+| **Audio a MD** | Transcribe audio a texto Markdown (tecnología Whisper) |
+| **Web a MD** | Convierte páginas web a Markdown limpio |
 
 ---
 

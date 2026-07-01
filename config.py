@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.54')
+VERSION = os.getenv('APP_VERSION', '1.1.62')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
@@ -31,7 +31,7 @@ DATA_FOLDER = BASE_DIR / 'data'
 MAX_CONTENT_LENGTH = int(os.getenv('MAX_FILE_SIZE', 1 * 1024 * 1024 * 1024))  # default 1GB
 
 # Extensiones permitidas
-ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp', 'svg', 'eps'}
+ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp', 'svg', 'eps', 'xlsx', 'xls', 'epub'}
 
 # Tiempo de retencion de archivos en horas (configurable via entorno)
 FILE_RETENTION_HOURS = int(os.getenv('FILE_RETENTION_HOURS', 4))

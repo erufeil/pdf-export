@@ -1576,6 +1576,246 @@ def verificar_tika_img():
         return respuesta_error('CHECK_ERROR', str(e), 500)
 
 
+@bp.route('/xlsx-to-csv', methods=['POST'])
+def convertir_xlsx_to_csv():
+    """
+    Convierte un archivo Excel (.xlsx/.xls) a CSV (Etapa 35).
+    Retorna CSV directo si tiene 1 hoja, ZIP si tiene multiples hojas.
+
+    Espera JSON:
+    - file_id: ID del archivo subido
+    - opciones:
+        - separador: ',' o ';' (default ';')
+        - codificacion: 'utf-8-sig', 'utf-8' o 'latin-1' (default 'utf-8-sig')
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not (nombre.endswith('.xlsx') or nombre.endswith('.xls')):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser .xlsx o .xls')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='xlsx-to-csv',
+            parametros={
+                'separador':    opciones.get('separador', ';'),
+                'codificacion': opciones.get('codificacion', 'utf-8-sig'),
+            }
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion Excel a CSV iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f"Error creando trabajo xlsx-to-csv: {e}")
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/xlsx-to-csv/info', methods=['POST'])
+def info_xlsx_to_csv():
+    """
+    Analisis previo del Excel: retorna nombres de hojas (sincrono).
+
+    Espera JSON:
+    - file_id: ID del archivo subido
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.xlsx_to_csv import analizar_xlsx
+        resultado = analizar_xlsx(archivo_id)
+        return respuesta_exitosa(resultado)
+    except Exception as e:
+        logger.error(f"Error analizando xlsx: {e}")
+        return respuesta_error('ANALYSIS_ERROR', str(e), 500)
+
+
+@bp.route('/excel-to-md', methods=['POST'])
+def convertir_excel_to_md():
+    """
+    Convierte un archivo Excel a Markdown (Etapa 39).
+    Todas las hojas seleccionadas se unen en un unico .md.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo .xlsx/.xls subido
+      - opciones:
+          - hojas: [str, ...] (default null = todas las hojas)
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not (nombre.endswith('.xlsx') or nombre.endswith('.xls')):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser .xlsx o .xls')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='excel-to-md',
+            parametros={
+                'hojas': opciones.get('hojas', None),
+            }
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion Excel a Markdown iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo excel-to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/excel-to-md/info', methods=['POST'])
+def info_excel_to_md():
+    """
+    Analisis previo del Excel: retorna nombres de hojas (sincrono).
+    Reutiliza analizar_xlsx de xlsx_to_csv.
+
+    Body JSON:
+      - file_id: ID del archivo subido
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    try:
+        from services.xlsx_to_csv import analizar_xlsx
+        resultado = analizar_xlsx(archivo_id)
+        return respuesta_exitosa(resultado)
+    except Exception as e:
+        logger.error(f'Error analizando xlsx para MD: {e}')
+        return respuesta_error('ANALYSIS_ERROR', str(e), 500)
+
+
+@bp.route('/to-md', methods=['POST'])
+def convertir_to_md():
+    """
+    Convierte un PDF a Markdown (Etapa 38).
+    Usa pdfplumber para tablas y pdfminer para prosa.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo PDF subido
+      - opciones:
+          - incluir_tablas: bool (default true)
+          - detectar_encabezados: bool (default true)
+          - limpiar_numeros_pagina: bool (default true)
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not nombre.endswith('.pdf'):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser un PDF')
+
+    opciones = datos.get('opciones', {})
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='to-md',
+            parametros={
+                'incluir_tablas':         opciones.get('incluir_tablas', True),
+                'detectar_encabezados':   opciones.get('detectar_encabezados', True),
+                'limpiar_numeros_pagina': opciones.get('limpiar_numeros_pagina', True),
+            }
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversion PDF a Markdown iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/epub-to-md', methods=['POST'])
+def convertir_epub_to_md():
+    """
+    Convierte un archivo EPUB a Markdown (Etapa 40).
+    Extrae capitulos en orden del spine y los une en un unico .md.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo EPUB subido
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not nombre.endswith('.epub'):
+        return respuesta_error('INVALID_FORMAT', 'El archivo debe ser un EPUB')
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='epub-to-md',
+            parametros={}
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Conversión EPUB a Markdown iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo epub-to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/img-metadata/extract', methods=['POST'])
 def extraer_metadatos_imagen():
     """

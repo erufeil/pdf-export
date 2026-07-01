@@ -278,6 +278,12 @@ def procesar_to_txt(trabajo_id: str, archivo_id: str, parametros: dict) -> dict:
     # Extraer texto
     texto = extraer_texto_pdf(ruta_pdf, parametros, trabajo_id)
 
+    if not texto.strip():
+        raise ValueError(
+            'No se pudo extraer texto: el PDF parece estar escaneado (sin capa de texto). '
+            'Proba con "PDF escaneado -> CSV" (OCR) para extraer su contenido.'
+        )
+
     job_manager.actualizar_progreso(trabajo_id, 85, "Guardando archivo")
 
     # Guardar archivo TXT

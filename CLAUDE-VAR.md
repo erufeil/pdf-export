@@ -189,6 +189,10 @@ fecha_modificacion: string  ← ISO format (para detección de duplicados)
 }
 ```
 
+*(Etapa 34)* Extracción 100% via `pdfminer.six` (`extract_text_to_fp` + `extract_pages` con `LAParams`).
+Si el texto extraído queda vacío (PDF escaneado sin capa de texto) el job falla con `ValueError`
+sugiriendo usar `/to-csv-ocr` (Tika) en su lugar.
+
 ### `POST /api/v1/convert/to-png` / `to-jpg`
 ```json
 {
@@ -434,6 +438,77 @@ Respuesta `resp.data`:
 - `escala`: `1` | `2` | `3` | `4` (multiplicador de resolución, default `2`)
 - Retorna PNG directo (sin ZIP)
 
+### `POST /api/v1/convert/xlsx-to-csv`  *(Etapa 35)*
+
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "separador":    ";",
+    "codificacion": "utf-8-sig"
+  }
+}
+```
+
+- `separador`: `","` o `";"` (default `";"`)
+- `codificacion`: `"utf-8-sig"` (BOM, recomendado para Excel) | `"utf-8"` | `"latin-1"`
+- Análisis previo (sync): `POST /api/v1/convert/xlsx-to-csv/info` → `{ "hojas": [...], "num_hojas": N }`
+- Retorna: CSV directo (1 hoja) o ZIP (múltiples hojas)
+- Naming: individual `{stem} - hoja {N_pad} {hoja_safe}.csv` · ZIP `{job_id}_{stem}_csv.zip`
+- Engines: `.xlsx` → `openpyxl`, `.xls` → `xlrd`
+
+### `POST /api/v1/convert/excel-to-md`  *(Etapa 39)*
+
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "hojas": ["Hoja1", "Hoja3"]
+  }
+}
+```
+
+- `hojas`: lista de nombres de hojas a convertir (default `null` = todas)
+- Análisis previo (sync): `POST /api/v1/convert/excel-to-md/info` → `{ "hojas": [...], "num_hojas": N }` (reutiliza `analizar_xlsx` de xlsx_to_csv)
+- Todas las hojas seleccionadas se unen en **un único .md** directo (sin ZIP)
+- 1 hoja → solo la tabla; múltiples hojas → encabezado `# nombre_archivo` + secciones `## NombreHoja`
+- Pipe tables generadas manualmente (sin tabulate); celdas vacías → `''`; `|` en celdas → `\|`
+- Retorna: `.md` directo. Naming: `{stem}.md`
+
+### `POST /api/v1/convert/to-md`  *(Etapa 38)*
+
+```json
+{
+  "file_id": "uuid",
+  "opciones": {
+    "incluir_tablas":         true,
+    "detectar_encabezados":   true,
+    "limpiar_numeros_pagina": true
+  }
+}
+```
+
+- `incluir_tablas`: usa pdfplumber para detectar tablas (≥3 cols, ≥20% filas con datos) → pipe tables MD. Si no hay tablas o `false`, usa pdfminer para toda la prosa.
+- `detectar_encabezados`: líneas toda CAPS → `## H2`; títulos cortos (≤7 palabras, sin puntuación final) → `### H3`
+- `limpiar_numeros_pagina`: elimina líneas que son solo dígitos (1–4 caracteres)
+- Retorna: `.md` directo (sin ZIP). Naming: `{stem}.md`
+- PDFs escaneados (sin capa de texto) → error con sugerencia de usar OCR
+
+### `POST /api/v1/convert/epub-to-md`  *(Etapa 40)*
+
+```json
+{
+  "file_id": "uuid"
+}
+```
+
+- Abre el EPUB como ZIP; lee `META-INF/container.xml` → `content.opf` → spine → capítulos XHTML
+- Por cada capítulo: BeautifulSoup limpia scripts/styles/nav/img → markdownify convierte a MD
+- Retorna: `.md` directo (sin ZIP). Naming: `{job_id}_{stem}.md`
+- Encabezado: metadatos del OPF (título, autores, idioma, editorial, fecha)
+- Capítulos separados por `---`. Links internos → texto plano (strip=['a'])
+- Bibliotecas: `zipfile` (stdlib) + `bs4` + `lxml` + `markdownify`
+
 ### `POST /api/v1/convert/img-to-txt`  *(Etapa 24)*
 ```json
 {
@@ -469,14 +544,15 @@ Respuesta `resp.data`:
                   "num_imagenes": 4, "num_anotaciones": 0, "num_marcadores": 48,
                   "num_formularios": 0, "num_adjuntos": 0, "tiene_javascript": false,
                   "num_firmas": 0, "capas": [] },
-  "contenido_texto": { "total_caracteres": 1445893, "total_palabras": 242869, "ratio_bytes_por_caracter": 2.12 },
+  "contenido_texto": { "total_caracteres": 1445893, "total_palabras": 242869, "ratio_bytes_por_caracter": 2.12, "pdf_escaneado": false },
   "permisos": { "imprimir": true, "modificar": true, "copiar": true, "sin_restricciones": true, "valor_raw": -1 },
   "xmp_xml": "<?xml version='1.0'?>..."
 }
 ```
 
 - `contenido_texto.ratio_bytes_por_caracter`: tamaño_en_disco / total_caracteres. < 5 = texto puro, 5–20 = mixto, > 20 = imagen dominante.
-- `contenido_texto.total_caracteres = 0` cuando el PDF es de solo imágenes (escaneado sin OCR).
+- `contenido_texto.pdf_escaneado`: `true` cuando `total_caracteres == 0` (PDF de imágenes sin capa de texto). *(Etapa 36)*
+- `contenido_texto.total_caracteres = 0` → siempre coincide con `pdf_escaneado: true`.
 
 ### `POST /api/v1/convert/img-metadata/extract`  *(Etapa 28 — sync)*
 

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caracteres Invisibles — PDF-Export</title>
+    <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg:        #0D1117;
+        --sidebar:   #161B22;
+        --card:      #1C2128;
+        --card-hover:#21262D;
+        --border:    #30363D;
+        --red:       #E63946;
+        --orange:    #F4A261;
+        --blue:      #58A6FF;
+        --green:     #3FB950;
+        --purple:    #A371F7;
+        --text:      #E6EDF3;
+        --text-muted:#8B949E;
+        --sidebar-w: 240px;
+        --sidebar-w-collapsed: 60px;
+        --header-h:  54px;
+        --accent:    #F4A261;
+      }
+
+      html { background: #0D1117; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ─── SIDEBAR ─── */
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transition: width 0.25s cubic-bezier(.4,0,.2,1);
+        overflow: hidden;
+      }
+      #sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+      .sidebar-logo {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer; text-decoration: none; color: var(--text);
+        height: var(--header-h); flex-shrink: 0;
+      }
+      .sidebar-logo-link {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; color: inherit;
+      }
+      .logo-icon {
+        width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13px;
+        color: white; flex-shrink: 0; letter-spacing: -1px;
+      }
+      .logo-text {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px;
+        line-height: 1.2; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; font-family: 'IBM Plex Sans', sans-serif; }
+      #sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+      .nav-section { padding: 6px 0; border-bottom: 1px solid var(--border); }
+      .nav-section-label {
+        font-size: 10px; font-weight: 600; color: var(--text-muted);
+        letter-spacing: .08em; text-transform: uppercase;
+        padding: 8px 14px 4px; white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
+      }
+      #sidebar.collapsed .nav-section-label { opacity: 0; }
+
+      .nav-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 14px; cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 0.15s; white-space: nowrap; position: relative;
+        text-decoration: none; color: inherit;
+        -webkit-user-select: none; user-select: none;
+      }
+      .nav-item:hover { background: rgba(255,255,255,0.04); }
+      .nav-item.active { background: var(--bg); border-left-color: var(--accent); }
+      .nav-item.active .nav-label { color: var(--text); }
+      .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+      .nav-label { font-size: 13px; color: var(--text-muted); transition: opacity 0.2s, color 0.15s; overflow: hidden; }
+      .nav-item:hover .nav-label { color: var(--text); }
+      #sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+      #sidebar.collapsed .nav-item:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(var(--sidebar-w-collapsed) + 8px);
+        background: #2D333B; color: var(--text); padding: 5px 10px;
+        border-radius: 6px; font-size: 12px; white-space: nowrap;
+        border: 1px solid var(--border); pointer-events: none; z-index: 200;
+        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      }
+
+      .sidebar-footer { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); }
+      .collapse-btn {
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        color: var(--text-muted); font-size: 13px; padding: 6px 0;
+        -webkit-user-select: none; user-select: none;
+      }
+      .collapse-btn:hover { color: var(--text); }
+      .collapse-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
+      #sidebar.collapsed .collapse-icon { transform: scaleX(-1); }
+      .collapse-label { transition: opacity 0.2s; white-space: nowrap; }
+      #sidebar.collapsed .collapse-label { opacity: 0; }
+
+      /* ─── MAIN ─── */
+      #main {
+        margin-left: var(--sidebar-w); flex: 1; min-height: 100vh;
+        display: flex; flex-direction: column;
+        transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
+      }
+      #main.expanded { margin-left: var(--sidebar-w-collapsed); }
+
+      /* HEADER */
+      .header {
+        height: var(--header-h); background: var(--sidebar); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; padding: 0 24px; gap: 14px;
+        position: sticky; top: 0; z-index: 50;
+      }
+      .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+      .breadcrumb a { color: var(--text-muted); cursor: pointer; transition: color 0.15s; text-decoration: none; }
+      .breadcrumb a:hover { color: var(--accent); }
+      .breadcrumb .sep { color: var(--border); margin: 0 2px; }
+      .breadcrumb .current { color: var(--text); font-weight: 500; }
+      .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .stat-chip {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);
+        background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px;
+      }
+      .stat-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+      /* ─── CONTENT ─── */
+      .content { padding: 28px 32px; flex: 1; }
+
+      .page-header {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        margin-bottom: 28px; gap: 16px;
+      }
+      .page-title-group { display: flex; align-items: center; gap: 14px; }
+      .page-badge {
+        font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px;
+        background: rgba(244,162,97,0.12); color: var(--accent); border: 1px solid rgba(244,162,97,0.3);
+        border-radius: 8px; padding: 8px 14px; letter-spacing: .02em;
+      }
+      .page-title { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; }
+      .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+      /* ─── LEYENDA ─── */
+      .leyenda {
+        display: flex; gap: 20px; flex-wrap: wrap;
+        font-size: 12px; margin-bottom: 20px;
+      }
+      .leyenda-item { display: flex; align-items: center; gap: 7px; }
+      .leyenda-dot {
+        width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+      }
+      .leyenda-dot.normal   { background: rgba(230,237,243,0.15); border: 1px solid var(--border); }
+      .leyenda-dot.invisible { background: rgba(230,57,70,0.3); border: 1px solid rgba(230,57,70,0.6); }
+      .leyenda-dot.noestandar { background: rgba(227,179,65,0.25); border: 1px solid rgba(227,179,65,0.5); }
+
+      /* ─── LAYOUT ─── */
+      .layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+
+      /* ─── COLUMNA IZQUIERDA ─── */
+      .input-col { display: flex; flex-direction: column; gap: 14px; }
+
+      .dropzone {
+        background: var(--card); border: 2px dashed var(--border);
+        border-radius: 14px; padding: 28px 16px; text-align: center;
+        cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      }
+      .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(244,162,97,0.04); }
+      .dropzone-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+      .dropzone-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+      .dropzone-sub { font-size: 11px; color: var(--text-muted); }
+
+      .separator-o {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em;
+      }
+      .separator-o::before, .separator-o::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+      .paste-area {
+        width: 100%; background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; padding: 12px; resize: vertical; min-height: 140px;
+        transition: border-color 0.2s; outline: none;
+      }
+      .paste-area:focus { border-color: var(--accent); }
+      .paste-area::placeholder { color: var(--text-muted); }
+
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600;
+        cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; width: 100%;
+      }
+      .btn-primary { background: var(--accent); color: #0D1117; }
+      .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 16px rgba(244,162,97,.35); transform: translateY(-1px); }
+      .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+      .btn-secondary:hover { background: var(--card-hover); border-color: var(--text-muted); }
+      .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+      .btn-sm {
+        padding: 6px 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border);
+        background: var(--card); color: var(--text-muted); cursor: pointer;
+        font-family: inherit; transition: all 0.15s; white-space: nowrap;
+      }
+      .btn-sm:hover { background: var(--card-hover); color: var(--text); border-color: var(--text-muted); }
+
+      .checkbox-row {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: var(--text-muted); cursor: pointer;
+      }
+      .checkbox-row input { accent-color: var(--accent); cursor: pointer; }
+      .checkbox-row:hover { color: var(--text); }
+
+      /* ─── STATS ─── */
+      .stats-cards {
+        display: flex; gap: 10px; flex-wrap: wrap;
+      }
+      .stat-card {
+        flex: 1; min-width: 80px; background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; padding: 10px 12px; text-align: center;
+      }
+      .stat-card.rojo { border-color: rgba(230,57,70,0.4); }
+      .stat-card.amarillo { border-color: rgba(227,179,65,0.4); }
+      .stat-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700;
+        line-height: 1;
+      }
+      .stat-card.rojo .stat-num { color: #E63946; }
+      .stat-card.amarillo .stat-num { color: #E3B341; }
+      .stat-card:not(.rojo):not(.amarillo) .stat-num { color: var(--text); }
+      .stat-desc { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+      /* ─── COLUMNA DERECHA ─── */
+      .viewer-col { display: flex; flex-direction: column; gap: 14px; }
+
+      .panel {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 14px; overflow: hidden;
+      }
+      .panel-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 16px; border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+      }
+      .panel-title {
+        font-size: 11px; font-weight: 600; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+      }
+      .panel-body {
+        padding: 20px; overflow-y: auto; max-height: 400px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+        line-height: 1.9; white-space: pre-wrap; word-break: break-all;
+      }
+      .panel-body-clean {
+        padding: 0; overflow: hidden;
+      }
+
+      .panel-placeholder {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: 180px; gap: 10px;
+      }
+      .panel-placeholder-icon { font-size: 36px; opacity: 0.25; }
+      .panel-placeholder-text { font-size: 13px; color: var(--text-muted); }
+
+      /* ─── Highlights de caracteres ─── */
+      .ci {
+        background: rgba(230,57,70,0.2);
+        color: #ff6b78;
+        border: 1px solid rgba(230,57,70,0.5);
+        border-radius: 3px;
+        font-size: 10px;
+        padding: 1px 4px;
+        cursor: help;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      .cn {
+        background: rgba(227,179,65,0.18);
+        color: #E3B341;
+        border-bottom: 2px solid rgba(227,179,65,0.6);
+        cursor: help;
+        border-radius: 2px;
+      }
+
+      /* ─── Clean textarea ─── */
+      .clean-textarea {
+        width: 100%; background: transparent; border: none;
+        color: var(--text); font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; padding: 16px; resize: vertical; min-height: 120px;
+        outline: none; line-height: 1.7;
+      }
+      .clean-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 16px; border-top: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+      }
+      .clean-footer-info { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+      /* ─── Ocultos por defecto ─── */
+      #btn-limpiar, #resultados, #panel-limpio { display: none; }
+      #input-archivo { display: none; }
+
+      /* ─── FOOTER ─── */
+      .footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 1rem 0 0.5rem; }
+      .footer-home-link { color: #aaa; text-decoration: none; }
+      .footer-home-link:hover { color: var(--text); }
+
+      /* ─── Scrollbar ─── */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        #sidebar { width: var(--sidebar-w-collapsed); }
+        #main { margin-left: var(--sidebar-w-collapsed); }
+        .content { padding: 20px 16px; }
+      }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+    <div class="sidebar-logo">
+        <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+            <div class="logo-icon">PDF</div>
+            <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Operaciones</div>
+        <a class="nav-item" href="/" data-tooltip="Tengo un PDF...">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Tengo un PDF...</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Quiero un PDF</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Forensis">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Forensis</span>
+        </a>
+        <a class="nav-item active" href="/" data-tooltip="Viewers">
+            <span class="nav-icon">👁️</span>
+            <span class="nav-label">Viewers</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Miscelaneos">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">Miscelaneos</span>
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">Sistema</div>
+        <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+            <span class="nav-icon">🗄️</span>
+            <span class="nav-label">Archivos en Cache</span>
+        </a>
+        <a class="nav-item" href="/" data-tooltip="Acerca de PDF-Export">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">Acerca de PDF-Export</span>
+        </a>
+        <a class="nav-item" href="/help.html" target="_blank" data-tooltip="Ayuda">
+            <span class="nav-icon">❓</span>
+            <span class="nav-label">Ayuda</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="collapse-btn" onclick="toggleSidebar()">
+            <span class="collapse-icon">◀</span>
+            <span class="collapse-label">Colapsar</span>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+    <header class="header">
+        <div class="breadcrumb">
+            <a href="/" title="Inicio">🏠</a>
+            <span class="sep">/</span>
+            <a href="/">Viewers</a>
+            <span class="sep">/</span>
+            <span class="current">Caracteres Invisibles</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-chip"><span class="dot"></span>Local</div>
+        </div>
+    </header>
+
+    <main class="content">
+
+        <div class="page-header">
+            <div class="page-title-group">
+                <div class="page-badge">INV</div>
+                <div>
+                    <div class="page-title">Caracteres Invisibles</div>
+                    <div class="page-subtitle">Detecta y resalta caracteres invisibles y no estándar en cualquier texto</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leyenda de colores -->
+        <div class="leyenda">
+            <div class="leyenda-item">
+                <div class="leyenda-dot normal"></div>
+                <span style="color:var(--text-muted)">Texto normal (UTF-8)</span>
+            </div>
+            <div class="leyenda-item">
+                <div class="leyenda-dot invisible"></div>
+                <span style="color:#ff6b78">Caracteres invisibles — se eliminan al limpiar</span>
+            </div>
+            <div class="leyenda-item">
+                <div class="leyenda-dot noestandar"></div>
+                <span style="color:#E3B341">No estándar (nbsp, PUA, espacios especiales)</span>
+            </div>
+        </div>
+
+        <div class="layout">
+
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="input-col">
+                <div class="dropzone" id="zona-carga">
+                    <span class="dropzone-icon">⚠️</span>
+                    <div class="dropzone-title">Arrastra un archivo de texto</div>
+                    <div class="dropzone-sub">.txt · .md · .csv · .html · .json · cualquier texto</div>
+                </div>
+
+                <div class="separator-o">o</div>
+
+                <textarea
+                    id="textarea-texto"
+                    class="paste-area"
+                    placeholder="Pegá el texto aquí para analizar..."
+                    spellcheck="false"
+                ></textarea>
+
+                <button type="button" class="btn btn-primary" id="btn-analizar">
+                    🔍 Analizar texto
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-limpiar">
+                    ✕ Limpiar
+                </button>
+
+                <!-- Stats (se muestran post-análisis) -->
+                <div id="resultados">
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-num" id="stat-total">0</div>
+                            <div class="stat-desc">caracteres</div>
+                        </div>
+                        <div class="stat-card rojo">
+                            <div class="stat-num" id="stat-invisibles">0</div>
+                            <div class="stat-desc">invisibles</div>
+                        </div>
+                        <div class="stat-card amarillo">
+                            <div class="stat-num" id="stat-noestandar">0</div>
+                            <div class="stat-desc">no estándar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opciones limpieza -->
+                <div id="panel-limpio-opts" style="display:none;">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="chk-nbsp" checked>
+                        Convertir NBSP y espacios especiales a espacio normal
+                    </label>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div class="viewer-col">
+
+                <!-- Panel: visualización con highlights -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Visualización</span>
+                        <span id="panel-meta" style="font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;"></span>
+                    </div>
+                    <div class="panel-body" id="visor-highlights">
+                        <div class="panel-placeholder">
+                            <div class="panel-placeholder-icon">⚠️</div>
+                            <div class="panel-placeholder-text">Cargá o pegá un texto para analizar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel: texto limpio -->
+                <div class="panel" id="panel-limpio">
+                    <div class="panel-header">
+                        <span class="panel-title">Texto limpio</span>
+                        <span style="font-size:11px;color:var(--text-muted);">sin caracteres invisibles</span>
+                    </div>
+                    <div class="panel-body-clean">
+                        <textarea id="textarea-limpio" class="clean-textarea" readonly spellcheck="false"></textarea>
+                        <div class="clean-footer">
+                            <span class="clean-footer-info" id="clean-info"></span>
+                            <button type="button" class="btn-sm" id="btn-copiar-limpio">📋 Copiar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="footer">
+        PDF-Export &amp; Import · ERF
+        &nbsp;|&nbsp; Caracteres Invisibles (Etapa 33 · JS)
+        &nbsp;|&nbsp; <span id="app-version"></span>
+        &nbsp;|&nbsp; <a href="/" class="footer-home-link">🏠 Inicio</a>
+    </div>
+
+</div>
+
+<input type="file" id="input-archivo" accept="text/*,.txt,.md,.csv,.json,.html,.xml,.yml,.yaml,.log">
+
+<script src="/config.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    const inputArchivo    = document.getElementById('input-archivo');
+    const zonaCarga       = document.getElementById('zona-carga');
+    const textareaTexto   = document.getElementById('textarea-texto');
+    const btnAnalizar     = document.getElementById('btn-analizar');
+    const btnLimpiar      = document.getElementById('btn-limpiar');
+    const visorHighlights = document.getElementById('visor-highlights');
+    const panelMeta       = document.getElementById('panel-meta');
+    const resultados      = document.getElementById('resultados');
+    const panelLimpio     = document.getElementById('panel-limpio');
+    const panelLimpioOpts = document.getElementById('panel-limpio-opts');
+    const textareaLimpio  = document.getElementById('textarea-limpio');
+    const cleanInfo       = document.getElementById('clean-info');
+    const chkNbsp         = document.getElementById('chk-nbsp');
+    const statTotal       = document.getElementById('stat-total');
+    const statInv         = document.getElementById('stat-invisibles');
+    const statNoEst       = document.getElementById('stat-noestandar');
+
+    let textoActual = '';
+
+    // ─── Versión ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.AppConfig?.version) {
+            const el = document.getElementById('app-version');
+            if (el) el.textContent = 'v' + window.AppConfig.version;
+        }
+    });
+
+    // ─── Drop zone ─────────────────────────────────────────────────────────────
+    zonaCarga.addEventListener('click', () => inputArchivo.click());
+    zonaCarga.addEventListener('dragover', (e) => { e.preventDefault(); zonaCarga.classList.add('drag-over'); });
+    zonaCarga.addEventListener('dragleave', () => zonaCarga.classList.remove('drag-over'));
+    zonaCarga.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zonaCarga.classList.remove('drag-over');
+        const arch = e.dataTransfer.files[0];
+        if (arch) leerArchivo(arch);
+    });
+    inputArchivo.addEventListener('change', () => {
+        if (inputArchivo.files[0]) leerArchivo(inputArchivo.files[0]);
+        inputArchivo.value = '';
+    });
+
+    function leerArchivo(archivo) {
+        const lector = new FileReader();
+        lector.onload = (e) => {
+            textareaTexto.value = e.target.result;
+            analizar(e.target.result, archivo.name);
+        };
+        lector.readAsText(archivo, 'utf-8');
+    }
+
+    // ─── Botón analizar ────────────────────────────────────────────────────────
+    btnAnalizar.addEventListener('click', () => {
+        const texto = textareaTexto.value;
+        if (!texto) return;
+        analizar(texto, 'pegado');
+    });
+
+    textareaTexto.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); btnAnalizar.click(); }
+    });
+
+    // ─── Limpiar ───────────────────────────────────────────────────────────────
+    btnLimpiar.addEventListener('click', () => {
+        textoActual = '';
+        textareaTexto.value = '';
+        visorHighlights.innerHTML = `
+            <div class="panel-placeholder">
+                <div class="panel-placeholder-icon">⚠️</div>
+                <div class="panel-placeholder-text">Cargá o pegá un texto para analizar</div>
+            </div>`;
+        resultados.style.display = 'none';
+        panelLimpio.style.display = 'none';
+        panelLimpioOpts.style.display = 'none';
+        btnLimpiar.style.display = 'none';
+        panelMeta.textContent = '';
+    });
+
+    // ─── Checkbox NBSP → actualiza texto limpio ────────────────────────────────
+    chkNbsp.addEventListener('change', () => {
+        if (textoActual) actualizarTextLimpio(textoActual);
+    });
+
+    // ─── Copiar texto limpio ───────────────────────────────────────────────────
+    document.getElementById('btn-copiar-limpio').addEventListener('click', () => {
+        navigator.clipboard.writeText(textareaLimpio.value).then(() => {
+            const btn = document.getElementById('btn-copiar-limpio');
+            btn.textContent = '✓ Copiado';
+            setTimeout(() => { btn.textContent = '📋 Copiar'; }, 1800);
+        });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CLASIFICACIÓN DE CARACTERES
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Caracteres completamente invisibles (zero-width, controles, directional)
+    const INVISIBLES = new Set([
+        // C0 controls (excluye \t 9, \n 10, \r 13)
+        0,1,2,3,4,5,6,7,8,11,12,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        0x007F, // DEL
+        // C1 controls
+        0x0080,0x0081,0x0082,0x0083,0x0084,0x0085,0x0086,0x0087,
+        0x0088,0x0089,0x008A,0x008B,0x008C,0x008D,0x008E,0x008F,
+        0x0090,0x0091,0x0092,0x0093,0x0094,0x0095,0x0096,0x0097,
+        0x0098,0x0099,0x009A,0x009B,0x009C,0x009D,0x009E,0x009F,
+        // Soft hyphen
+        0x00AD,
+        // Zero-width chars
+        0x200B, // zero-width space
+        0x200C, // zero-width non-joiner
+        0x200D, // zero-width joiner
+        0x200E, // left-to-right mark
+        0x200F, // right-to-left mark
+        // Line/paragraph separators
+        0x2028, 0x2029,
+        // Directional formatting
+        0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
+        // Invisible math
+        0x2060, 0x2061, 0x2062, 0x2063, 0x2064,
+        // BOM
+        0xFEFF,
+        // Interlinear annotation
+        0xFFF9, 0xFFFA, 0xFFFB,
+    ]);
+
+    // Nombres legibles para caracteres conocidos
+    const NOMBRES = {
+        0: 'NULL', 7: 'BELL', 8: 'BACKSPACE', 11: 'VERTICAL TAB', 12: 'FORM FEED',
+        0x001B: 'ESCAPE', 0x007F: 'DELETE',
+        0x0085: 'NEXT LINE (NEL)', 0x00AD: 'SOFT HYPHEN',
+        0x200B: 'ZERO WIDTH SPACE', 0x200C: 'ZERO WIDTH NON-JOINER',
+        0x200D: 'ZERO WIDTH JOINER', 0x200E: 'LEFT-TO-RIGHT MARK',
+        0x200F: 'RIGHT-TO-LEFT MARK', 0x2028: 'LINE SEPARATOR',
+        0x2029: 'PARAGRAPH SEPARATOR', 0x202A: 'LEFT-TO-RIGHT EMBEDDING',
+        0x202B: 'RIGHT-TO-LEFT EMBEDDING', 0x202C: 'POP DIRECTIONAL FORMAT',
+        0x202D: 'LEFT-TO-RIGHT OVERRIDE', 0x202E: 'RIGHT-TO-LEFT OVERRIDE',
+        0x2060: 'WORD JOINER', 0x2061: 'FUNCTION APPLICATION',
+        0x2062: 'INVISIBLE TIMES', 0x2063: 'INVISIBLE SEPARATOR',
+        0x2064: 'INVISIBLE PLUS', 0xFEFF: 'BYTE ORDER MARK (BOM)',
+        0xFFF9: 'INTERLINEAR ANNOTATION ANCHOR',
+        0xFFFA: 'INTERLINEAR ANNOTATION SEPARATOR',
+        0xFFFB: 'INTERLINEAR ANNOTATION TERMINATOR',
+    };
+
+    // Caracteres no estándar (visibles pero problemáticos)
+    const NO_ESTANDAR = new Set([
+        0x00A0, // non-breaking space (nbsp)
+        0x2007, // figure space
+        0x2008, // punctuation space
+        0x2009, // thin space
+        0x200A, // hair space
+        0x202F, // narrow no-break space
+        0x205F, // medium mathematical space
+        0x3000, // ideographic space
+    ]);
+
+    function esInvisible(cp) {
+        if (INVISIBLES.has(cp)) return true;
+        if (cp >= 0xE0000 && cp <= 0xE007F) return true; // Unicode tags
+        return false;
+    }
+
+    function esNoEstandar(cp) {
+        if (NO_ESTANDAR.has(cp)) return true;
+        if (cp >= 0xE000 && cp <= 0xF8FF) return true;   // Private Use Area
+        if (cp >= 0xF0000 && cp <= 0xFFFFD) return true; // PUA suplementario A
+        return false;
+    }
+
+    function nombreChar(cp) {
+        if (NOMBRES[cp]) return NOMBRES[cp];
+        if (cp <= 0x001F) return `CONTROL U+${cp.toString(16).toUpperCase().padStart(4,'0')}`;
+        if (cp >= 0x0080 && cp <= 0x009F) return `C1 CONTROL U+${cp.toString(16).toUpperCase().padStart(4,'0')}`;
+        if (cp >= 0xE000 && cp <= 0xF8FF) return 'PRIVATE USE AREA';
+        return `U+${cp.toString(16).toUpperCase().padStart(4,'0')}`;
+    }
+
+    function cpHex(cp) {
+        return 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ANÁLISIS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function analizar(texto, origen) {
+        textoActual = texto;
+
+        // Límite de seguridad: no renderizar textos enormes carácter por carácter
+        const MAX_RENDER = 200_000; // 200k chars
+        const textoRender = texto.length > MAX_RENDER ? texto.slice(0, MAX_RENDER) : texto;
+        const truncado = texto.length > MAX_RENDER;
+
+        let html = '';
+        let cntInv = 0;
+        let cntNoEst = 0;
+        let total = 0;
+
+        for (const ch of textoRender) {
+            const cp = ch.codePointAt(0);
+            total++;
+
+            if (ch === '\n') { html += '\n'; continue; }
+            if (ch === '\r') { continue; }
+            if (ch === '\t') { html += '\t'; continue; }
+
+            if (esInvisible(cp)) {
+                cntInv++;
+                const nombre = nombreChar(cp);
+                const hex = cpHex(cp);
+                html += `<span class="ci" title="${esc(nombre)}">${hex}</span>`;
+            } else if (esNoEstandar(cp)) {
+                cntNoEst++;
+                const nombre = nombreChar(cp);
+                html += `<span class="cn" title="${esc(nombre)} — ${cpHex(cp)}">${esc(ch)}</span>`;
+            } else {
+                html += esc(ch);
+            }
+        }
+
+        // Texto completo para stats (puede diferir del renderizado si truncado)
+        if (truncado) {
+            // Contar en el resto también (sin render)
+            for (const ch of texto.slice(MAX_RENDER)) {
+                const cp = ch.codePointAt(0);
+                total++;
+                if (esInvisible(cp)) cntInv++;
+                else if (esNoEstandar(cp)) cntNoEst++;
+            }
+        }
+
+        // Actualizar visor
+        visorHighlights.innerHTML = html || '<span style="color:var(--text-muted);">(texto vacío)</span>';
+        if (truncado) {
+            visorHighlights.innerHTML += `<div style="margin-top:12px;font-size:11px;color:var(--text-muted);">⚠ Texto muy largo — se muestran los primeros ${MAX_RENDER.toLocaleString()} caracteres. Los conteos incluyen el documento completo.</div>`;
+        }
+
+        // Stats
+        statTotal.textContent    = total.toLocaleString('es-AR');
+        statInv.textContent      = cntInv.toLocaleString('es-AR');
+        statNoEst.textContent    = cntNoEst.toLocaleString('es-AR');
+
+        panelMeta.textContent = origen === 'pegado' ? 'Texto pegado' : origen;
+
+        resultados.style.display = '';
+        panelLimpio.style.display = '';
+        panelLimpioOpts.style.display = '';
+        btnLimpiar.style.display = '';
+
+        actualizarTextLimpio(texto);
+    }
+
+    function actualizarTextLimpio(texto) {
+        const normalizarEspacios = chkNbsp.checked;
+        let limpio = '';
+
+        for (const ch of texto) {
+            const cp = ch.codePointAt(0);
+            if (esInvisible(cp)) continue; // eliminar
+            if (normalizarEspacios && esNoEstandar(cp) && cp !== 0xFEFF) {
+                // Convertir espacios especiales a espacio normal
+                if ([0x00A0,0x2007,0x2008,0x2009,0x200A,0x202F,0x205F,0x3000].includes(cp)) {
+                    limpio += ' ';
+                    continue;
+                }
+            }
+            limpio += ch;
+        }
+
+        textareaLimpio.value = limpio;
+
+        const removidos = texto.length - limpio.length;
+        cleanInfo.textContent = removidos > 0
+            ? `${removidos} carácter${removidos !== 1 ? 'es' : ''} eliminado${removidos !== 1 ? 's' : ''}`
+            : 'Sin cambios necesarios';
+    }
+
+    // ─── Escape HTML ───────────────────────────────────────────────────────────
+    function esc(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // ─── Sidebar ───────────────────────────────────────────────────────────────
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('main').classList.toggle('expanded');
+    }
+</script>
+</body>
+</html>
