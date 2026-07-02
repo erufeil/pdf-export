@@ -480,11 +480,35 @@ El resultado es un archivo **.md** con:
 
 ---
 
+### 🎵 Audio a Markdown
+
+**Transcribe archivos de audio a texto y los guarda en Markdown.**
+
+Formatos soportados: **WAV, MP3, MP4, M4A**.
+
+La herramienta usa un servidor Whisper instalado en la red interna. Si el servidor no está disponible, verás una advertencia en rojo al abrir la página y no podrás convertir.
+
+Opciones de idioma:
+
+- **Auto** (recomendado): Whisper detecta el idioma del audio automáticamente
+- **Español / English**: fuerza la transcripción en ese idioma
+
+El resultado es un archivo **.md** con el nombre del archivo, el formato y el texto completo de la transcripción.
+
+**Útil para:** pasar grabaciones de reuniones a texto, transcribir entrevistas, convertir notas de voz a Markdown para usar con IA.
+
+**Limitaciones:**
+
+- Requiere que el servidor Whisper esté activo y configurado (variable `WHISPER_URL`). Si no está disponible, contactá al administrador del sistema
+- Archivos de audio muy largos pueden tardar varios minutos
+- La calidad de la transcripción depende de la claridad del audio y del modelo Whisper instalado
+
+---
+
 Las siguientes herramientas de Markdown están **próximamente**:
 
 | Herramienta | Qué hace |
 |-------------|----------|
-| **Audio a MD** | Transcribe audio a texto Markdown (tecnología Whisper) |
 | **Web a MD** | Convierte páginas web a Markdown limpio |
 
 ---

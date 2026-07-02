@@ -1775,6 +1775,67 @@ def convertir_to_md():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/audio-to-md', methods=['POST'])
+def convertir_audio_to_md():
+    """
+    Transcribe audio a Markdown via servidor Whisper propio (Etapa 41).
+    Formatos: WAV, MP3, MP4, M4A.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - file_id: ID del archivo de audio subido
+      - idioma: 'auto' | 'es' | 'en' (default 'auto')
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    archivo_id = datos.get('file_id')
+    archivo, error = validar_archivo(archivo_id)
+    if error:
+        return error
+
+    nombre = archivo['nombre_original'].lower()
+    if not any(nombre.endswith(ext) for ext in ('.wav', '.mp3', '.mp4', '.m4a')):
+        return respuesta_error('INVALID_FORMAT', 'Formatos soportados: WAV, MP3, MP4, M4A')
+
+    if not getattr(config, 'WHISPER_URL', ''):
+        return respuesta_error(
+            'WHISPER_NOT_CONFIGURED',
+            'El servidor Whisper no está configurado (WHISPER_URL vacío)',
+            503
+        )
+
+    idioma = datos.get('idioma', 'auto')
+    if idioma not in ('auto', 'es', 'en'):
+        idioma = 'auto'
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=archivo_id,
+            tipo_conversion='audio-to-md',
+            parametros={'idioma': idioma}
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Transcripción de audio iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo audio-to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
+@bp.route('/audio-to-md/check', methods=['GET'])
+def check_audio_to_md():
+    """Verifica si el servidor Whisper está configurado y responde (Etapa 41)."""
+    from services.audio_to_md import verificar_whisper
+    estado = verificar_whisper()
+    return respuesta_exitosa(estado, 'Estado del servidor Whisper')
+
+
 @bp.route('/youtube-to-md', methods=['POST'])
 def convertir_youtube_to_md():
     """

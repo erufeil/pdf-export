@@ -494,6 +494,20 @@ Respuesta `resp.data`:
 - Retorna: `.md` directo (sin ZIP). Naming: `{stem}.md`
 - PDFs escaneados (sin capa de texto) → error con sugerencia de usar OCR
 
+### `POST /api/v1/convert/audio-to-md`  *(Etapa 41)*
+
+```json
+{ "file_id": "uuid", "idioma": "auto" }
+```
+
+- `idioma`: `'auto'` (default) | `'es'` | `'en'`
+- Formatos: `.wav`, `.mp3`, `.mp4`, `.m4a` (deben estar en ALLOWED_EXTENSIONS)
+- Requiere `WHISPER_URL` configurado en entorno; si vacío → HTTP 503 inmediato
+- POST multipart a `{WHISPER_URL}/v1/audio/transcriptions` con `model=whisper-1`, `response_format=json`
+- Timeout 600s. Retry no incluido (la librería de Whisper puede tardar mucho)
+- Check sync: `GET /api/v1/convert/audio-to-md/check` → `{'disponible': bool, 'url': str, 'mensaje': str}`
+- Retorna: `.md` directo. Naming: `{job_id}_{stem}.md`
+
 ### `POST /api/v1/convert/youtube-to-md`  *(Etapa 43)*
 
 ```json

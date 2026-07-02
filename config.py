@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.63')
+VERSION = os.getenv('APP_VERSION', '1.1.64')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
@@ -31,7 +31,7 @@ DATA_FOLDER = BASE_DIR / 'data'
 MAX_CONTENT_LENGTH = int(os.getenv('MAX_FILE_SIZE', 1 * 1024 * 1024 * 1024))  # default 1GB
 
 # Extensiones permitidas
-ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp', 'svg', 'eps', 'xlsx', 'xls', 'epub'}
+ALLOWED_EXTENSIONS = {'pdf', 'ndm2', 'json', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'tif', 'webp', 'svg', 'eps', 'xlsx', 'xls', 'epub', 'wav', 'mp3', 'mp4', 'm4a'}
 
 # Tiempo de retencion de archivos en horas (configurable via entorno)
 FILE_RETENTION_HOURS = int(os.getenv('FILE_RETENTION_HOURS', 4))
@@ -50,6 +50,9 @@ THUMBNAIL_DPI = 72
 # Dejar vacio ('') para deshabilitar y usar solo PyMuPDF/pdfplumber como fallback.
 # Configurar NLM_INGESTOR_URL en el entorno para apuntar al contenedor correcto.
 NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://ingestor:5001').strip()
+
+# URL del servidor Whisper propio (API compatible OpenAI). Dejar vacio para deshabilitar.
+WHISPER_URL = os.getenv('WHISPER_URL', '').strip()
 
 # URL base del servicio Apache Tika para extraccion con OCR (Etapa 22).
 # Tika procesa PDFs escaneados usando Tesseract internamente.

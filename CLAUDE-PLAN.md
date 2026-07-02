@@ -571,28 +571,40 @@ Todas con `class="card cat-md"` + `badge-pronto`. Apuntan a las páginas futuras
 
 ---
 
-### Etapa 41 — Audio→MD con Whisper propio (planificada)
+### Etapa 41 — Audio→MD con Whisper propio (v1.1.64 — COMPLETADA)
+
 **Página:** `static/audio-to-md.html`
 **Servicio:** `services/audio_to_md.py`
-**Endpoint:** `POST /audio-to-md` (async)
-**Dependencia externa:** servidor Whisper propio del usuario (API compatible OpenAI)
-**Config:** `WHISPER_URL = os.getenv('WHISPER_URL', '')` en `config.py`
-**Formatos entrada:** WAV, MP3, MP4, M4A
+**Endpoints:** `POST /api/v1/convert/audio-to-md` (async) · `GET /audio-to-md/check` (sync)
+**Dependencia externa:** servidor Whisper propio (API compatible OpenAI) — no librería Python
+**Config:** `WHISPER_URL = os.getenv('WHISPER_URL', '').strip()` en `config.py`
+**Formatos entrada:** WAV, MP3, MP4, M4A (agregados a ALLOWED_EXTENSIONS)
 **Retorna:** `.md` directo (sin ZIP)
-**Acento UI:** violeta `#A371F7`
 
-**Pipeline:**
-```
-audio_file → multipart POST {WHISPER_URL}/v1/audio/transcriptions
-  → {text: "transcripción..."} → wrappear en Markdown:
-    # Transcripción — {nombre_archivo}
-    **Formato:** MP3  **Duración:** N/A
-    ---
-    {texto_transcripcion}
+**Pipeline implementado:**
+
+1. Validar archivo (extensión en `{'.wav', '.mp3', '.mp4', '.m4a'}`)
+2. Verificar `config.WHISPER_URL` — si vacío → error 503 inmediato en la ruta (no llega al worker)
+3. Abrir archivo y POST multipart a `{WHISPER_URL}/v1/audio/transcriptions` con `model=whisper-1`, `response_format=json`, `language=idioma` (omitir si `auto`)
+4. Timeout 600s; manejo de `ConnectionError`, `Timeout`, `HTTPError`
+5. Extraer `datos['text']` → generar MD con cabecera
+
+**Output MD:**
+
+```markdown
+# Transcripción — nombre_archivo.mp3
+
+**Formato:** MP3
+**Idioma:** es
+
+---
+
+Texto completo de la transcripción...
 ```
 
-**UI:** Drop zone → selector idioma (es/en/auto) → convertir → `.md` directo.
-**Nota:** Si `WHISPER_URL` no está configurado → mostrar mensaje de error claro en la UI.
+**Check endpoint:** `GET /audio-to-md/check` llama a `verificar_whisper()` → GET `{WHISPER_URL}/v1/models` con timeout 5s → `{disponible, url, mensaje}`.
+
+**UI:** Banner verde/rojo del estado de Whisper al cargar · drop zone audio · selector Auto/Español/English · botón deshabilitado si Whisper no disponible.
 
 ---
 
