@@ -36,62 +36,55 @@ _HEADERS = {
 }
 
 
+def _ruta_cookies_activa() -> Path | None:
+    """Retorna la ruta de cookies activa (env var o ruta default subida desde UI)."""
+    ruta_env = config.YOUTUBE_COOKIES_FILE
+    if ruta_env:
+        p = Path(ruta_env)
+        if p.exists():
+            return p
+
+    ruta_default = Path(config.YOUTUBE_COOKIES_DEFAULT)
+    if ruta_default.exists():
+        return ruta_default
+
+    return None
+
+
 def verificar_youtube_config() -> dict:
-    """
-    Retorna el estado de configuración del workaround de IP block.
-    Usado por GET /youtube-to-md/check.
-    """
+    """Retorna el estado de configuración del workaround de IP block."""
     proxy_url = config.YOUTUBE_PROXY_URL
-    cookies_file = config.YOUTUBE_COOKIES_FILE
 
     if proxy_url:
-        return {
-            'modo': 'proxy',
-            'configurado': True,
-            'mensaje': f'Proxy configurado ({proxy_url.split("@")[-1] if "@" in proxy_url else proxy_url})'
-        }
+        host = proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url
+        return {'modo': 'proxy', 'configurado': True, 'mensaje': f'Proxy configurado ({host})'}
 
-    if cookies_file:
-        ruta = Path(cookies_file)
-        if ruta.exists():
-            return {
-                'modo': 'cookies',
-                'configurado': True,
-                'mensaje': f'Cookies configuradas ({ruta.name})'
-            }
-        else:
-            return {
-                'modo': 'cookies',
-                'configurado': False,
-                'mensaje': f'Archivo de cookies no encontrado: {cookies_file}'
-            }
+    cookies = _ruta_cookies_activa()
+    if cookies:
+        return {'modo': 'cookies', 'configurado': True, 'mensaje': f'Cookies cargadas ({cookies.name})'}
 
     return {
         'modo': 'ninguno',
         'configurado': False,
-        'mensaje': 'Sin proxy ni cookies — puede fallar en IPs de nube/datacenter'
+        'mensaje': 'Sin cookies — puede fallar en IPs de nube/datacenter'
     }
 
 
 def _crear_ytt() -> YouTubeTranscriptApi:
     """Crea instancia de YouTubeTranscriptApi con proxy o cookies si están configurados."""
     proxy_url = config.YOUTUBE_PROXY_URL
-    cookies_file = config.YOUTUBE_COOKIES_FILE
 
     if proxy_url:
         proxy_cfg = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
         return YouTubeTranscriptApi(proxy_config=proxy_cfg)
 
-    if cookies_file:
-        ruta = Path(cookies_file)
-        if ruta.exists():
-            sesion = requests.Session()
-            jar = http.cookiejar.MozillaCookieJar(str(ruta))
-            jar.load(ignore_discard=True, ignore_expires=True)
-            sesion.cookies = jar
-            return YouTubeTranscriptApi(http_client=sesion)
-        else:
-            logger.warning(f'YOUTUBE_COOKIES_FILE no encontrado: {cookies_file}')
+    cookies = _ruta_cookies_activa()
+    if cookies:
+        sesion = requests.Session()
+        jar = http.cookiejar.MozillaCookieJar(str(cookies))
+        jar.load(ignore_discard=True, ignore_expires=True)
+        sesion.cookies = jar
+        return YouTubeTranscriptApi(http_client=sesion)
 
     return YouTubeTranscriptApi()
 

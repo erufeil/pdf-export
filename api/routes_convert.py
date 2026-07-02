@@ -1844,6 +1844,61 @@ def check_youtube_to_md():
     return respuesta_exitosa(estado, 'Estado de configuración YouTube')
 
 
+@bp.route('/youtube-to-md/cookies', methods=['POST'])
+def subir_cookies_youtube():
+    """
+    Recibe archivo de cookies en formato Netscape (exportado desde Chrome/Firefox)
+    y lo guarda en data/youtube_cookies.txt para uso en youtube-transcript-api.
+    """
+    import config as cfg
+    import http.cookiejar
+    from pathlib import Path
+
+    if 'archivo' not in request.files:
+        return respuesta_error('NO_FILE', 'No se recibió archivo')
+
+    f = request.files['archivo']
+    if not f.filename:
+        return respuesta_error('NO_FILE', 'Archivo vacío')
+
+    contenido = f.read().decode('utf-8', errors='replace')
+
+    # Validar que sea formato Netscape
+    if '# Netscape HTTP Cookie File' not in contenido and '# HTTP Cookie File' not in contenido:
+        return respuesta_error(
+            'INVALID_FORMAT',
+            'El archivo no es un cookie file Netscape válido. '
+            'Usá la extensión "Get cookies.txt LOCALLY" (Chrome) o "cookies.txt" (Firefox).'
+        )
+
+    # Verificar que tenga cookies de youtube.com
+    if 'youtube.com' not in contenido:
+        return respuesta_error(
+            'NO_YOUTUBE_COOKIES',
+            'El archivo no contiene cookies de youtube.com. '
+            'Exportá las cookies estando en youtube.com con la sesión iniciada.'
+        )
+
+    ruta = Path(cfg.YOUTUBE_COOKIES_DEFAULT)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(contenido, encoding='utf-8')
+
+    # Verificar que se pueden cargar
+    try:
+        jar = http.cookiejar.MozillaCookieJar(str(ruta))
+        jar.load(ignore_discard=True, ignore_expires=True)
+        n_cookies = len(list(jar))
+    except Exception as e:
+        ruta.unlink(missing_ok=True)
+        return respuesta_error('LOAD_ERROR', f'Error al leer las cookies: {e}')
+
+    logger.info(f'Cookies YouTube actualizadas: {n_cookies} cookies guardadas en {ruta}')
+    return respuesta_exitosa(
+        {'cookies': n_cookies, 'archivo': ruta.name},
+        f'{n_cookies} cookies de YouTube guardadas correctamente'
+    )
+
+
 @bp.route('/youtube-to-md', methods=['POST'])
 def convertir_youtube_to_md():
     """

@@ -59,7 +59,10 @@ WHISPER_URL = os.getenv('WHISPER_URL', '').strip()
 YOUTUBE_PROXY_URL = os.getenv('YOUTUBE_PROXY_URL', '').strip()
 # Opción B: ruta a archivo de cookies Netscape exportado desde el browser
 # (ej: usar extensión "Get cookies.txt LOCALLY" en Chrome/Firefox)
+# Por defecto apunta a data/youtube_cookies.txt (subible desde la UI).
 YOUTUBE_COOKIES_FILE = os.getenv('YOUTUBE_COOKIES_FILE', '').strip()
+# Ruta interna donde la UI puede subir cookies (siempre fija)
+YOUTUBE_COOKIES_DEFAULT = str(DATA_FOLDER / 'youtube_cookies.txt')
 
 # URL base del servicio Apache Tika para extraccion con OCR (Etapa 22).
 # Tika procesa PDFs escaneados usando Tesseract internamente.

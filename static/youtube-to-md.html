@@ -174,6 +174,46 @@
     .config-banner.ok   .config-dot { background: var(--green); }
     .config-banner.warn .config-dot { background: #D2991F; }
     .config-banner.hidden { display: none; }
+    .hidden { display: none; }
+
+    /* ── Cookies setup card ── */
+    .cookies-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+    .browser-btns { display: flex; gap: 10px; margin-bottom: 14px; }
+    .browser-btn {
+      flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 12.5px; cursor: pointer;
+      display: flex; align-items: center; gap: 9px; transition: border-color 0.15s, background 0.15s;
+    }
+    .browser-btn:hover { border-color: var(--accent); background: rgba(163,113,247,0.06); }
+    .browser-btn.active { border-color: var(--accent); background: rgba(163,113,247,0.1); }
+    .browser-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .cookies-instructions {
+      display: none; padding: 10px 12px; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: 7px; font-size: 12px;
+      color: var(--muted); margin-bottom: 12px; line-height: 1.7;
+    }
+    .cookies-instructions.visible { display: block; }
+    .cookies-instructions a { color: var(--accent); text-decoration: none; }
+    .cookies-instructions a:hover { text-decoration: underline; }
+    .cookies-instructions ol { padding-left: 16px; }
+    .file-upload-row { display: flex; gap: 8px; align-items: center; }
+    .file-label {
+      flex: 1; padding: 8px 12px; background: var(--bg); border: 1px dashed var(--border);
+      border-radius: 7px; font-size: 12px; color: var(--muted); cursor: pointer;
+      transition: border-color 0.15s; text-align: center;
+    }
+    .file-label:hover { border-color: var(--accent); color: var(--text); }
+    .file-label.has-file { border-color: var(--accent); color: var(--text); border-style: solid; }
+    .btn-upload {
+      padding: 8px 16px; background: var(--accent); color: #fff; border: none;
+      border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn-upload:hover:not(:disabled) { opacity: 0.85; }
+    .btn-upload:disabled { opacity: 0.4; cursor: not-allowed; }
+    .upload-result { font-size: 12px; margin-top: 8px; }
+    .upload-result.ok   { color: var(--green); }
+    .upload-result.err  { color: var(--red); }
 
     /* ── Footer ── */
     footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
@@ -257,6 +297,65 @@
     <div class="config-banner warn hidden" id="banner-config">
       <div class="config-dot"></div>
       <span id="banner-texto">Verificando configuración...</span>
+    </div>
+
+    <!-- Card: cookies YouTube -->
+    <div class="card" id="card-cookies">
+      <div class="cookies-title">Cookies de YouTube (requeridas en servidores cloud)</div>
+
+      <div class="browser-btns">
+        <!-- Chrome icon SVG -->
+        <button type="button" class="browser-btn" id="btn-chrome" onclick="mostrarInstrucciones('chrome')">
+          <svg class="browser-icon" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#4285F4"/>
+            <circle cx="12" cy="12" r="4.2" fill="white"/>
+            <path d="M12 7.8h8.5A10 10 0 0 0 12 2v5.8z" fill="#EA4335"/>
+            <path d="M3.5 7.8 7.8 15.3A10 10 0 0 1 3.5 7.8z" fill="#FBBC05"/>
+            <path d="M7.8 15.3l4.2-3.5-4.2-4 L3.5 7.8A10 10 0 0 0 7.8 15.3z" fill="#FBBC05"/>
+            <path d="M12 16.2l-4.2-0.9A10 10 0 0 0 12 22v-5.8z" fill="#34A853"/>
+            <path d="M16.2 15.3l-4.2 0.9V22A10 10 0 0 0 20.5 7.8h-8.5z" fill="#4285F4"/>
+          </svg>
+          Exportar desde Chrome
+        </button>
+        <!-- Firefox icon SVG -->
+        <button type="button" class="browser-btn" id="btn-firefox" onclick="mostrarInstrucciones('firefox')">
+          <svg class="browser-icon" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#FF9500"/>
+            <circle cx="12" cy="12" r="6.5" fill="#FF6611"/>
+            <circle cx="12" cy="12" r="3.5" fill="#6633CC"/>
+            <path d="M12 5.5C8.4 5.5 5.5 8.4 5.5 12s2.9 6.5 6.5 6.5" stroke="#FF9500" stroke-width="1.5" fill="none"/>
+          </svg>
+          Exportar desde Firefox
+        </button>
+      </div>
+
+      <!-- Instrucciones Chrome -->
+      <div class="cookies-instructions" id="inst-chrome">
+        <ol>
+          <li>Abrí Chrome y andá a <strong>youtube.com</strong> con tu sesión iniciada</li>
+          <li>Instalá la extensión <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener">Get cookies.txt LOCALLY</a></li>
+          <li>Hacé click en el ícono de la extensión → <strong>Export</strong></li>
+          <li>Guardás el archivo <code>.txt</code> y lo subís acá abajo</li>
+        </ol>
+      </div>
+
+      <!-- Instrucciones Firefox -->
+      <div class="cookies-instructions" id="inst-firefox">
+        <ol>
+          <li>Abrí Firefox y andá a <strong>youtube.com</strong> con tu sesión iniciada</li>
+          <li>Instalá el complemento <a href="https://addons.mozilla.org/es/firefox/addon/cookies-txt/" target="_blank" rel="noopener">cookies.txt</a></li>
+          <li>Hacé click en el ícono → <strong>Current Site</strong> → descargá el archivo</li>
+          <li>Subí el archivo <code>.txt</code> acá abajo</li>
+        </ol>
+      </div>
+
+      <!-- Upload -->
+      <div class="file-upload-row">
+        <input type="file" id="input-cookies" accept=".txt" class="hidden" onchange="archivoSeleccionado()">
+        <label for="input-cookies" class="file-label" id="label-cookies">Seleccionar archivo cookies.txt</label>
+        <button type="button" class="btn-upload" id="btn-upload-cookies" disabled onclick="subirCookies()">Subir</button>
+      </div>
+      <div class="upload-result" id="upload-result"></div>
     </div>
 
     <!-- URL + opciones -->
@@ -452,6 +551,62 @@
     const btn = document.getElementById('btn-ejecutar');
     btn.disabled = false;
     btn.textContent = 'Convertir a MD';
+  }
+
+  // ── Cookies setup ──
+  let browserActivo = null;
+
+  function mostrarInstrucciones(browser) {
+    ['chrome', 'firefox'].forEach(b => {
+      document.getElementById(`inst-${b}`).classList.toggle('visible', b === browser);
+      document.getElementById(`btn-${b}`).classList.toggle('active', b === browser);
+    });
+    browserActivo = browser;
+  }
+
+  function archivoSeleccionado() {
+    const input = document.getElementById('input-cookies');
+    const label = document.getElementById('label-cookies');
+    const btn   = document.getElementById('btn-upload-cookies');
+    if (input.files.length) {
+      label.textContent = input.files[0].name;
+      label.classList.add('has-file');
+      btn.disabled = false;
+    }
+  }
+
+  async function subirCookies() {
+    const input = document.getElementById('input-cookies');
+    if (!input.files.length) return;
+
+    const btn = document.getElementById('btn-upload-cookies');
+    const res = document.getElementById('upload-result');
+    btn.disabled = true;
+    btn.textContent = 'Subiendo...';
+    res.className = 'upload-result';
+    res.textContent = '';
+
+    const fd = new FormData();
+    fd.append('archivo', input.files[0]);
+
+    try {
+      const r = await fetch(`${API}/convert/youtube-to-md/cookies`, { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.success) {
+        res.className = 'upload-result ok';
+        res.textContent = d.message;
+        cargarEstadoConfig();
+      } else {
+        res.className = 'upload-result err';
+        res.textContent = d.error?.message || 'Error al subir cookies';
+      }
+    } catch(e) {
+      res.className = 'upload-result err';
+      res.textContent = 'Error de conexión: ' + e.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Subir';
+    }
   }
 </script>
 </body>
