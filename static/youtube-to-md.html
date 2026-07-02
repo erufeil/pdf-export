@@ -163,6 +163,18 @@
     .info-strip p { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
     .info-strip p + p { margin-top: 4px; }
 
+    /* ── Config banner ── */
+    .config-banner {
+      padding: 10px 14px; border-radius: 8px; font-size: 12px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .config-banner.ok   { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--green); }
+    .config-banner.warn { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.35); color: #D2991F; }
+    .config-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .config-banner.ok   .config-dot { background: var(--green); }
+    .config-banner.warn .config-dot { background: #D2991F; }
+    .config-banner.hidden { display: none; }
+
     /* ── Footer ── */
     footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
   </style>
@@ -241,6 +253,12 @@
       <p>Descarga los subtítulos/CC de un video de YouTube y los convierte a Markdown.</p>
     </div>
 
+    <!-- Banner config IP -->
+    <div class="config-banner warn hidden" id="banner-config">
+      <div class="config-dot"></div>
+      <span id="banner-texto">Verificando configuración...</span>
+    </div>
+
     <!-- URL + opciones -->
     <div class="card">
       <div class="card-title">URL del video</div>
@@ -286,6 +304,7 @@
       <p><strong>Auto</strong>: toma subtítulos manuales primero; si no hay, usa los generados automáticamente.</p>
       <p>Si el video no tiene subtítulos disponibles, se mostrará un error claro.</p>
       <p>Funciona con: <code>youtube.com/watch?v=...</code> · <code>youtu.be/...</code> · <code>/shorts/...</code></p>
+      <p><strong>IP bloqueada por YouTube:</strong> configurar <code>YOUTUBE_PROXY_URL</code> o <code>YOUTUBE_COOKIES_FILE</code> en el entorno del servidor.</p>
     </div>
   </div>
 
@@ -298,6 +317,23 @@
   const API = window.AppConfig?.API_BASE_URL || '/api/v1';
   let idiomaSeleccionado = 'auto';
   let trabajoId = null;
+
+  async function cargarEstadoConfig() {
+    try {
+      const r = await fetch(`${API}/convert/youtube-to-md/check`);
+      const d = await r.json();
+      if (!d.success) return;
+      const banner = document.getElementById('banner-config');
+      const texto  = document.getElementById('banner-texto');
+      texto.textContent = d.data.mensaje;
+      banner.classList.remove('hidden');
+      if (d.data.configurado) {
+        banner.classList.remove('warn');
+        banner.classList.add('ok');
+      }
+    } catch(_) {}
+  }
+  cargarEstadoConfig();
 
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('collapsed');

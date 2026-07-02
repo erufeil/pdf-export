@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.64')
+VERSION = os.getenv('APP_VERSION', '1.1.65')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
@@ -53,6 +53,13 @@ NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://ingestor:5001').strip()
 
 # URL del servidor Whisper propio (API compatible OpenAI). Dejar vacio para deshabilitar.
 WHISPER_URL = os.getenv('WHISPER_URL', '').strip()
+
+# Workaround para IPs bloqueadas por YouTube en youtube-transcript-api.
+# Opción A (recomendada): proxy HTTP/HTTPS — ej: http://user:pass@host:port
+YOUTUBE_PROXY_URL = os.getenv('YOUTUBE_PROXY_URL', '').strip()
+# Opción B: ruta a archivo de cookies Netscape exportado desde el browser
+# (ej: usar extensión "Get cookies.txt LOCALLY" en Chrome/Firefox)
+YOUTUBE_COOKIES_FILE = os.getenv('YOUTUBE_COOKIES_FILE', '').strip()
 
 # URL base del servicio Apache Tika para extraccion con OCR (Etapa 22).
 # Tika procesa PDFs escaneados usando Tesseract internamente.

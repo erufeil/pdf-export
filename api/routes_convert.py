@@ -1836,6 +1836,14 @@ def check_audio_to_md():
     return respuesta_exitosa(estado, 'Estado del servidor Whisper')
 
 
+@bp.route('/youtube-to-md/check', methods=['GET'])
+def check_youtube_to_md():
+    """Verifica configuración de workaround para IP block de YouTube (Etapa 43)."""
+    from services.youtube_to_md import verificar_youtube_config
+    estado = verificar_youtube_config()
+    return respuesta_exitosa(estado, 'Estado de configuración YouTube')
+
+
 @bp.route('/youtube-to-md', methods=['POST'])
 def convertir_youtube_to_md():
     """

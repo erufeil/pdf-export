@@ -3,11 +3,14 @@
 Servicio YouTube CC→MD para PDFexport (Etapa 43).
 Descarga subtítulos/CC de YouTube y los convierte a Markdown.
 Usa youtube-transcript-api v1.2.4 (instancia, no classmethods).
+
+Workaround IP block: YOUTUBE_PROXY_URL o YOUTUBE_COOKIES_FILE en env.
 """
 
 import re
 import time
 import logging
+import http.cookiejar
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
@@ -19,6 +22,7 @@ from youtube_transcript_api import (
     NoTranscriptFound,
     CouldNotRetrieveTranscript,
 )
+from youtube_transcript_api.proxies import GenericProxyConfig
 
 import config
 import models
@@ -30,6 +34,66 @@ _HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
     'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
 }
+
+
+def verificar_youtube_config() -> dict:
+    """
+    Retorna el estado de configuración del workaround de IP block.
+    Usado por GET /youtube-to-md/check.
+    """
+    proxy_url = config.YOUTUBE_PROXY_URL
+    cookies_file = config.YOUTUBE_COOKIES_FILE
+
+    if proxy_url:
+        return {
+            'modo': 'proxy',
+            'configurado': True,
+            'mensaje': f'Proxy configurado ({proxy_url.split("@")[-1] if "@" in proxy_url else proxy_url})'
+        }
+
+    if cookies_file:
+        ruta = Path(cookies_file)
+        if ruta.exists():
+            return {
+                'modo': 'cookies',
+                'configurado': True,
+                'mensaje': f'Cookies configuradas ({ruta.name})'
+            }
+        else:
+            return {
+                'modo': 'cookies',
+                'configurado': False,
+                'mensaje': f'Archivo de cookies no encontrado: {cookies_file}'
+            }
+
+    return {
+        'modo': 'ninguno',
+        'configurado': False,
+        'mensaje': 'Sin proxy ni cookies — puede fallar en IPs de nube/datacenter'
+    }
+
+
+def _crear_ytt() -> YouTubeTranscriptApi:
+    """Crea instancia de YouTubeTranscriptApi con proxy o cookies si están configurados."""
+    proxy_url = config.YOUTUBE_PROXY_URL
+    cookies_file = config.YOUTUBE_COOKIES_FILE
+
+    if proxy_url:
+        proxy_cfg = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+        return YouTubeTranscriptApi(proxy_config=proxy_cfg)
+
+    if cookies_file:
+        ruta = Path(cookies_file)
+        if ruta.exists():
+            sesion = requests.Session()
+            jar = http.cookiejar.MozillaCookieJar(str(ruta))
+            jar.load(ignore_discard=True, ignore_expires=True)
+            sesion.cookies = jar
+            return YouTubeTranscriptApi(http_client=sesion)
+        else:
+            logger.warning(f'YOUTUBE_COOKIES_FILE no encontrado: {cookies_file}')
+
+    return YouTubeTranscriptApi()
 
 
 def _extraer_video_id(url: str) -> str:
@@ -103,7 +167,7 @@ def _obtener_transcripcion(video_id: str, idioma: str) -> tuple:
     Retorna (texto_continuo, idioma_usado).
     idioma='auto' → primera disponible (manual antes que auto-generada).
     """
-    ytt = YouTubeTranscriptApi()
+    ytt = _crear_ytt()
 
     if idioma == 'auto':
         lista = ytt.list(video_id)
@@ -121,7 +185,6 @@ def _obtener_transcripcion(video_id: str, idioma: str) -> tuple:
             fetched = ytt.fetch(video_id, languages=langs_pref)
             idioma_usado = idioma
         except NoTranscriptFound:
-            # Intentar traducción desde cualquier transcripción disponible
             lista = ytt.list(video_id)
             try:
                 base = lista.find_manually_created_transcript(['es', 'en'])
@@ -135,7 +198,6 @@ def _obtener_transcripcion(video_id: str, idioma: str) -> tuple:
     for f in fragmentos:
         t = f.get('text', '').strip()
         if t:
-            # Quitar marcadores de efectos [música], [Música], [applause], etc.
             t = re.sub(r'\[.*?\]', '', t).strip()
             if t:
                 partes.append(t)
@@ -158,7 +220,7 @@ def procesar_youtube_to_md(trabajo_id: str, archivo_id: str, parametros: dict) -
 
     job_manager.actualizar_progreso(trabajo_id, 5, "Validando URL")
 
-    video_id = _extraer_video_id(url)  # lanza ValueError si inválida
+    video_id = _extraer_video_id(url)
 
     job_manager.actualizar_progreso(trabajo_id, 15, "Obteniendo metadatos del video")
     meta = _extraer_meta_youtube(url, video_id)
