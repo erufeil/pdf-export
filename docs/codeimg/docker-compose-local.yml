@@ -30,6 +30,10 @@ services:
       # Requiere imagen apache/tika:latest-full para OCR con Tesseract.
       # Dejar vacio para deshabilitar Etapa 22 (PDF escaneado a CSV).
       - TIKA_URL=${TIKA_URL:-http://tika:9998}
+      # YouTube relay xero-proxy (Etapa 43).
+      # Necesario para evitar el bloqueo de IP de YouTube en servidores cloud.
+      - YOUTUBE_RELAY_URL=${YOUTUBE_RELAY_URL:-}
+      - YOUTUBE_RELAY_TOKEN=${YOUTUBE_RELAY_TOKEN:-}
 
     # Puertos expuestos
     ports:

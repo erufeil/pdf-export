@@ -31,6 +31,19 @@ services:
       # Dejar vacio para deshabilitar Etapa 22 (PDF escaneado a CSV).
       - TIKA_URL=${TIKA_URL:-http://tika:9998}
 
+      # Whisper: servidor de transcripcion de audio (Etapa 41).
+      # Dejar vacio para deshabilitar audio-to-md.
+      - WHISPER_URL=${WHISPER_URL:-}
+
+      # YouTube relay xero-proxy (Etapa 43).
+      # Necesario para evitar el bloqueo de IP de YouTube en servidores cloud.
+      - YOUTUBE_RELAY_URL=${YOUTUBE_RELAY_URL:-}
+      - YOUTUBE_RELAY_TOKEN=${YOUTUBE_RELAY_TOKEN:-}
+
+      # Alternativas al relay (menos recomendadas):
+      - YOUTUBE_PROXY_URL=${YOUTUBE_PROXY_URL:-}
+      - YOUTUBE_COOKIES_FILE=${YOUTUBE_COOKIES_FILE:-}
+
     # Puertos expuestos
     ports:
       - "${PORT:-5000}:${PORT:-5000}"
