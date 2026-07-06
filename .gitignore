@@ -13,10 +13,12 @@ ENV/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Entorno virtual
+# Entorno virtual y configuracion local
 venv/
 .env
 *.env
+.env.local
+config.local.py
 
 # IDEs
 .vscode/
@@ -34,6 +36,7 @@ desktop.ini
 uploads/
 outputs/
 data/*.db
+data/youtube_cookies.txt
 
 # Logs
 *.log
@@ -50,10 +53,6 @@ build/
 dist/
 *.egg-info/
 
-# Archivos de configuracion local (si se crean)
-config.local.py
-.env.local
-
 # Documentacion generada
 docs/_build/
 
@@ -61,3 +60,35 @@ docs/_build/
 *.tmp
 *.temp
 *.bak
+
+# ── Graphify ──────────────────────────────────────────────
+graphify-out/
+.graphify_python
+.graphify_detect.json
+.graphify_extract.json
+.graphify_ast.json
+.graphify_semantic.json
+.graphify_semantic_new.json
+.graphify_cached.json
+.graphify_uncached.txt
+.graphify_analysis.json
+.graphify_labels.json
+.graphify_incremental.json
+.graphify_old.json
+.graphify_transcripts.json
+
+# ── Contexto Claude (no es codigo del proyecto) ───────────
+CLAUDE.md
+CLAUDE-*.md
+CLAUDE2.md
+CLAUDE2-*.md
+
+# ── Archivos de desarrollo / no funcionales ───────────────
+Rta1.md
+docs/
+config.js
+Dockerfile-convencional
+entrypoint.sh
+static/css/styles.css
+.env.development
+.env.produccion

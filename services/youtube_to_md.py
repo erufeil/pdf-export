@@ -53,11 +53,21 @@ def _ruta_cookies_activa() -> Path | None:
 
 def verificar_youtube_config() -> dict:
     """Retorna el estado de configuración del workaround de IP block."""
-    proxy_url = config.YOUTUBE_PROXY_URL
+    if config.YOUTUBE_RELAY_URL:
+        host = config.YOUTUBE_RELAY_URL.split('//')[-1].split('/')[0]
+        tiene_token = bool(config.YOUTUBE_RELAY_TOKEN)
+        return {
+            'modo': 'relay',
+            'configurado': tiene_token,
+            'mensaje': (
+                f'Relay configurado: {host}' if tiene_token
+                else f'Relay URL presente ({host}) pero falta YOUTUBE_RELAY_TOKEN'
+            ),
+        }
 
-    if proxy_url:
-        host = proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url
-        return {'modo': 'proxy', 'configurado': True, 'mensaje': f'Proxy configurado ({host})'}
+    if config.YOUTUBE_PROXY_URL:
+        host = config.YOUTUBE_PROXY_URL.split('@')[-1] if '@' in config.YOUTUBE_PROXY_URL else config.YOUTUBE_PROXY_URL
+        return {'modo': 'proxy', 'configurado': True, 'mensaje': f'Proxy CONNECT configurado ({host})'}
 
     cookies = _ruta_cookies_activa()
     if cookies:
@@ -66,7 +76,7 @@ def verificar_youtube_config() -> dict:
     return {
         'modo': 'ninguno',
         'configurado': False,
-        'mensaje': 'Sin cookies — puede fallar en IPs de nube/datacenter'
+        'mensaje': 'Sin relay ni proxy — puede fallar en IPs de nube/datacenter',
     }
 
 
@@ -155,11 +165,49 @@ def _extraer_meta_youtube(url: str, video_id: str) -> dict:
     return meta
 
 
+def _obtener_via_relay(video_id: str, idioma: str) -> tuple:
+    """Llama al relay xero-proxy en lugar de youtube-transcript-api local."""
+    url   = config.YOUTUBE_RELAY_URL.rstrip('/')
+    token = config.YOUTUBE_RELAY_TOKEN
+    try:
+        r = requests.post(
+            f'{url}/yt-transcript',
+            json={'video_id': video_id, 'idioma': idioma},
+            headers={'Authorization': f'Bearer {token}'},
+            timeout=30,
+        )
+        r.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise CouldNotRetrieveTranscript(video_id) from e
+
+    d = r.json()
+    if not d.get('ok'):
+        msg = d.get('error', 'Error en relay')
+        if 'subtítulos' in msg or 'habilitados' in msg or 'Disabled' in msg:
+            raise TranscriptsDisabled(video_id)
+        if 'idioma' in msg or 'NoTranscript' in msg:
+            raise NoTranscriptFound(video_id, [idioma], {})
+        raise CouldNotRetrieveTranscript(video_id)
+
+    fragmentos = d.get('fragmentos', [])
+    idioma_usado = d.get('idioma', idioma)
+    partes = []
+    for f in fragmentos:
+        t = re.sub(r'\[.*?\]', '', f.get('text', '')).strip()
+        if t:
+            partes.append(t)
+    texto = re.sub(r' {2,}', ' ', ' '.join(partes)).strip()
+    return texto, idioma_usado
+
+
 def _obtener_transcripcion(video_id: str, idioma: str) -> tuple:
     """
     Retorna (texto_continuo, idioma_usado).
-    idioma='auto' → primera disponible (manual antes que auto-generada).
+    Prioridad: relay xero-proxy → CONNECT proxy → cookies → directo.
     """
+    if config.YOUTUBE_RELAY_URL:
+        return _obtener_via_relay(video_id, idioma)
+
     ytt = _crear_ytt()
 
     if idioma == 'auto':

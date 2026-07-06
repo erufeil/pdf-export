@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Version de la aplicacion (sobrescribible via variable de entorno)
-VERSION = os.getenv('APP_VERSION', '1.1.65')
+VERSION = os.getenv('APP_VERSION', '1.1.66')
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).parent.absolute()
@@ -55,11 +55,12 @@ NLM_INGESTOR_URL = os.getenv('NLM_INGESTOR_URL', 'http://ingestor:5001').strip()
 WHISPER_URL = os.getenv('WHISPER_URL', '').strip()
 
 # Workaround para IPs bloqueadas por YouTube en youtube-transcript-api.
-# Opción A (recomendada): proxy HTTP/HTTPS — ej: http://user:pass@host:port
+# Opción A (recomendada): relay REST on-premise vía Cloudflare tunnel
+YOUTUBE_RELAY_URL   = os.getenv('YOUTUBE_RELAY_URL', '').strip()
+YOUTUBE_RELAY_TOKEN = os.getenv('YOUTUBE_RELAY_TOKEN', '').strip()
+# Opción B: proxy HTTP/HTTPS CONNECT (sin Cloudflare, puerto directo)
 YOUTUBE_PROXY_URL = os.getenv('YOUTUBE_PROXY_URL', '').strip()
-# Opción B: ruta a archivo de cookies Netscape exportado desde el browser
-# (ej: usar extensión "Get cookies.txt LOCALLY" en Chrome/Firefox)
-# Por defecto apunta a data/youtube_cookies.txt (subible desde la UI).
+# Opción C: archivo de cookies Netscape exportado desde el browser
 YOUTUBE_COOKIES_FILE = os.getenv('YOUTUBE_COOKIES_FILE', '').strip()
 # Ruta interna donde la UI puede subir cookies (siempre fija)
 YOUTUBE_COOKIES_DEFAULT = str(DATA_FOLDER / 'youtube_cookies.txt')
