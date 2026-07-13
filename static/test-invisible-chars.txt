@@ -1,0 +1,76 @@
+=== ARCHIVO DE TEST — CARACTERES INVISIBLES Y RAROS ===
+Generado para testear modulos de deteccion de caracteres especiales.
+
+--- SECCION 1: ESPACIOS INVISIBLES ---
+Texto​normal (zero-width space U+200B entre 'Texto' y 'normal')
+Espacio no quebrable (NBSP U+00A0 entre palabras)
+Guion­softly (soft hyphen U+00AD invisible entre 'Guion' y 'softly')
+Separador⁠palabras (word joiner U+2060 entre palabras)
+Texto‌normal (zero-width non-joiner U+200C)
+Texto‍normal (zero-width joiner U+200D)
+
+--- SECCION 2: MARCAS DE DIRECCION (BIDI) ---
+Texto con marca LTR:‎ (U+200E Left-to-Right Mark)
+Texto con marca RTL:‏ (U+200F Right-to-Left Mark)
+Marca PDF bidi: ‬ (U+202C Pop Directional Formatting)
+Marca LRE: ‪ (U+202A Left-to-Right Embedding)
+Marca RLE: ‫ (U+202B Right-to-Left Embedding)
+
+--- SECCION 3: CARACTERES QUE PARECEN OTROS ---
+Guion normal: -  (U+002D HYPHEN-MINUS)
+Guion largo: —  (U+2014 EM DASH)
+Guion medio: –  (U+2013 EN DASH)
+Guion de figura: ‒  (U+2012 FIGURE DASH)
+Guion horizontal: ―  (U+2015 HORIZONTAL BAR)
+Espacio normal:[ ]  (U+0020)
+Espacio en-cuadratín:[ ]  (U+2002 EN SPACE)
+Espacio em-cuadratín:[ ]  (U+2003 EM SPACE)
+Espacio estrecho:[ ]  (U+2009 THIN SPACE)
+Espacio med. matemático:[ ]  (U+205F MEDIUM MATHEMATICAL SPACE)
+
+--- SECCION 4: COMILLAS Y APOSTROFES TIPOGRAFICOS ---
+Comillas rectas: texto y 'texto'
+Comillas tipograficas dobles: “texto”
+Comillas tipograficas simples: ‘texto’
+Comillas angulares: «texto»
+Comillas angulares simples: ‹texto›
+Apostrofe tipografico: it’s
+
+--- SECCION 5: PUNTUACION ESPECIAL ---
+Puntos suspensivos tipograficos: …
+Puntos suspensivos manuales: ...
+Barra de fraccion: 1⁄2  (U+2044 FRACTION SLASH)
+Diagonal invertida: Asterisco: *  Daggers: † ‡
+Marca de parrafo: ¶  Seccion: §
+
+--- SECCION 6: CARACTERES DE CONTROL VISIBLES ---
+Tabulacion horizontal:	(U+0009 TAB — la siguiente linea usa tabs)
+Col1	Col2	Col3
+Val1	Val2	Val3
+Retorno de carro: (CR+LF sigue)
+Fin de linea.
+
+--- SECCION 7: UNICODE AMPLIO (FUERA DEL BMP) ---
+Emoji cara: 😀 (U+1F600 cara sonriente)
+Emoji fuego: 🔥 (U+1F525)
+Nota musical: 𝄞 (U+1D11E G CLEF — fuera del BMP)
+Caracter raro: 𐀀 (U+10000 LINEAR B SYLLABLE B008 A)
+
+--- SECCION 8: CARACTERES SIMILARES VISUALMENTE (HOMOGLIFOS) ---
+Letra O latina vs digito 0: O 0
+Letra l minuscula vs I mayuscula vs | barra: l I |
+Letra a latina (a) vs a cirilico (а) vs a griego (α)
+Letra e latina (e) vs e cirilico (е) vs epsilon griego (ε)
+Letra o latina (o) vs o cirilico (о) vs omicron griego (ο)
+Guion-menos (-) vs guion-mayon en hangul (－) vs menos matematico (−)
+
+--- SECCION 9: BYTE ORDER MARK ---
+(Este archivo fue guardado en UTF-8 SIN BOM. Un archivo con BOM comienza con EF BB BF invisibles.)
+
+--- SECCION 10: CADENA VACIA Y ESPACIOS MULTIPLES ---
+(linea solo con espacios):   
+(linea solo con tabs):			
+(linea vacia):
+
+(dos lineas vacias arriba)
+Fin del archivo de test.

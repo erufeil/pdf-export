@@ -4,6 +4,7 @@ Endpoints de la API para gestion de archivos.
 Maneja subida, listado, eliminacion y miniaturas.
 """
 
+import re
 from flask import Blueprint, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 import logging
@@ -259,6 +260,63 @@ def verificar_duplicado():
         }, 'Archivo encontrado en el servidor')
     else:
         return respuesta_exitosa({'exists': False}, 'Archivo no encontrado')
+
+
+_REGEX_SLUG = re.compile(r'^[a-z0-9_-]{3,50}$')
+
+
+def _ip_cliente() -> str:
+    """Extrae la IP real del cliente respetando X-Forwarded-For de Nginx."""
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or '0.0.0.0'
+
+
+@bp.route('/notepad/<slug>', methods=['GET'])
+def obtener_notepad(slug):
+    """Obtiene (o crea) un notepad compartido por slug. Registra presencia."""
+    if not _REGEX_SLUG.match(slug):
+        return respuesta_error('SLUG_INVALIDO', 'El slug solo puede tener letras minúsculas, números, guión y guión bajo (3–50 caracteres)')
+    ip = _ip_cliente()
+    notepad = models.obtener_o_crear_notepad(slug, ip)
+    return respuesta_exitosa({
+        'slug': notepad['slug'],
+        'contenido': notepad['contenido'],
+        'version': notepad['version'],
+        'fecha_modificacion': notepad['fecha_modificacion'],
+        'visitantes': notepad['visitantes'],
+    })
+
+
+@bp.route('/notepad/<slug>', methods=['PUT'])
+def guardar_notepad(slug):
+    """Guarda el contenido del notepad (last-write-wins). Registra presencia."""
+    if not _REGEX_SLUG.match(slug):
+        return respuesta_error('SLUG_INVALIDO', 'Slug inválido')
+    datos = request.get_json(silent=True) or {}
+    contenido = datos.get('contenido', '')
+    if not isinstance(contenido, str):
+        return respuesta_error('CONTENIDO_INVALIDO', 'El contenido debe ser texto')
+    ip = _ip_cliente()
+    resultado = models.guardar_notepad(slug, contenido, ip)
+    return respuesta_exitosa({
+        'ok': True,
+        'version': resultado['version'],
+        'fecha_modificacion': resultado['fecha_modificacion'],
+        'visitantes': resultado['visitantes'],
+    })
+
+
+@bp.route('/notepad/<slug>', methods=['DELETE'])
+def eliminar_notepad(slug):
+    """Elimina el notepad permanentemente."""
+    if not _REGEX_SLUG.match(slug):
+        return respuesta_error('SLUG_INVALIDO', 'Slug inválido')
+    eliminado = models.eliminar_notepad(slug)
+    if not eliminado:
+        return respuesta_error('NOT_FOUND', 'Notepad no encontrado', 404)
+    return respuesta_exitosa({'ok': True}, 'Notepad eliminado')
 
 
 @bp.route('/help', methods=['GET'])

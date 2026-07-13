@@ -75,6 +75,31 @@ def inicializar_db():
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_trabajos_estado ON trabajos(estado)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_trabajos_fecha ON trabajos(fecha_creacion)')
 
+        # Tabla de notepads compartidos (Etapa 45)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notepads (
+                slug                TEXT PRIMARY KEY,
+                contenido           TEXT NOT NULL DEFAULT '',
+                version             INTEGER NOT NULL DEFAULT 1,
+                fecha_creacion      TEXT NOT NULL,
+                fecha_modificacion  TEXT NOT NULL,
+                fecha_ultimo_acceso TEXT NOT NULL
+            )
+        ''')
+
+        # Presencia: IPs activas por slug (ventana 45s)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notepad_presencia (
+                slug        TEXT NOT NULL,
+                ip          TEXT NOT NULL,
+                ultimo_ping TEXT NOT NULL,
+                PRIMARY KEY (slug, ip)
+            )
+        ''')
+
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_notepads_acceso ON notepads(fecha_ultimo_acceso)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_presencia_slug ON notepad_presencia(slug)')
+
         logger.info("Base de datos inicializada correctamente")
 
 
@@ -313,3 +338,96 @@ def eliminar_trabajos_expirados() -> int:
         logger.info(f"Eliminados {cantidad} trabajos expirados de BD")
 
     return cantidad
+
+
+# =============================================================================
+# Funciones para NOTEPADS (Etapa 45)
+# =============================================================================
+
+def _registrar_presencia(cursor, slug: str, ip: str):
+    """Upsert de presencia del cliente. Requiere cursor dentro de una conexión activa."""
+    cursor.execute('''
+        INSERT INTO notepad_presencia (slug, ip, ultimo_ping) VALUES (?, ?, ?)
+        ON CONFLICT(slug, ip) DO UPDATE SET ultimo_ping = excluded.ultimo_ping
+    ''', (slug, ip, datetime.now().isoformat()))
+
+
+def _leer_presencia(cursor, slug: str, ip_cliente: str) -> list:
+    """IPs activas en los últimos 45s. Marca es_yo para la IP del cliente."""
+    limite = (datetime.now() - timedelta(seconds=45)).isoformat()
+    cursor.execute(
+        'SELECT ip FROM notepad_presencia WHERE slug = ? AND ultimo_ping > ? ORDER BY ultimo_ping DESC',
+        (slug, limite)
+    )
+    return [{'ip': row['ip'], 'es_yo': row['ip'] == ip_cliente} for row in cursor.fetchall()]
+
+
+def obtener_o_crear_notepad(slug: str, ip: str) -> dict:
+    """Obtiene el notepad o lo crea vacío. Registra presencia y retorna visitantes."""
+    ahora = datetime.now().isoformat()
+    with obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM notepads WHERE slug = ?', (slug,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute('UPDATE notepads SET fecha_ultimo_acceso = ? WHERE slug = ?', (ahora, slug))
+            notepad = dict(row)
+        else:
+            cursor.execute('''
+                INSERT INTO notepads (slug, contenido, version, fecha_creacion, fecha_modificacion, fecha_ultimo_acceso)
+                VALUES (?, '', 1, ?, ?, ?)
+            ''', (slug, ahora, ahora, ahora))
+            notepad = {'slug': slug, 'contenido': '', 'version': 1,
+                       'fecha_creacion': ahora, 'fecha_modificacion': ahora}
+        _registrar_presencia(cursor, slug, ip)
+        visitantes = _leer_presencia(cursor, slug, ip)
+    return {**notepad, 'visitantes': visitantes}
+
+
+def guardar_notepad(slug: str, contenido: str, ip: str) -> dict:
+    """Guarda contenido (last-write-wins). Retorna versión, fecha y visitantes."""
+    ahora = datetime.now().isoformat()
+    with obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE notepads
+            SET contenido = ?, version = version + 1, fecha_modificacion = ?, fecha_ultimo_acceso = ?
+            WHERE slug = ?
+        ''', (contenido, ahora, ahora, slug))
+        if cursor.rowcount == 0:
+            cursor.execute('''
+                INSERT INTO notepads (slug, contenido, version, fecha_creacion, fecha_modificacion, fecha_ultimo_acceso)
+                VALUES (?, ?, 1, ?, ?, ?)
+            ''', (slug, contenido, ahora, ahora, ahora))
+            version = 1
+        else:
+            cursor.execute('SELECT version FROM notepads WHERE slug = ?', (slug,))
+            version = cursor.fetchone()['version']
+        _registrar_presencia(cursor, slug, ip)
+        visitantes = _leer_presencia(cursor, slug, ip)
+    return {'version': version, 'fecha_modificacion': ahora, 'visitantes': visitantes}
+
+
+def eliminar_notepad(slug: str) -> bool:
+    """Elimina el notepad y su presencia. Retorna True si existía."""
+    with obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM notepad_presencia WHERE slug = ?', (slug,))
+        cursor.execute('DELETE FROM notepads WHERE slug = ?', (slug,))
+        return cursor.rowcount > 0
+
+
+def eliminar_notepads_expirados() -> int:
+    """Elimina notepads sin acceso en 30 días. Retorna cantidad eliminada."""
+    limite = (datetime.now() - timedelta(days=30)).isoformat()
+    with obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT slug FROM notepads WHERE fecha_ultimo_acceso < ?', (limite,))
+        slugs = [row['slug'] for row in cursor.fetchall()]
+        if slugs:
+            placeholders = ','.join('?' * len(slugs))
+            cursor.execute(f'DELETE FROM notepad_presencia WHERE slug IN ({placeholders})', slugs)
+            cursor.execute(f'DELETE FROM notepads WHERE slug IN ({placeholders})', slugs)
+    if slugs:
+        logger.info(f"Notepads expirados eliminados: {len(slugs)}")
+    return len(slugs)

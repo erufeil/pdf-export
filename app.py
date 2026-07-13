@@ -98,6 +98,16 @@ def crear_app():
         return Response(js, mimetype='application/javascript',
                         headers={'Cache-Control': 'no-store'})
 
+    # Rutas para notepad compartido (Etapa 45) — deben ir antes del catch-all
+    @app.route('/txt-viewer/<slug>')
+    @app.route('/txt-viewer/<slug>/txt-viewer.html')
+    def notepad_editor(slug):
+        import re
+        if not re.match(r'^[a-z0-9_-]{3,50}$', slug):
+            from flask import abort
+            abort(404)
+        return send_from_directory('static', 'txt-viewer-editor.html')
+
     # Ruta para archivos estaticos adicionales en la raiz
     @app.route('/<path:filename>')
     def archivos_raiz(filename):
@@ -144,6 +154,15 @@ def iniciar_scheduler(app):
         hours=1,
         id='limpieza_archivos',
         name='Limpieza de archivos expirados'
+    )
+
+    # Limpieza de notepads sin acceso en 30 días (cada 24h)
+    scheduler.add_job(
+        func=models.eliminar_notepads_expirados,
+        trigger='interval',
+        hours=24,
+        id='limpieza_notepads',
+        name='Limpieza de notepads expirados'
     )
 
     scheduler.start()

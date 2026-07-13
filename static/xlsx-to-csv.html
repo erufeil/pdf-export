@@ -231,6 +231,14 @@
 
     /* ── Footer ── */
     footer { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+
+    /* ── Cambiar archivo ── */
+    .btn-cambiar {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 11px;
+      flex-shrink: 0; transition: border-color .15s, color .15s;
+    }
+    .btn-cambiar:hover { border-color: var(--accent); color: var(--text); }
   </style>
 </head>
 <body>
@@ -333,7 +341,7 @@
       <!-- ── Columna derecha ── -->
       <div>
         <!-- Drop zone -->
-        <div class="card">
+        <div class="card" id="card-upload">
           <div class="dropzone" id="drop-zone">
             <div class="dropzone-icon">📊</div>
             <div class="dropzone-text">
@@ -359,10 +367,11 @@
         <!-- File info -->
         <div class="card file-info-card" id="file-info-card">
           <div class="file-icon">XLS</div>
-          <div class="file-meta">
+          <div class="file-meta" style="flex:1">
             <h3 id="nombre-archivo">—</h3>
             <p id="info-archivo">—</p>
           </div>
+          <button type="button" class="btn-cambiar" onclick="cambiarArchivo()">× Cambiar</button>
         </div>
 
         <!-- Sheet list -->
@@ -504,6 +513,7 @@
     estado.archivoId = arch.id;
     document.getElementById('nombre-archivo').textContent = arch.nombre_original;
     document.getElementById('info-archivo').textContent   = formatBytes(arch.tamano_bytes);
+    document.getElementById('card-upload').classList.add('hidden');
     document.getElementById('file-info-card').classList.add('visible');
     ocultarMensaje();
 
@@ -658,6 +668,22 @@
     const btn = document.getElementById('btn-ejecutar');
     btn.disabled = !estado.archivoId;
     btn.textContent = 'Convertir a CSV';
+  }
+
+  function cambiarArchivo() {
+    estado.archivoId = null;
+    estado.numHojas  = 0;
+    estado.trabajoId = null;
+    document.getElementById('card-upload').classList.remove('hidden');
+    document.getElementById('file-info-card').classList.remove('visible');
+    document.getElementById('sheet-list').classList.remove('visible');
+    document.getElementById('options-col').classList.remove('visible');
+    document.getElementById('btn-ejecutar').disabled = true;
+    document.getElementById('sheet-chips').innerHTML = '';
+    document.getElementById('action-note').textContent = 'CSV directo · sin ZIP';
+    fileInput.value = '';
+    ocultarMensaje();
+    ocultarProcesando();
   }
 </script>
 </body>

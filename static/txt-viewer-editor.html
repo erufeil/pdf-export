@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notepad — PDF-Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="/config.js"></script>
+  <style>
+    :root {
+      --bg:      #0D1117;
+      --surface: #161B22;
+      --border:  #30363D;
+      --accent:  #58A6FF;
+      --red:     #E63946;
+      --green:   #3FB950;
+      --text:    #E6EDF3;
+      --muted:   #8B949E;
+      --topbar-h: 52px;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: var(--text);
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      height: var(--topbar-h); flex-shrink: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 16px;
+    }
+    .slug-label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px; font-weight: 600;
+      color: var(--accent); white-space: nowrap;
+      cursor: pointer; user-select: none;
+    }
+    .slug-label:hover { opacity: .8; }
+    .slug-label span { font-size: 16px; }
+
+    #estado {
+      font-size: 12px; color: var(--muted);
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* presencia */
+    #presencia {
+      display: flex; align-items: center; gap: 6px;
+      flex: 1; flex-wrap: wrap; overflow: hidden;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      padding: 3px 8px; border-radius: 20px;
+      border: 1px solid rgba(88,166,255,.3);
+      color: var(--muted); white-space: nowrap;
+    }
+    .chip.yo { border-color: rgba(63,185,80,.4); color: var(--green); }
+    .chip .dot { font-size: 8px; }
+
+    /* botones topbar */
+    .btn-topbar {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px;
+      font-size: 12px; cursor: pointer; padding: 5px 10px;
+      white-space: nowrap; transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .btn-topbar:hover { border-color: var(--accent); color: var(--text); }
+    .btn-eliminar { border-color: rgba(230,57,70,.3); color: rgba(230,57,70,.7); }
+    .btn-eliminar:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── TEXTAREA ── */
+    #editor {
+      flex: 1; display: block; width: 100%;
+      background: var(--bg); color: var(--text);
+      border: none; outline: none; resize: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px; line-height: 1.7;
+      padding: 24px 32px;
+      caret-color: var(--accent);
+    }
+    #editor::placeholder { color: var(--muted); }
+
+    /* ── FEEDBACK TOAST ── */
+    #toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px;
+      padding: 10px 16px; font-size: 13px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+      pointer-events: none; z-index: 999;
+    }
+    #toast.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── MODAL CONFIRMACIÓN ── */
+    #modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    #modal-overlay.visible { display: flex; }
+    .modal {
+      background: #1C2128; border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px 32px;
+      max-width: 380px; width: 90%; text-align: center;
+    }
+    .modal h3 { margin-bottom: 10px; font-size: 16px; }
+    .modal p { color: var(--muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+    .modal-btns { display: flex; gap: 10px; justify-content: center; }
+    .modal-btns button {
+      flex: 1; padding: 9px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-cancel { background: #30363D; color: var(--text); }
+    .btn-cancel:hover { background: #3D444D; }
+    .btn-confirm-del { background: var(--red); color: #fff; }
+    .btn-confirm-del:hover { opacity: .85; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="slug-label" onclick="copiarUrl()" title="Copiar URL">
+    <span>📝</span>
+    <span id="slug-display">…</span>
+  </div>
+
+  <div id="estado">Cargando…</div>
+
+  <div id="presencia"></div>
+
+  <button class="btn-topbar" onclick="copiarUrl()">📋 Copiar URL</button>
+  <button class="btn-topbar btn-eliminar" onclick="confirmarEliminar()">🗑 Eliminar</button>
+</div>
+
+<textarea id="editor" placeholder="Empezá a escribir…" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+
+<div id="toast"></div>
+
+<div id="modal-overlay">
+  <div class="modal">
+    <h3>¿Eliminar este notepad?</h3>
+    <p>Se borrará el contenido permanentemente para todos los que comparten este slug.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirm-del" onclick="ejecutarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+
+  // Extraer slug de la URL: /txt-viewer/<slug> o /txt-viewer/<slug>/txt-viewer.html
+  const partes = window.location.pathname.split('/').filter(Boolean);
+  const SLUG = partes[1] || '';
+
+  let versionLocal = 0;
+  let contenidoGuardado = '';
+  let ultimoGuardado = null;
+  let intervalSync = null;
+  let intervalContador = null;
+
+  const editor       = document.getElementById('editor');
+  const elEstado     = document.getElementById('estado');
+  const elPresencia  = document.getElementById('presencia');
+  const elSlug       = document.getElementById('slug-display');
+
+  // ── Inicialización ──────────────────────────────────────────────────────────
+  async function iniciar() {
+    if (!SLUG) { window.location.href = '/txt-viewer.html'; return; }
+    document.title = `${SLUG} — Notepad`;
+    elSlug.textContent = SLUG;
+
+    try {
+      const data = await apiGet();
+      editor.value = data.contenido;
+      contenidoGuardado = data.contenido;
+      versionLocal = data.version;
+      ultimoGuardado = Date.now();
+      renderizarVisitantes(data.visitantes);
+      setEstado('ok');
+    } catch (e) {
+      setEstado('error');
+    }
+
+    intervalSync = setInterval(sync, 15000);
+    intervalContador = setInterval(actualizarContador, 1000);
+  }
+
+  // ── Bucle de sync ────────────────────────────────────────────────────────────
+  async function sync() {
+    const dirty = editor.value !== contenidoGuardado;
+    try {
+      if (dirty) {
+        setEstado('guardando');
+        const data = await apiPut(editor.value);
+        versionLocal = data.version;
+        contenidoGuardado = editor.value;
+        ultimoGuardado = Date.now();
+        renderizarVisitantes(data.visitantes);
+        setEstado('ok');
+      } else {
+        const data = await apiGet();
+        renderizarVisitantes(data.visitantes);
+        if (data.version > versionLocal) {
+          editor.value = data.contenido;
+          contenidoGuardado = data.contenido;
+          versionLocal = data.version;
+          ultimoGuardado = Date.now();
+          setEstado('sync');
+        }
+      }
+    } catch (e) {
+      setEstado('error');
+    }
+  }
+
+  editor.addEventListener('input', () => {
+    if (editor.value !== contenidoGuardado) setEstado('pendiente');
+  });
+
+  // ── API ──────────────────────────────────────────────────────────────────────
+  async function apiGet() {
+    const r = await fetch(`${API}/notepad/${SLUG}`);
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    return j.data;
+  }
+
+  async function apiPut(contenido) {
+    const r = await fetch(`${API}/notepad/${SLUG}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contenido })
+    });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    return j.data;
+  }
+
+  async function apiDelete() {
+    const r = await fetch(`${API}/notepad/${SLUG}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  // ── Estado visual ─────────────────────────────────────────────────────────────
+  function setEstado(tipo) {
+    const mapa = {
+      ok:        '✓ Guardado',
+      pendiente: '· Sin guardar…',
+      guardando: '⟳ Guardando…',
+      sync:      '↓ Sincronizado',
+      error:     '⚠ Sin conexión',
+    };
+    elEstado.textContent = mapa[tipo] || tipo;
+    elEstado.style.color = tipo === 'error' ? 'var(--red)' : 'var(--muted)';
+  }
+
+  function actualizarContador() {
+    if (!ultimoGuardado || editor.value !== contenidoGuardado) return;
+    const seg = Math.round((Date.now() - ultimoGuardado) / 1000);
+    if (seg < 5) { elEstado.textContent = '✓ Guardado'; return; }
+    elEstado.textContent = `✓ Guardado · hace ${seg}s`;
+  }
+
+  // ── Presencia ─────────────────────────────────────────────────────────────────
+  function renderizarVisitantes(lista) {
+    if (!lista || lista.length === 0) { elPresencia.innerHTML = ''; return; }
+    const soloYo = lista.length === 1 && lista[0].es_yo;
+    if (soloYo) {
+      elPresencia.innerHTML = '<span class="chip yo"><span class="dot">●</span>Solo vos</span>';
+      return;
+    }
+    elPresencia.innerHTML = lista.map(v =>
+      v.es_yo
+        ? `<span class="chip yo" title="Tu IP"><span class="dot">●</span>${escHtml(v.ip)} (vos)</span>`
+        : `<span class="chip" title="Otro usuario"><span class="dot">●</span>${escHtml(v.ip)}</span>`
+    ).join('');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Acciones ──────────────────────────────────────────────────────────────────
+  function copiarUrl() {
+    navigator.clipboard.writeText(window.location.origin + '/txt-viewer/' + SLUG)
+      .then(() => mostrarToast('URL copiada al portapapeles'))
+      .catch(() => mostrarToast('No se pudo copiar la URL'));
+  }
+
+  function confirmarEliminar() {
+    document.getElementById('modal-overlay').classList.add('visible');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-overlay').classList.remove('visible');
+  }
+
+  async function ejecutarEliminar() {
+    cerrarModal();
+    try {
+      await apiDelete();
+      clearInterval(intervalSync);
+      clearInterval(intervalContador);
+      mostrarToast('Notepad eliminado. Redirigiendo…');
+      setTimeout(() => { window.location.href = '/txt-viewer.html'; }, 1200);
+    } catch (e) {
+      mostrarToast('Error al eliminar el notepad');
+    }
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+  let toastTimer = null;
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visible'), 2200);
+  }
+
+  // ── Arranque ──────────────────────────────────────────────────────────────────
+  iniciar();
+</script>
+</body>
+</html>
