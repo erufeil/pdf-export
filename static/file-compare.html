@@ -558,10 +558,16 @@
   function cargarArchivo(n, file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const buffer = e.target.result;
-      estado[`a${n}`] = { nombre: file.name, tamano: file.size, buffer };
-      mostrarInfoArchivo(n, file.name, file.size, buffer);
-      if (estado.a1 && estado.a2) comparar();
+      try {
+        const buffer = e.target.result;
+        estado[`a${n}`] = { nombre: file.name, tamano: file.size, buffer };
+        mostrarInfoArchivo(n, file.name, file.size, buffer);
+        if (estado.a1 && estado.a2) comparar();
+      } catch (err) {
+        console.error('cargarArchivo error:', err);
+        elResultado.innerHTML = `<div style="color:var(--red);padding:12px 0;font-size:13px;">Error al cargar archivo: ${esc(String(err))}</div>`;
+        btnComparar.disabled = false;
+      }
     };
     reader.readAsArrayBuffer(file);
   }
@@ -569,7 +575,7 @@
   function mostrarInfoArchivo(n, nombre, tamano, buffer) {
     document.getElementById(`icono${n}`).textContent = iconoPorNombre(nombre);
     document.getElementById(`nombre${n}`).textContent = nombre;
-    document.getElementById(`tamano${n}`).textContent = formatBytes(tamano);
+    document.getElementById(`tamano${n}`).textContent = fmtB(tamano);
     document.getElementById(`zona${n}`).hidden = true;
     document.getElementById(`info${n}`).hidden = false;
     btnComparar.disabled = !(estado.a1 && estado.a2);
@@ -583,8 +589,7 @@
     elResultado.innerHTML = '';
   }
 
-  function formatBytes(b) {
-    if (window.formatBytes) return window.formatBytes(b);
+  function fmtB(b) {
     if (b < 1024) return b + ' B';
     if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
     return (b / 1048576).toFixed(2) + ' MB';
@@ -628,7 +633,7 @@
 
   // ─── Banner IDÉNTICOS ──────────────────────────────────────────────────────
   function mostrarIdenticos(hash) {
-    const s = formatBytes(estado.a1.tamano);
+    const s = fmtB(estado.a1.tamano);
     elResultado.innerHTML = `
       <div class="banner-identico">
         <div class="banner-identico-icon">✅</div>
@@ -653,7 +658,7 @@
           <div class="banner-col-num">Archivo 1</div>
           <div class="tag-diferente">DIFERENTE</div>
           <div class="banner-col-nombre">${esc(estado.a1.nombre)}</div>
-          <div class="banner-col-tamano">${formatBytes(estado.a1.tamano)} · ${tipo1}</div>
+          <div class="banner-col-tamano">${fmtB(estado.a1.tamano)} · ${tipo1}</div>
           <div class="banner-col-hash-label">SHA-256</div>
           <div class="banner-col-hash">${h1}</div>
         </div>
@@ -661,7 +666,7 @@
           <div class="banner-col-num">Archivo 2</div>
           <div class="tag-diferente">DIFERENTE</div>
           <div class="banner-col-nombre">${esc(estado.a2.nombre)}</div>
-          <div class="banner-col-tamano">${formatBytes(estado.a2.tamano)} · ${tipo2}</div>
+          <div class="banner-col-tamano">${fmtB(estado.a2.tamano)} · ${tipo2}</div>
           <div class="banner-col-hash-label">SHA-256</div>
           <div class="banner-col-hash">${h2}</div>
         </div>
@@ -773,7 +778,7 @@
           <div class="banner-col-num">Archivo 1</div>
           <div class="tag-diferente">DIFERENTE</div>
           <div class="banner-col-nombre">${esc(estado.a1.nombre)}</div>
-          <div class="banner-col-tamano">${formatBytes(estado.a1.tamano)} · ${n1.toLocaleString('es-AR')} líneas</div>
+          <div class="banner-col-tamano">${fmtB(estado.a1.tamano)} · ${n1.toLocaleString('es-AR')} líneas</div>
           <div class="banner-col-hash-label">SHA-256</div>
           <div class="banner-col-hash">${h1}</div>
         </div>
@@ -781,7 +786,7 @@
           <div class="banner-col-num">Archivo 2</div>
           <div class="tag-diferente">DIFERENTE</div>
           <div class="banner-col-nombre">${esc(estado.a2.nombre)}</div>
-          <div class="banner-col-tamano">${formatBytes(estado.a2.tamano)} · ${n2.toLocaleString('es-AR')} líneas</div>
+          <div class="banner-col-tamano">${fmtB(estado.a2.tamano)} · ${n2.toLocaleString('es-AR')} líneas</div>
           <div class="banner-col-hash-label">SHA-256</div>
           <div class="banner-col-hash">${h2}</div>
         </div>
