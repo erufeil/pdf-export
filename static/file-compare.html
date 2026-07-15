@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparar Archivos — PDF-Export</title>
+  <link rel="icon" type="image/x-icon" href="/static/fav.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="/config.js"></script>
+  <style>
+    :root {
+      --bg:      #0D1117;
+      --surface: #161B22;
+      --card:    #1C2128;
+      --card-hover: #22272E;
+      --border:  #30363D;
+      --accent:  #58A6FF;
+      --red:     #E63946;
+      --green:   #3FB950;
+      --text:    #E6EDF3;
+      --muted:   #8B949E;
+      --del-bg:  rgba(230,57,70,.12);
+      --ins-bg:  rgba(63,185,80,.12);
+      --sidebar-w: 220px;
+      --sidebar-w-collapsed: 52px;
+    }
+    html, body { margin:0; padding:0; height:100%; background:var(--bg); }
+    * { box-sizing:border-box; }
+    body { font-family:'IBM Plex Sans',sans-serif; color:var(--text); }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position:fixed; top:0; left:0; height:100vh; width:var(--sidebar-w);
+      background:var(--surface); border-right:1px solid var(--border);
+      display:flex; flex-direction:column; z-index:100;
+      transition:width .2s;
+    }
+    #sidebar.collapsed { width:var(--sidebar-w-collapsed); }
+    .sidebar-logo {
+      padding:16px 12px; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .sidebar-logo-link {
+      display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text);
+    }
+    .logo-icon {
+      background:var(--accent); color:#0D1117; font-weight:700;
+      font-size:12px; padding:6px 8px; border-radius:8px; flex-shrink:0;
+      font-family:'IBM Plex Mono',monospace;
+    }
+    .logo-text { font-size:13px; font-weight:600; line-height:1.3; }
+    .logo-sub { font-size:10px; color:var(--muted); font-weight:400; }
+    #sidebar.collapsed .logo-text,
+    #sidebar.collapsed .collapse-label { display:none; }
+    .nav-section { padding:12px 8px 4px; overflow:hidden; flex:1; }
+    .nav-section-label {
+      font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;
+      letter-spacing:.08em; padding:4px 8px 8px; white-space:nowrap; overflow:hidden;
+    }
+    #sidebar.collapsed .nav-section-label { visibility:hidden; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:8px 10px;
+      border-radius:8px; text-decoration:none; color:var(--muted);
+      font-size:13px; transition:.15s; white-space:nowrap; overflow:hidden;
+      position:relative;
+    }
+    .nav-item:hover { background:var(--card); color:var(--text); }
+    .nav-item.active { background:rgba(88,166,255,.12); color:var(--accent); }
+    .nav-icon { font-size:15px; flex-shrink:0; }
+    .nav-label { overflow:hidden; text-overflow:ellipsis; }
+    #sidebar.collapsed .nav-label { display:none; }
+    #sidebar.collapsed .nav-item[data-tooltip]:hover::after {
+      content:attr(data-tooltip); position:absolute; left:52px; top:50%;
+      transform:translateY(-50%); background:#1C2128; border:1px solid var(--border);
+      color:var(--text); font-size:12px; padding:4px 10px; border-radius:6px;
+      white-space:nowrap; z-index:200; pointer-events:none;
+    }
+    .sidebar-footer {
+      padding:12px 8px; border-top:1px solid var(--border); flex-shrink:0;
+    }
+    .collapse-btn {
+      display:flex; align-items:center; gap:10px; padding:8px 10px;
+      border-radius:8px; cursor:pointer; color:var(--muted); font-size:13px;
+      transition:.15s;
+    }
+    .collapse-btn:hover { background:var(--card); color:var(--text); }
+    .collapse-icon { font-size:12px; flex-shrink:0; }
+    #sidebar.collapsed .collapse-icon { transform:rotate(180deg); }
+
+    /* ── MAIN ── */
+    #main {
+      margin-left:var(--sidebar-w); min-height:100vh;
+      display:flex; flex-direction:column; transition:margin-left .2s;
+    }
+    #sidebar.collapsed ~ #main { margin-left:var(--sidebar-w-collapsed); }
+
+    /* ── HEADER ── */
+    .header {
+      height:52px; flex-shrink:0; background:var(--surface);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 24px;
+    }
+    .breadcrumb { display:flex; align-items:center; gap:6px; font-size:13px; }
+    .breadcrumb a { color:var(--muted); text-decoration:none; }
+    .breadcrumb a:hover { color:var(--text); }
+    .sep { color:var(--border); }
+    .current { color:var(--text); font-weight:500; }
+    .header-right { display:flex; align-items:center; gap:12px; }
+    .stat-chip {
+      display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);
+    }
+    .stat-chip .dot {
+      width:7px; height:7px; border-radius:50%; background:var(--green);
+      animation:pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── CONTENT ── */
+    .content { padding:28px 32px; flex:1; max-width:1600px; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+    .page-title-group { display:flex; align-items:center; gap:16px; }
+    .page-badge {
+      background:var(--accent); color:#0D1117;
+      font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700;
+      padding:6px 12px; border-radius:8px; letter-spacing:.04em; flex-shrink:0;
+    }
+    .page-title { font-size:22px; font-weight:600; }
+    .page-subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
+
+    /* ── UPLOAD ROW ── */
+    .upload-row {
+      display:grid; grid-template-columns:1fr auto 1fr;
+      gap:16px; align-items:center; margin-bottom:16px;
+    }
+    .upload-slot { display:flex; flex-direction:column; gap:0; }
+    .dropzone {
+      border:2px dashed var(--border); border-radius:14px;
+      padding:32px 20px; text-align:center; cursor:pointer;
+      transition:border-color .2s, background .2s; background:var(--surface);
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color:var(--accent); background:rgba(88,166,255,.06);
+    }
+    .dropzone-icon { font-size:32px; opacity:.45; display:block; margin-bottom:10px; }
+    .dropzone-title { font-weight:600; font-size:15px; margin-bottom:4px; }
+    .dropzone-sub { font-size:12px; color:var(--muted); }
+
+    .archivo-cargado {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:14px 16px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .archivo-cargado-icon { font-size:24px; flex-shrink:0; }
+    .archivo-meta { flex:1; min-width:0; }
+    .archivo-nombre {
+      font-weight:600; font-size:14px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .archivo-tamano {
+      font-size:12px; color:var(--muted);
+      font-family:'IBM Plex Mono',monospace; margin-top:2px;
+    }
+    .btn-cambiar {
+      background:none; border:1px solid rgba(230,57,70,.4); color:rgba(230,57,70,.8);
+      border-radius:6px; font-size:11px; padding:4px 10px; cursor:pointer;
+      white-space:nowrap; flex-shrink:0; transition:.15s;
+    }
+    .btn-cambiar:hover { border-color:var(--red); color:var(--red); }
+
+    .vs-badge {
+      font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:700;
+      color:var(--muted); text-align:center; padding:0 4px; user-select:none;
+    }
+
+    /* ── BUTTON ── */
+    .btn {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      padding:11px 20px; border-radius:10px; font-size:14px; font-weight:600;
+      cursor:pointer; border:none; font-family:inherit; transition:all .15s; width:100%;
+    }
+    .btn-primary { background:var(--accent); color:#0D1117; }
+    .btn-primary:hover:not(:disabled) { filter:brightness(1.12); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; }
+
+    /* ── RESULTADO ── */
+    #resultado { margin-top:20px; }
+
+    /* Banner IDÉNTICOS */
+    .banner-identico {
+      background:rgba(63,185,80,.09); border:1px solid rgba(63,185,80,.4);
+      border-radius:14px; padding:36px 28px; text-align:center;
+    }
+    .banner-identico-icon { font-size:48px; margin-bottom:12px; }
+    .banner-identico-titulo { font-size:22px; font-weight:700; color:var(--green); margin-bottom:8px; }
+    .banner-identico-hash {
+      font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted);
+      margin-bottom:14px; word-break:break-all;
+    }
+    .banner-identico-archivos {
+      display:inline-flex; align-items:center; gap:12px; font-size:13px; color:var(--muted);
+    }
+    .banner-file-tag {
+      background:var(--card); border:1px solid var(--border); border-radius:8px;
+      padding:6px 12px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+    }
+
+    /* Banner DIFERENTES (binarios / muy grandes) */
+    .banner-diferente {
+      display:grid; grid-template-columns:1fr 1fr; gap:1px;
+      background:var(--border); border-radius:14px; overflow:hidden;
+    }
+    .banner-col { background:var(--card); padding:24px 28px; }
+    .banner-col-num {
+      font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+      color:var(--muted); margin-bottom:10px;
+    }
+    .banner-col-nombre { font-weight:600; font-size:15px; margin-bottom:3px; word-break:break-all; }
+    .banner-col-tamano {
+      font-family:'IBM Plex Mono',monospace; font-size:12px;
+      color:var(--muted); margin-bottom:14px;
+    }
+    .banner-col-hash-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
+    .banner-col-hash {
+      font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--accent);
+      word-break:break-all;
+    }
+    .tag-diferente {
+      display:inline-block; background:rgba(230,57,70,.12); color:var(--red);
+      border:1px solid rgba(230,57,70,.3); border-radius:6px;
+      font-size:11px; font-weight:700; padding:3px 10px; margin-bottom:16px;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display:flex; gap:18px; align-items:center; margin-bottom:12px;
+      padding:10px 16px; background:var(--surface); border-radius:10px;
+      border:1px solid var(--border); font-size:13px; flex-wrap:wrap;
+    }
+    .stat-item { display:flex; align-items:center; gap:6px; }
+    .stat-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .stat-dot.rojo  { background:var(--red); }
+    .stat-dot.verde { background:var(--green); }
+    .stat-dot.gris  { background:var(--muted); }
+    .stat-num { font-family:'IBM Plex Mono',monospace; font-weight:700; }
+
+    /* Sin diferencias de contenido */
+    .nota-warn {
+      background:rgba(88,166,255,.08); border:1px solid rgba(88,166,255,.3);
+      border-radius:10px; padding:14px 18px; font-size:13px; color:var(--muted);
+    }
+
+    /* Diff wrapper */
+    .diff-wrapper { border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .diff-header {
+      display:grid; grid-template-columns:40px 1fr 1px 40px 1fr;
+      background:var(--surface); border-bottom:1px solid var(--border);
+    }
+    .diff-header-ln { width:40px; }
+    .diff-header-col {
+      padding:10px 14px; font-size:12px; font-weight:600; color:var(--muted);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .diff-header-sep { background:var(--border); }
+
+    .diff-scroll { overflow-x:auto; overflow-y:auto; max-height:600px; }
+    table.diff-table {
+      width:100%; border-collapse:collapse;
+      font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.55;
+      table-layout:fixed;
+    }
+    td.ln {
+      width:40px; min-width:40px; text-align:right; padding:1px 8px 1px 4px;
+      color:var(--muted); user-select:none; border-right:1px solid var(--border);
+      font-size:11px; vertical-align:top; white-space:nowrap;
+    }
+    td.cel-del {
+      width:calc(50% - 41px); padding:1px 8px;
+      background:var(--del-bg); color:#ff8585;
+      white-space:pre-wrap; word-break:break-all; vertical-align:top;
+    }
+    td.cel-ins {
+      width:calc(50% - 41px); padding:1px 8px;
+      background:var(--ins-bg); color:#7ee87e;
+      white-space:pre-wrap; word-break:break-all; vertical-align:top;
+    }
+    td.cel-empty {
+      width:calc(50% - 41px); padding:1px 8px;
+      background:rgba(255,255,255,.015); vertical-align:top;
+    }
+    td.col-sep { width:1px; background:var(--border); padding:0; }
+    tr.sep-row td {
+      padding:5px 0; text-align:center; color:var(--muted);
+      font-size:11px; background:rgba(255,255,255,.025);
+      border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    }
+
+    /* ── FOOTER ── */
+    .footer { text-align:center; color:#aaa; font-size:.75rem; padding:1rem 0 .5rem; }
+    .footer a { color:#aaa; text-decoration:none; }
+    .footer a:hover { color:var(--text); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    @media (max-width:860px) {
+      .upload-row { grid-template-columns:1fr; }
+      .vs-badge { display:none; }
+      .diff-table { font-size:11px; }
+      table.diff-table td.cel-del,
+      table.diff-table td.cel-ins,
+      table.diff-table td.cel-empty { width:auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <a href="https://pdf-export.xero-one.com/" target="_blank" rel="noopener" class="sidebar-logo-link">
+      <div class="logo-icon">PDF</div>
+      <div class="logo-text">PDF-Export<br><span class="logo-sub">& Import · ERF</span></div>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Operaciones</div>
+    <a class="nav-item" href="/" data-tooltip="Tengo un PDF...">
+      <span class="nav-icon">📄</span><span class="nav-label">Tengo un PDF...</span>
+    </a>
+    <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
+      <span class="nav-icon">✨</span><span class="nav-label">Quiero un PDF</span>
+    </a>
+    <a class="nav-item" href="/" data-tooltip="Forensis">
+      <span class="nav-icon">🔍</span><span class="nav-label">Forensis</span>
+    </a>
+    <a class="nav-item" href="/" data-tooltip="Viewers">
+      <span class="nav-icon">👁️</span><span class="nav-label">Viewers</span>
+    </a>
+    <a class="nav-item active" href="/" data-tooltip="Miscelaneos">
+      <span class="nav-icon">🔧</span><span class="nav-label">Miscelaneos</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Sistema</div>
+    <a class="nav-item" href="/" data-tooltip="Archivos en Cache">
+      <span class="nav-icon">🗄️</span><span class="nav-label">Archivos en Cache</span>
+    </a>
+    <a class="nav-item" href="/" data-tooltip="Acerca de">
+      <span class="nav-icon">ℹ️</span><span class="nav-label">Acerca de PDF-Export</span>
+    </a>
+    <a class="nav-item" href="/help.html" target="_blank" data-tooltip="Ayuda">
+      <span class="nav-icon">❓</span><span class="nav-label">Ayuda</span>
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="collapse-btn" onclick="toggleSidebar()">
+      <span class="collapse-icon">◀</span>
+      <span class="collapse-label">Colapsar</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <header class="header">
+    <div class="breadcrumb">
+      <a href="/" title="Inicio">🏠</a>
+      <span class="sep">/</span>
+      <a href="/">Misceláneos</a>
+      <span class="sep">/</span>
+      <span class="current">Comparar Archivos</span>
+    </div>
+    <div class="header-right">
+      <div class="stat-chip"><span class="dot"></span>Local</div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <div class="page-title-group">
+        <div class="page-badge">CMP</div>
+        <div>
+          <div class="page-title">Comparar Archivos</div>
+          <div class="page-subtitle">Cargá dos archivos: compara hashes y muestra las diferencias línea a línea</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload zones -->
+    <div class="upload-row">
+
+      <!-- Slot 1 -->
+      <div class="upload-slot">
+        <div class="dropzone" id="zona1">
+          <span class="dropzone-icon">📄</span>
+          <div class="dropzone-title">Archivo 1</div>
+          <div class="dropzone-sub">Arrastrá o hacé click para seleccionar</div>
+        </div>
+        <div class="archivo-cargado" id="info1" hidden>
+          <div class="archivo-cargado-icon" id="icono1">📄</div>
+          <div class="archivo-meta">
+            <div class="archivo-nombre" id="nombre1">—</div>
+            <div class="archivo-tamano" id="tamano1">—</div>
+          </div>
+          <button class="btn-cambiar" onclick="cambiarArchivo(1)">× Cambiar</button>
+        </div>
+      </div>
+
+      <div class="vs-badge">VS</div>
+
+      <!-- Slot 2 -->
+      <div class="upload-slot">
+        <div class="dropzone" id="zona2">
+          <span class="dropzone-icon">📄</span>
+          <div class="dropzone-title">Archivo 2</div>
+          <div class="dropzone-sub">Arrastrá o hacé click para seleccionar</div>
+        </div>
+        <div class="archivo-cargado" id="info2" hidden>
+          <div class="archivo-cargado-icon" id="icono2">📄</div>
+          <div class="archivo-meta">
+            <div class="archivo-nombre" id="nombre2">—</div>
+            <div class="archivo-tamano" id="tamano2">—</div>
+          </div>
+          <button class="btn-cambiar" onclick="cambiarArchivo(2)">× Cambiar</button>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="btn btn-primary" id="btn-comparar" disabled onclick="comparar()">
+      🔍 Comparar archivos
+    </button>
+
+    <div id="resultado"></div>
+
+  </main>
+
+  <div class="footer">
+    PDF Export &amp; Import · ERF
+    &nbsp;|&nbsp; Comparar Archivos (Etapa 46 · JS)
+    &nbsp;|&nbsp; <span id="app-version"></span>
+    &nbsp;|&nbsp; <a href="/">🏠 Inicio</a>
+  </div>
+
+</div>
+
+<input type="file" id="input-archivo-1" hidden>
+<input type="file" id="input-archivo-2" hidden>
+
+<script src="/static/js/common.js"></script>
+<script>
+  'use strict';
+
+  // ─── Referencias DOM ───────────────────────────────────────────────────────
+  const zona1       = document.getElementById('zona1');
+  const zona2       = document.getElementById('zona2');
+  const info1       = document.getElementById('info1');
+  const info2       = document.getElementById('info2');
+  const inputA1     = document.getElementById('input-archivo-1');
+  const inputA2     = document.getElementById('input-archivo-2');
+  const btnComparar = document.getElementById('btn-comparar');
+  const elResultado = document.getElementById('resultado');
+
+  // Versión
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('app-version');
+    if (el && window.AppConfig?.version) el.textContent = 'v' + window.AppConfig.version;
+  });
+
+  // ─── Estado ────────────────────────────────────────────────────────────────
+  const estado = { a1: null, a2: null };
+
+  // ─── Extensiones de texto ──────────────────────────────────────────────────
+  const EXT_TEXTO = new Set([
+    'txt','md','markdown','py','js','ts','jsx','tsx','css','scss','less',
+    'html','htm','xml','json','yaml','yml','toml','ini','conf','config','env',
+    'csv','sql','sh','bash','zsh','fish','go','java','c','cpp','cc','cxx',
+    'h','hpp','rb','php','rs','swift','kt','cs','scala','lua','r','pl',
+    'ps1','bat','cmd','gitignore','Makefile','dockerfile','log','diff','patch',
+  ]);
+
+  function esArchivoTexto(nombre, buffer) {
+    const ext = nombre.split('.').pop().toLowerCase();
+    if (EXT_TEXTO.has(ext)) return true;
+    // Sniff: null byte → binario
+    const muestra = new Uint8Array(buffer, 0, Math.min(8192, buffer.byteLength));
+    for (let i = 0; i < muestra.length; i++) {
+      if (muestra[i] === 0) return false;
+    }
+    return true;
+  }
+
+  function iconoPorNombre(nombre) {
+    const ext = nombre.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return '📕';
+    if (['jpg','jpeg','png','gif','webp','bmp','svg'].includes(ext)) return '🖼️';
+    if (['zip','tar','gz','rar','7z'].includes(ext)) return '📦';
+    if (['mp4','mp3','wav','avi','mov'].includes(ext)) return '🎵';
+    if (['json','xml','yaml','yml'].includes(ext)) return '🗂️';
+    if (['py','js','ts','go','rs','java','c','cpp','rb'].includes(ext)) return '💻';
+    return '📄';
+  }
+
+  // ─── Hash SHA-256 ──────────────────────────────────────────────────────────
+  async function sha256hex(buffer) {
+    const h = await crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(h))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // ─── Drag & Drop ──────────────────────────────────────────────────────────
+  function bindZona(zona, n, inputEl) {
+    zona.addEventListener('click', () => inputEl.click());
+    zona.addEventListener('dragover', (e) => { e.preventDefault(); zona.classList.add('drag-over'); });
+    zona.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
+    zona.addEventListener('drop', (e) => {
+      e.preventDefault(); zona.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) cargarArchivo(n, f);
+    });
+    inputEl.addEventListener('change', () => {
+      if (inputEl.files[0]) cargarArchivo(n, inputEl.files[0]);
+      inputEl.value = '';
+    });
+  }
+  bindZona(zona1, 1, inputA1);
+  bindZona(zona2, 2, inputA2);
+
+  function cargarArchivo(n, file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const buffer = e.target.result;
+      estado[`a${n}`] = { nombre: file.name, tamano: file.size, buffer };
+      mostrarInfoArchivo(n, file.name, file.size, buffer);
+      if (estado.a1 && estado.a2) comparar();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function mostrarInfoArchivo(n, nombre, tamano, buffer) {
+    document.getElementById(`icono${n}`).textContent = iconoPorNombre(nombre);
+    document.getElementById(`nombre${n}`).textContent = nombre;
+    document.getElementById(`tamano${n}`).textContent = formatBytes(tamano);
+    document.getElementById(`zona${n}`).hidden = true;
+    document.getElementById(`info${n}`).hidden = false;
+    btnComparar.disabled = !(estado.a1 && estado.a2);
+  }
+
+  function cambiarArchivo(n) {
+    estado[`a${n}`] = null;
+    document.getElementById(`zona${n}`).hidden = false;
+    document.getElementById(`info${n}`).hidden = true;
+    btnComparar.disabled = true;
+    elResultado.innerHTML = '';
+  }
+
+  function formatBytes(b) {
+    if (window.formatBytes) return window.formatBytes(b);
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPARACIÓN
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async function comparar() {
+    if (!estado.a1 || !estado.a2) return;
+    btnComparar.disabled = true;
+    elResultado.innerHTML = '<div style="color:var(--muted);padding:16px 0;font-size:13px;">Calculando hashes…</div>';
+
+    const [h1, h2] = await Promise.all([
+      sha256hex(estado.a1.buffer),
+      sha256hex(estado.a2.buffer),
+    ]);
+
+    if (h1 === h2) {
+      mostrarIdenticos(h1);
+      btnComparar.disabled = false;
+      return;
+    }
+
+    // Archivos diferentes — intentar diff de texto
+    const texto1 = esArchivoTexto(estado.a1.nombre, estado.a1.buffer);
+    const texto2 = esArchivoTexto(estado.a2.nombre, estado.a2.buffer);
+
+    if (texto1 && texto2) {
+      const decoder = new TextDecoder('utf-8', { fatal: false });
+      const str1 = decoder.decode(estado.a1.buffer);
+      const str2 = decoder.decode(estado.a2.buffer);
+      mostrarDiff(str1, str2, h1, h2);
+    } else {
+      mostrarBinariosDiferentes(h1, h2, texto1, texto2);
+    }
+    btnComparar.disabled = false;
+  }
+
+  // ─── Banner IDÉNTICOS ──────────────────────────────────────────────────────
+  function mostrarIdenticos(hash) {
+    const s = formatBytes(estado.a1.tamano);
+    elResultado.innerHTML = `
+      <div class="banner-identico">
+        <div class="banner-identico-icon">✅</div>
+        <div class="banner-identico-titulo">ARCHIVOS IDÉNTICOS</div>
+        <div class="banner-identico-hash">SHA-256: ${hash}</div>
+        <div class="banner-identico-archivos">
+          <span class="banner-file-tag">${esc(estado.a1.nombre)}</span>
+          <span style="color:var(--muted)">═══</span>
+          <span class="banner-file-tag">${esc(estado.a2.nombre)}</span>
+          <span style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:12px;">${s}</span>
+        </div>
+      </div>`;
+  }
+
+  // ─── Banner BINARIOS DIFERENTES ────────────────────────────────────────────
+  function mostrarBinariosDiferentes(h1, h2, esTexto1, esTexto2) {
+    const tipo1 = esTexto1 ? 'texto' : 'binario';
+    const tipo2 = esTexto2 ? 'texto' : 'binario';
+    elResultado.innerHTML = `
+      <div class="banner-diferente">
+        <div class="banner-col">
+          <div class="banner-col-num">Archivo 1</div>
+          <div class="tag-diferente">DIFERENTE</div>
+          <div class="banner-col-nombre">${esc(estado.a1.nombre)}</div>
+          <div class="banner-col-tamano">${formatBytes(estado.a1.tamano)} · ${tipo1}</div>
+          <div class="banner-col-hash-label">SHA-256</div>
+          <div class="banner-col-hash">${h1}</div>
+        </div>
+        <div class="banner-col">
+          <div class="banner-col-num">Archivo 2</div>
+          <div class="tag-diferente">DIFERENTE</div>
+          <div class="banner-col-nombre">${esc(estado.a2.nombre)}</div>
+          <div class="banner-col-tamano">${formatBytes(estado.a2.tamano)} · ${tipo2}</div>
+          <div class="banner-col-hash-label">SHA-256</div>
+          <div class="banner-col-hash">${h2}</div>
+        </div>
+      </div>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DIFF DE TEXTO
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const MAX_LINEAS = 3000;
+
+  function mostrarDiff(str1, str2, h1, h2) {
+    const lineas1 = str1.split('\n');
+    const lineas2 = str2.split('\n');
+
+    // Quitar línea vacía final si viene de trailing newline
+    if (lineas1[lineas1.length - 1] === '') lineas1.pop();
+    if (lineas2[lineas2.length - 1] === '') lineas2.pop();
+
+    if (lineas1.length > MAX_LINEAS || lineas2.length > MAX_LINEAS) {
+      mostrarTextoDemasiado(h1, h2, lineas1.length, lineas2.length);
+      return;
+    }
+
+    elResultado.innerHTML = '<div style="color:var(--muted);padding:12px 0;font-size:13px;">Calculando diferencias…</div>';
+
+    // Diferir para permitir que el DOM actualice el mensaje
+    requestAnimationFrame(() => {
+      const ops = calcularDiff(lineas1, lineas2);
+      const segments = buildSegments(ops);
+
+      const cntDel = ops.filter(o => o.t === '-').length;
+      const cntIns = ops.filter(o => o.t === '+').length;
+      const cntIgual = ops.filter(o => o.t === '=').length;
+      const tieneDiff = cntDel > 0 || cntIns > 0;
+
+      const statsHtml = `
+        <div class="stats-bar">
+          <span style="font-weight:600;color:var(--text);">Diferencias encontradas</span>
+          <div class="stat-item">
+            <div class="stat-dot gris"></div>
+            <span class="stat-num">${lineas1.length.toLocaleString('es-AR')}</span>
+            <span style="color:var(--muted)">líneas en archivo 1</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-dot gris"></div>
+            <span class="stat-num">${lineas2.length.toLocaleString('es-AR')}</span>
+            <span style="color:var(--muted)">líneas en archivo 2</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-dot rojo"></div>
+            <span class="stat-num">${cntDel.toLocaleString('es-AR')}</span>
+            <span style="color:var(--muted)">solo en archivo 1</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-dot verde"></div>
+            <span class="stat-num">${cntIns.toLocaleString('es-AR')}</span>
+            <span style="color:var(--muted)">solo en archivo 2</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-dot gris"></div>
+            <span class="stat-num">${cntIgual.toLocaleString('es-AR')}</span>
+            <span style="color:var(--muted)">iguales (ocultas)</span>
+          </div>
+        </div>`;
+
+      if (!tieneDiff) {
+        // Mismos hashes habrían salido antes — esto no debería ocurrir
+        // pero puede pasar si la diferencia es solo BOM o encoding
+        elResultado.innerHTML = statsHtml + `
+          <div class="nota-warn">
+            Los archivos tienen el mismo contenido de texto pero difieren en algún detalle de codificación o BOM (Byte Order Mark).
+          </div>`;
+        return;
+      }
+
+      const diffHtml = renderizarDiff(segments);
+      elResultado.innerHTML = `
+        ${statsHtml}
+        <div class="diff-wrapper">
+          <div class="diff-header">
+            <div class="diff-header-ln"></div>
+            <div class="diff-header-col" title="${esc(estado.a1.nombre)}">📄 ${esc(estado.a1.nombre)}</div>
+            <div class="diff-header-sep"></div>
+            <div class="diff-header-ln"></div>
+            <div class="diff-header-col" title="${esc(estado.a2.nombre)}">📄 ${esc(estado.a2.nombre)}</div>
+          </div>
+          <div class="diff-scroll">
+            <table class="diff-table">
+              <colgroup>
+                <col style="width:40px">
+                <col>
+                <col style="width:1px">
+                <col style="width:40px">
+                <col>
+              </colgroup>
+              <tbody>${diffHtml}</tbody>
+            </table>
+          </div>
+        </div>`;
+    });
+  }
+
+  function mostrarTextoDemasiado(h1, h2, n1, n2) {
+    elResultado.innerHTML = `
+      <div class="banner-diferente">
+        <div class="banner-col">
+          <div class="banner-col-num">Archivo 1</div>
+          <div class="tag-diferente">DIFERENTE</div>
+          <div class="banner-col-nombre">${esc(estado.a1.nombre)}</div>
+          <div class="banner-col-tamano">${formatBytes(estado.a1.tamano)} · ${n1.toLocaleString('es-AR')} líneas</div>
+          <div class="banner-col-hash-label">SHA-256</div>
+          <div class="banner-col-hash">${h1}</div>
+        </div>
+        <div class="banner-col">
+          <div class="banner-col-num">Archivo 2</div>
+          <div class="tag-diferente">DIFERENTE</div>
+          <div class="banner-col-nombre">${esc(estado.a2.nombre)}</div>
+          <div class="banner-col-tamano">${formatBytes(estado.a2.tamano)} · ${n2.toLocaleString('es-AR')} líneas</div>
+          <div class="banner-col-hash-label">SHA-256</div>
+          <div class="banner-col-hash">${h2}</div>
+        </div>
+      </div>
+      <div class="nota-warn" style="margin-top:12px;">
+        ⚠ Archivos demasiado grandes para diff visual (límite: ${MAX_LINEAS.toLocaleString('es-AR')} líneas por archivo). Se muestran los hashes para confirmación manual.
+      </div>`;
+  }
+
+  // ─── Algoritmo LCS (diff) ──────────────────────────────────────────────────
+  function calcularDiff(a, b) {
+    const n = a.length, m = b.length;
+
+    // DP con Int16Array para ahorrar memoria (max 3000 < 32767)
+    const dp = new Array(n + 1);
+    for (let i = 0; i <= n; i++) dp[i] = new Int16Array(m + 1);
+
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= m; j++) {
+        if (a[i-1] === b[j-1]) {
+          dp[i][j] = dp[i-1][j-1] + 1;
+        } else {
+          dp[i][j] = dp[i-1][j] > dp[i][j-1] ? dp[i-1][j] : dp[i][j-1];
+        }
+      }
+    }
+
+    // Backtracking
+    const ops = [];
+    let i = n, j = m;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && a[i-1] === b[j-1]) {
+        ops.push({ t: '=', n1: i, n2: j });
+        i--; j--;
+      } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+        ops.push({ t: '+', l: b[j-1], n2: j });
+        j--;
+      } else {
+        ops.push({ t: '-', l: a[i-1], n1: i });
+        i--;
+      }
+    }
+    ops.reverse();
+    return ops;
+  }
+
+  // ─── Agrupar ops en segmentos ──────────────────────────────────────────────
+  function buildSegments(ops) {
+    const segments = [];
+    let i = 0;
+    while (i < ops.length) {
+      if (ops[i].t === '=') {
+        let j = i;
+        let cnt = 0;
+        while (j < ops.length && ops[j].t === '=') { cnt++; j++; }
+        segments.push({ tipo: 'igual', count: cnt });
+        i = j;
+      } else {
+        const deletes = [], inserts = [];
+        while (i < ops.length && ops[i].t !== '=') {
+          if (ops[i].t === '-') deletes.push(ops[i]);
+          else inserts.push(ops[i]);
+          i++;
+        }
+        segments.push({ tipo: 'cambio', deletes, inserts });
+      }
+    }
+    return segments;
+  }
+
+  // ─── Renderizar diff ───────────────────────────────────────────────────────
+  function renderizarDiff(segments) {
+    let html = '';
+    for (const seg of segments) {
+      if (seg.tipo === 'igual') {
+        const s = seg.count;
+        html += `<tr class="sep-row"><td colspan="5">··· ${s.toLocaleString('es-AR')} línea${s !== 1 ? 's' : ''} igual${s !== 1 ? 'es' : ''} ···</td></tr>`;
+      } else {
+        const { deletes, inserts } = seg;
+        const maxRows = Math.max(deletes.length, inserts.length);
+        for (let i = 0; i < maxRows; i++) {
+          const d   = deletes[i];
+          const ins = inserts[i];
+          html += `<tr>
+            <td class="ln">${d   ? d.n1   : ''}</td>
+            <td class="${d   ? 'cel-del'   : 'cel-empty'}">${d   ? esc(d.l)   : ''}</td>
+            <td class="col-sep"></td>
+            <td class="ln">${ins ? ins.n2  : ''}</td>
+            <td class="${ins ? 'cel-ins'   : 'cel-empty'}">${ins ? esc(ins.l) : ''}</td>
+          </tr>`;
+        }
+      }
+    }
+    return html;
+  }
+
+  // ─── Escape HTML ───────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Sidebar ───────────────────────────────────────────────────────────────
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main').classList.toggle('expanded');
+  }
+</script>
+</body>
+</html>
