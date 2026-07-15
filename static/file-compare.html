@@ -173,7 +173,7 @@
 
     .vs-badge {
       font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:700;
-      color:var(--muted); text-align:center; padding:0 4px; user-select:none;
+      color:var(--muted); text-align:center; padding:0 4px; -webkit-user-select:none; user-select:none;
     }
 
     /* ── BUTTON ── */
@@ -274,7 +274,7 @@
     }
     td.ln {
       width:40px; min-width:40px; text-align:right; padding:1px 8px 1px 4px;
-      color:var(--muted); user-select:none; border-right:1px solid var(--border);
+      color:var(--muted); -webkit-user-select:none; user-select:none; border-right:1px solid var(--border);
       font-size:11px; vertical-align:top; white-space:nowrap;
     }
     td.cel-del {
@@ -337,13 +337,13 @@
     <a class="nav-item" href="/" data-tooltip="Quiero un PDF">
       <span class="nav-icon">✨</span><span class="nav-label">Quiero un PDF</span>
     </a>
-    <a class="nav-item" href="/" data-tooltip="Forensis">
+    <a class="nav-item active" href="/" data-tooltip="Forensis">
       <span class="nav-icon">🔍</span><span class="nav-label">Forensis</span>
     </a>
     <a class="nav-item" href="/" data-tooltip="Viewers">
       <span class="nav-icon">👁️</span><span class="nav-label">Viewers</span>
     </a>
-    <a class="nav-item active" href="/" data-tooltip="Miscelaneos">
+    <a class="nav-item" href="/" data-tooltip="Miscelaneos">
       <span class="nav-icon">🔧</span><span class="nav-label">Miscelaneos</span>
     </a>
   </div>
@@ -376,7 +376,7 @@
     <div class="breadcrumb">
       <a href="/" title="Inicio">🏠</a>
       <span class="sep">/</span>
-      <a href="/">Misceláneos</a>
+      <a href="/">Forensis</a>
       <span class="sep">/</span>
       <span class="current">Comparar Archivos</span>
     </div>
@@ -413,7 +413,7 @@
             <div class="archivo-nombre" id="nombre1">—</div>
             <div class="archivo-tamano" id="tamano1">—</div>
           </div>
-          <button class="btn-cambiar" onclick="cambiarArchivo(1)">× Cambiar</button>
+          <button type="button" class="btn-cambiar" onclick="cambiarArchivo(1)">× Cambiar</button>
         </div>
       </div>
 
@@ -432,13 +432,13 @@
             <div class="archivo-nombre" id="nombre2">—</div>
             <div class="archivo-tamano" id="tamano2">—</div>
           </div>
-          <button class="btn-cambiar" onclick="cambiarArchivo(2)">× Cambiar</button>
+          <button type="button" class="btn-cambiar" onclick="cambiarArchivo(2)">× Cambiar</button>
         </div>
       </div>
 
     </div>
 
-    <button class="btn btn-primary" id="btn-comparar" disabled onclick="comparar()">
+    <button type="button" class="btn btn-primary" id="btn-comparar" disabled onclick="comparar()">
       🔍 Comparar archivos
     </button>
 
@@ -512,12 +512,29 @@
     return '📄';
   }
 
-  // ─── Hash SHA-256 ──────────────────────────────────────────────────────────
-  async function sha256hex(buffer) {
-    const h = await crypto.subtle.digest('SHA-256', buffer);
-    return Array.from(new Uint8Array(h))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+  // ─── Hash ─────────────────────────────────────────────────────────────────
+  // crypto.subtle requiere contexto seguro (HTTPS/localhost).
+  // En HTTP se usa FNV-1a 32-bit como fallback (solo para comparación de igualdad).
+  async function hashBuffer(buffer) {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      try {
+        const h = await crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(h))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+      } catch (_) { /* caer al fallback */ }
+    }
+    return 'fnv:' + fnv1a32(buffer);
+  }
+
+  function fnv1a32(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let h = 0x811c9dc5;
+    for (let i = 0; i < bytes.length; i++) {
+      h ^= bytes[i];
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(16).padStart(8, '0');
   }
 
   // ─── Drag & Drop ──────────────────────────────────────────────────────────
@@ -582,30 +599,31 @@
     btnComparar.disabled = true;
     elResultado.innerHTML = '<div style="color:var(--muted);padding:16px 0;font-size:13px;">Calculando hashes…</div>';
 
-    const [h1, h2] = await Promise.all([
-      sha256hex(estado.a1.buffer),
-      sha256hex(estado.a2.buffer),
-    ]);
+    try {
+      const [h1, h2] = await Promise.all([
+        hashBuffer(estado.a1.buffer),
+        hashBuffer(estado.a2.buffer),
+      ]);
 
-    if (h1 === h2) {
-      mostrarIdenticos(h1);
+      if (h1 === h2) {
+        mostrarIdenticos(h1);
+        return;
+      }
+
+      const texto1 = esArchivoTexto(estado.a1.nombre, estado.a1.buffer);
+      const texto2 = esArchivoTexto(estado.a2.nombre, estado.a2.buffer);
+
+      if (texto1 && texto2) {
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        mostrarDiff(decoder.decode(estado.a1.buffer), decoder.decode(estado.a2.buffer), h1, h2);
+      } else {
+        mostrarBinariosDiferentes(h1, h2, texto1, texto2);
+      }
+    } catch (e) {
+      elResultado.innerHTML = `<div style="color:var(--red);padding:12px 0;font-size:13px;">Error al comparar: ${esc(String(e))}</div>`;
+    } finally {
       btnComparar.disabled = false;
-      return;
     }
-
-    // Archivos diferentes — intentar diff de texto
-    const texto1 = esArchivoTexto(estado.a1.nombre, estado.a1.buffer);
-    const texto2 = esArchivoTexto(estado.a2.nombre, estado.a2.buffer);
-
-    if (texto1 && texto2) {
-      const decoder = new TextDecoder('utf-8', { fatal: false });
-      const str1 = decoder.decode(estado.a1.buffer);
-      const str2 = decoder.decode(estado.a2.buffer);
-      mostrarDiff(str1, str2, h1, h2);
-    } else {
-      mostrarBinariosDiferentes(h1, h2, texto1, texto2);
-    }
-    btnComparar.disabled = false;
   }
 
   // ─── Banner IDÉNTICOS ──────────────────────────────────────────────────────
