@@ -6,6 +6,7 @@ Gestiona archivos subidos y trabajos de conversion.
 
 import sqlite3
 import uuid
+import binascii
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 import logging
@@ -13,6 +14,11 @@ import logging
 import config
 
 logger = logging.getLogger(__name__)
+
+
+def _crc32(texto: str) -> int:
+    """CRC32 del contenido como entero sin signo. Coincide con binascii.crc32 de Python."""
+    return binascii.crc32(texto.encode('utf-8')) & 0xFFFFFFFF
 
 
 @contextmanager
@@ -381,7 +387,7 @@ def obtener_o_crear_notepad(slug: str, ip: str) -> dict:
                        'fecha_creacion': ahora, 'fecha_modificacion': ahora}
         _registrar_presencia(cursor, slug, ip)
         visitantes = _leer_presencia(cursor, slug, ip)
-    return {**notepad, 'visitantes': visitantes}
+    return {**notepad, 'visitantes': visitantes, 'crc32': _crc32(notepad.get('contenido', ''))}
 
 
 def guardar_notepad(slug: str, contenido: str, ip: str) -> dict:
@@ -405,7 +411,55 @@ def guardar_notepad(slug: str, contenido: str, ip: str) -> dict:
             version = cursor.fetchone()['version']
         _registrar_presencia(cursor, slug, ip)
         visitantes = _leer_presencia(cursor, slug, ip)
-    return {'version': version, 'fecha_modificacion': ahora, 'visitantes': visitantes}
+    return {'version': version, 'fecha_modificacion': ahora, 'visitantes': visitantes, 'crc32': _crc32(contenido)}
+
+
+def aplicar_deltas_notepad(slug: str, deltas: list, ip: str) -> dict | None:
+    """Aplica deltas de líneas al notepad. Retorna {version, crc32, visitantes} o None si no existe."""
+    ahora = datetime.now().isoformat()
+    with obtener_conexion() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT contenido FROM notepads WHERE slug = ?', (slug,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        lineas = row['contenido'].split('\n') if row['contenido'] else ['']
+
+        edits   = [d for d in deltas if 'op' not in d]
+        inserts = sorted([d for d in deltas if d.get('op') == 'insert'], key=lambda x: x['n'])
+        deletes = sorted([d for d in deltas if d.get('op') == 'delete'], key=lambda x: x['n'], reverse=True)
+
+        for d in edits:
+            n = d['n']
+            while len(lineas) <= n:
+                lineas.append('')
+            lineas[n] = d.get('texto', '')
+
+        for d in inserts:
+            n = d['n']
+            if n <= len(lineas):
+                lineas.insert(n, d.get('texto', ''))
+            else:
+                lineas.append(d.get('texto', ''))
+
+        for d in deletes:
+            n = d['n']
+            if 0 <= n < len(lineas):
+                lineas.pop(n)
+
+        nuevo_contenido = '\n'.join(lineas)
+        crc = _crc32(nuevo_contenido)
+        cursor.execute('''
+            UPDATE notepads
+            SET contenido = ?, version = version + 1,
+                fecha_modificacion = ?, fecha_ultimo_acceso = ?
+            WHERE slug = ?
+        ''', (nuevo_contenido, ahora, ahora, slug))
+        cursor.execute('SELECT version FROM notepads WHERE slug = ?', (slug,))
+        version = cursor.fetchone()['version']
+        _registrar_presencia(cursor, slug, ip)
+        visitantes = _leer_presencia(cursor, slug, ip)
+    return {'version': version, 'crc32': crc, 'visitantes': visitantes}
 
 
 def eliminar_notepad(slug: str) -> bool:

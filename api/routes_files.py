@@ -284,6 +284,7 @@ def obtener_notepad(slug):
         'slug': notepad['slug'],
         'contenido': notepad['contenido'],
         'version': notepad['version'],
+        'crc32': notepad['crc32'],
         'fecha_modificacion': notepad['fecha_modificacion'],
         'visitantes': notepad['visitantes'],
     })
@@ -303,7 +304,28 @@ def guardar_notepad(slug):
     return respuesta_exitosa({
         'ok': True,
         'version': resultado['version'],
+        'crc32': resultado['crc32'],
         'fecha_modificacion': resultado['fecha_modificacion'],
+        'visitantes': resultado['visitantes'],
+    })
+
+
+@bp.route('/notepad/<slug>/lines', methods=['PUT'])
+def guardar_lineas_notepad(slug):
+    """Aplica deltas de líneas (last-write-wins por línea). Retorna version y crc32."""
+    if not _REGEX_SLUG.match(slug):
+        return respuesta_error('SLUG_INVALIDO', 'Slug inválido')
+    datos = request.get_json(silent=True) or {}
+    deltas = datos.get('deltas', [])
+    if not isinstance(deltas, list):
+        return respuesta_error('DELTAS_INVALIDOS', 'deltas debe ser una lista')
+    ip = _ip_cliente()
+    resultado = models.aplicar_deltas_notepad(slug, deltas, ip)
+    if resultado is None:
+        return respuesta_error('NOT_FOUND', 'Notepad no encontrado', 404)
+    return respuesta_exitosa({
+        'version': resultado['version'],
+        'crc32': resultado['crc32'],
         'visitantes': resultado['visitantes'],
     })
 

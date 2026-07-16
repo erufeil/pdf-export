@@ -91,6 +91,24 @@
     }
     #editor::placeholder { color: var(--muted); }
 
+    /* ── CONTROL INTERVALO ── */
+    #intervalo-ctrl {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    #intervalo-display {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      min-width: 28px; text-align: center; -webkit-user-select: none; user-select: none;
+    }
+    .btn-int {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 4px;
+      font-size: 13px; font-weight: 600; line-height: 1;
+      cursor: pointer; padding: 2px 7px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-int:hover { border-color: var(--accent); color: var(--text); }
+
     /* ── FEEDBACK TOAST ── */
     #toast {
       position: fixed; bottom: 20px; right: 20px;
@@ -139,6 +157,12 @@
 
   <div id="estado">Cargando…</div>
 
+  <div id="intervalo-ctrl" title="Intervalo de actualización idle">
+    <button type="button" class="btn-int" onclick="cambiarIntervalo(-1)">−</button>
+    <span id="intervalo-display">15s</span>
+    <button type="button" class="btn-int" onclick="cambiarIntervalo(+1)">+</button>
+  </div>
+
   <div id="presencia"></div>
 
   <button class="btn-topbar" onclick="copiarUrl()">📋 Copiar URL</button>
@@ -161,66 +185,159 @@
 </div>
 
 <script>
-  const API = window.AppConfig?.API_BASE_URL || '/api/v1';
+  const API  = window.AppConfig?.API_BASE_URL || '/api/v1';
+  const SLUG = window.location.pathname.split('/').filter(Boolean)[1] || '';
 
-  // Extraer slug de la URL: /txt-viewer/<slug> o /txt-viewer/<slug>/txt-viewer.html
-  const partes = window.location.pathname.split('/').filter(Boolean);
-  const SLUG = partes[1] || '';
+  // ── CRC32 (tabla precalculada; coincide con binascii.crc32 de Python) ────────
+  const _CRC_T = (() => {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[i] = c;
+    }
+    return t;
+  })();
+  function crc32(str) {
+    const buf = new TextEncoder().encode(str);
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < buf.length; i++) c = _CRC_T[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
 
-  let versionLocal = 0;
-  let contenidoGuardado = '';
-  let ultimoGuardado = null;
-  let intervalSync = null;
-  let intervalContador = null;
+  // ── Estado ───────────────────────────────────────────────────────────────────
+  let versionLocal      = 0;
+  let lineasConfirmadas = [];         // último estado confirmado por el servidor
+  let lineasProtegidas  = new Map();  // lineIndex → timestamp del último keystroke
+  let crc32Srv          = 0;
+  let ultimaEdicion     = 0;
+  let ultimoGuardado    = null;
 
-  const editor       = document.getElementById('editor');
-  const elEstado     = document.getElementById('estado');
-  const elPresencia  = document.getElementById('presencia');
-  const elSlug       = document.getElementById('slug-display');
+  const PASOS = [5, 10, 15, 30, 60];
+  let idxPaso = 2;  // 15 s por defecto
 
-  // ── Inicialización ──────────────────────────────────────────────────────────
-  async function iniciar() {
-    if (!SLUG) { window.location.href = '/txt-viewer.html'; return; }
-    document.title = `${SLUG} — Notepad`;
-    elSlug.textContent = SLUG;
+  let timDirty    = null;
+  let timIdle     = null;
+  let timContador = null;
+  let timReconcil = null;
 
+  const editor      = document.getElementById('editor');
+  const elEstado    = document.getElementById('estado');
+  const elPresencia = document.getElementById('presencia');
+  const elSlug      = document.getElementById('slug-display');
+  const elInterval  = document.getElementById('intervalo-display');
+
+  // ── Diff líneas (client → server) ────────────────────────────────────────────
+  // Compara el estado confirmado con el actual y genera deltas para el servidor.
+  // Inserts y edits se aplican en orden ascendente; deletes en descendente.
+  function calcularDeltas(anterior, actual) {
+    const deltas = [];
+    const max = Math.max(anterior.length, actual.length);
+    for (let i = 0; i < max; i++) {
+      if (i >= actual.length) {
+        deltas.push({ n: i, op: 'delete' });
+      } else if (i >= anterior.length) {
+        deltas.push({ n: i, op: 'insert', texto: actual[i] });
+      } else if (anterior[i] !== actual[i]) {
+        deltas.push({ n: i, texto: actual[i] });
+      }
+    }
+    return deltas;
+  }
+
+  // ── Recálculo de índices protegidos tras cambio estructural ──────────────────
+  // Cuando el servidor inserta o borra líneas, desplaza los índices protegidos.
+  function recalcularProtegidas(protegidas, conf, srv) {
+    const delta = srv.length - conf.length;
+    if (delta === 0) return protegidas;
+    let primerCambio = Math.min(conf.length, srv.length);
+    for (let i = 0; i < primerCambio; i++) {
+      if (conf[i] !== srv[i]) { primerCambio = i; break; }
+    }
+    const nuevas = new Map();
+    for (const [idx, ts] of protegidas.entries()) {
+      nuevas.set(idx < primerCambio ? idx : idx + delta, ts);
+    }
+    return nuevas;
+  }
+
+  // ── Aplica contenido del servidor conservando líneas en edición ──────────────
+  function aplicarContenidoServidor(contenidoSrv) {
+    const srv   = contenidoSrv.split('\n');
+    const loc   = editor.value.split('\n');
+    const ahora = Date.now();
+
+    lineasProtegidas = recalcularProtegidas(lineasProtegidas, lineasConfirmadas, srv);
+
+    const resultado = srv.map((linea, i) => {
+      const ts = lineasProtegidas.get(i);
+      return (ts && ahora - ts < 3000 && i < loc.length) ? loc[i] : linea;
+    });
+
+    const nuevo = resultado.join('\n');
+    const pos   = editor.selectionStart;
+    editor.value = nuevo;
+    editor.selectionStart = editor.selectionEnd = Math.min(pos, nuevo.length);
+    lineasConfirmadas = srv.slice();
+  }
+
+  // ── API ───────────────────────────────────────────────────────────────────────
+  async function apiGet() {
+    const r = await fetch(`${API}/notepad/${SLUG}`);
+    if (!r.ok) throw new Error(r.status);
+    return (await r.json()).data;
+  }
+  async function apiPutLines(deltas) {
+    const r = await fetch(`${API}/notepad/${SLUG}/lines`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deltas })
+    });
+    if (!r.ok) throw new Error(r.status);
+    return (await r.json()).data;
+  }
+  async function apiDelete() {
+    const r = await fetch(`${API}/notepad/${SLUG}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  // ── Bucle dirty (cada 1 s) ────────────────────────────────────────────────────
+  async function syncDirty() {
+    const actual  = editor.value.split('\n');
+    const deltas  = calcularDeltas(lineasConfirmadas, actual);
+    if (deltas.length === 0) return;
+    setEstado('guardando');
     try {
-      const data = await apiGet();
-      editor.value = data.contenido;
-      contenidoGuardado = data.contenido;
-      versionLocal = data.version;
-      ultimoGuardado = Date.now();
+      const data = await apiPutLines(deltas);
+      lineasConfirmadas = actual.slice();
+      crc32Srv          = data.crc32;
+      versionLocal      = data.version;
+      ultimoGuardado    = Date.now();
       renderizarVisitantes(data.visitantes);
+      // Si hay divergencia (otro usuario escribió al mismo tiempo)
+      // el bucle idle la resolverá cuando el usuario haga pausa.
       setEstado('ok');
     } catch (e) {
       setEstado('error');
     }
-
-    intervalSync = setInterval(sync, 15000);
-    intervalContador = setInterval(actualizarContador, 1000);
   }
 
-  // ── Bucle de sync ────────────────────────────────────────────────────────────
-  async function sync() {
-    const dirty = editor.value !== contenidoGuardado;
+  // ── Bucle idle (configurable) ─────────────────────────────────────────────────
+  async function syncIdle() {
     try {
-      if (dirty) {
-        setEstado('guardando');
-        const data = await apiPut(editor.value);
-        versionLocal = data.version;
-        contenidoGuardado = editor.value;
-        ultimoGuardado = Date.now();
-        renderizarVisitantes(data.visitantes);
-        setEstado('ok');
-      } else {
-        const data = await apiGet();
-        renderizarVisitantes(data.visitantes);
-        if (data.version > versionLocal) {
-          editor.value = data.contenido;
-          contenidoGuardado = data.contenido;
-          versionLocal = data.version;
+      const data = await apiGet();
+      renderizarVisitantes(data.visitantes);
+      versionLocal = data.version;
+      const crc32Local = crc32(editor.value);
+      if (data.crc32 !== crc32Local) {
+        if (Date.now() - ultimaEdicion >= 3000) {
+          aplicarContenidoServidor(data.contenido);
+          crc32Srv = data.crc32;
           ultimoGuardado = Date.now();
           setEstado('sync');
+        } else {
+          crc32Srv = data.crc32;  // marcar divergencia, reconciliar al hacer pausa
         }
       }
     } catch (e) {
@@ -228,34 +345,37 @@
     }
   }
 
-  editor.addEventListener('input', () => {
-    if (editor.value !== contenidoGuardado) setEstado('pendiente');
+  // ── Intervalo configurable ────────────────────────────────────────────────────
+  function cambiarIntervalo(dir) {
+    idxPaso = Math.max(0, Math.min(PASOS.length - 1, idxPaso + dir));
+    elInterval.textContent = PASOS[idxPaso] + 's';
+    clearInterval(timIdle);
+    timIdle = setInterval(syncIdle, PASOS[idxPaso] * 1000);
+  }
+
+  // ── Keydown: proteger línea activa y programar reconciliación ─────────────────
+  editor.addEventListener('keydown', () => {
+    ultimaEdicion = Date.now();
+    const pos = editor.selectionStart;
+    const lineaActual = editor.value.substring(0, pos).split('\n').length - 1;
+    lineasProtegidas.set(lineaActual, ultimaEdicion);
+    setEstado('pendiente');
+    // Reconciliar ~3 s después de que el usuario deje de escribir
+    clearTimeout(timReconcil);
+    timReconcil = setTimeout(async () => {
+      if (crc32Srv !== 0 && crc32(editor.value) !== crc32Srv) {
+        await syncIdle();
+      }
+    }, 3100);
   });
 
-  // ── API ──────────────────────────────────────────────────────────────────────
-  async function apiGet() {
-    const r = await fetch(`${API}/notepad/${SLUG}`);
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    return j.data;
-  }
-
-  async function apiPut(contenido) {
-    const r = await fetch(`${API}/notepad/${SLUG}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contenido })
-    });
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    return j.data;
-  }
-
-  async function apiDelete() {
-    const r = await fetch(`${API}/notepad/${SLUG}`, { method: 'DELETE' });
-    if (!r.ok) throw new Error(r.status);
-    return r.json();
-  }
+  // Purgar líneas protegidas expiradas cada 500 ms
+  setInterval(() => {
+    const ahora = Date.now();
+    for (const [idx, ts] of lineasProtegidas.entries()) {
+      if (ahora - ts >= 3000) lineasProtegidas.delete(idx);
+    }
+  }, 500);
 
   // ── Estado visual ─────────────────────────────────────────────────────────────
   function setEstado(tipo) {
@@ -271,10 +391,10 @@
   }
 
   function actualizarContador() {
-    if (!ultimoGuardado || editor.value !== contenidoGuardado) return;
+    if (!ultimoGuardado) return;
+    if (editor.value !== lineasConfirmadas.join('\n')) return;
     const seg = Math.round((Date.now() - ultimoGuardado) / 1000);
-    if (seg < 5) { elEstado.textContent = '✓ Guardado'; return; }
-    elEstado.textContent = `✓ Guardado · hace ${seg}s`;
+    elEstado.textContent = seg < 5 ? '✓ Guardado' : `✓ Guardado · hace ${seg}s`;
   }
 
   // ── Presencia ─────────────────────────────────────────────────────────────────
@@ -287,13 +407,13 @@
     }
     elPresencia.innerHTML = lista.map(v =>
       v.es_yo
-        ? `<span class="chip yo" title="Tu IP"><span class="dot">●</span>${escHtml(v.ip)} (vos)</span>`
-        : `<span class="chip" title="Otro usuario"><span class="dot">●</span>${escHtml(v.ip)}</span>`
+        ? `<span class="chip yo" title="Tu IP"><span class="dot">●</span>${esc(v.ip)} <em>(vos)</em></span>`
+        : `<span class="chip" title="Otro usuario"><span class="dot">●</span>${esc(v.ip)}</span>`
     ).join('');
   }
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // ── Acciones ──────────────────────────────────────────────────────────────────
@@ -306,7 +426,6 @@
   function confirmarEliminar() {
     document.getElementById('modal-overlay').classList.add('visible');
   }
-
   function cerrarModal() {
     document.getElementById('modal-overlay').classList.remove('visible');
   }
@@ -315,8 +434,7 @@
     cerrarModal();
     try {
       await apiDelete();
-      clearInterval(intervalSync);
-      clearInterval(intervalContador);
+      clearInterval(timDirty); clearInterval(timIdle); clearInterval(timContador);
       mostrarToast('Notepad eliminado. Redirigiendo…');
       setTimeout(() => { window.location.href = '/txt-viewer.html'; }, 1200);
     } catch (e) {
@@ -324,17 +442,39 @@
     }
   }
 
-  // ── Toast ─────────────────────────────────────────────────────────────────────
   let toastTimer = null;
   function mostrarToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('visible');
+    t.textContent = msg; t.classList.add('visible');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('visible'), 2200);
   }
 
   // ── Arranque ──────────────────────────────────────────────────────────────────
+  async function iniciar() {
+    if (!SLUG) { window.location.href = '/txt-viewer.html'; return; }
+    document.title = `${SLUG} — Notepad`;
+    elSlug.textContent = SLUG;
+    elInterval.textContent = PASOS[idxPaso] + 's';
+
+    try {
+      const data = await apiGet();
+      editor.value         = data.contenido;
+      lineasConfirmadas    = data.contenido.split('\n');
+      versionLocal         = data.version;
+      crc32Srv             = data.crc32 || 0;
+      ultimoGuardado       = Date.now();
+      renderizarVisitantes(data.visitantes);
+      setEstado('ok');
+    } catch (e) {
+      setEstado('error');
+    }
+
+    timDirty    = setInterval(syncDirty, 1000);
+    timIdle     = setInterval(syncIdle, PASOS[idxPaso] * 1000);
+    timContador = setInterval(actualizarContador, 1000);
+  }
+
   iniciar();
 </script>
 </body>
