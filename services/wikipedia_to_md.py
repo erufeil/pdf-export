@@ -87,6 +87,10 @@ def _limpiar_html(html: str) -> str:
     """Elimina elementos de navegación, notas al pie y decoradores de Wikipedia."""
     soup = BeautifulSoup(html, 'lxml')
 
+    # markdownify.strip=['style'] elimina el tag pero conserva el texto CSS — hay que usar decompose()
+    for tag in soup.find_all(['style', 'script']):
+        tag.decompose()
+
     selectores_eliminar = [
         # Notas y referencias
         '.mw-ref', '.reference', '.mw-references-wrap', '.reflist', '.references', 'sup',
