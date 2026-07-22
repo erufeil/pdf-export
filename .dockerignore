@@ -20,6 +20,7 @@ data/
 # Documentacion y planificacion
 *.md
 !NOTAS-USUARIO.md
+!README-API-Ref.md
 CLAUDE.md
 planificacion*.md
 LICENSE
