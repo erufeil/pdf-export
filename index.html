@@ -737,16 +737,15 @@
     <div class="nav-section">
         <div class="nav-section-label">Sistema</div>
 
-        <div class="nav-item" data-tooltip="Archivos en Cache" id="nav-cache" onclick="mostrarVista('cache')">
-            <span class="nav-icon">🗄️</span>
-            <span class="nav-label">Archivos en Cache</span>
-            <span class="nav-badge" id="badge-trabajos"></span>
-        </div>
-
         <div class="nav-item" data-tooltip="Acerca de PDF-Export" onclick="mostrarVista('about')">
             <span class="nav-icon">ℹ️</span>
             <span class="nav-label">Acerca de PDF-Export</span>
         </div>
+
+        <a class="nav-item" href="/api-ref.html" target="_blank" rel="noopener" data-tooltip="Referencia API (desarrolladores)">
+            <span class="nav-icon">📡</span>
+            <span class="nav-label">Referencia API</span>
+        </a>
 
         <a class="nav-item" href="/help.html" target="_blank" data-tooltip="Ayuda">
             <span class="nav-icon">❓</span>
@@ -899,7 +898,7 @@
                     <div class="section-title">Quiero un MD</div>
                     <div class="section-desc">Convierte cualquier fuente a Markdown — ideal para IA y documentación</div>
                 </div>
-                <div class="section-count">4 activas · 2 próximamente</div>
+                <div class="section-count">5 activas · 2 próximamente</div>
             </div>
             <div class="cards-grid">
                 <a href="/pdf-to-md.html" class="card cat-md">
@@ -924,6 +923,11 @@
                     <div class="card-title">YouTube a MD</div>
                     <div class="card-desc">Descarga subtítulos/CC de YouTube en Markdown</div>
                 </a>
+                <a href="/wikipedia-to-md.html" class="card cat-md">
+                    <div class="card-icon">WIKI</div>
+                    <div class="card-title">Wikipedia a MD</div>
+                    <div class="card-desc">Descarga artículos de Wikipedia en Markdown</div>
+                </a>
                 <a href="/audio-to-md.html" class="card cat-md">
                     <div class="card-icon">AUD</div>
                     <div class="card-title">Audio a MD</div>
@@ -946,7 +950,7 @@
                     <div class="section-title">Miscelaneos</div>
                     <div class="section-desc">Herramientas de utilidad general</div>
                 </div>
-                <div class="section-count">7 herramientas</div>
+                <div class="section-count">8 herramientas</div>
             </div>
             <div class="cards-grid">
                 <a href="/ndm-to-tables-seq.html" class="card cat-misc">
@@ -988,6 +992,12 @@
                     <div class="card-icon">XLS</div>
                     <div class="card-title">Excel a CSV</div>
                     <div class="card-desc">Convierte .xlsx y .xls a CSV por hoja</div>
+                </a>
+                <a href="/token-counter.html" class="card cat-misc">
+                    <span class="card-badge badge-new">Nuevo</span>
+                    <div class="card-icon">TOK</div>
+                    <div class="card-title">Contador de Tokens</div>
+                    <div class="card-desc">Tokens, palabras, chars y bytes de un texto</div>
                 </a>
             </div>
         </div>
@@ -1157,6 +1167,7 @@
                         <span class="about-tag">PyMuPDF</span>
                         <span class="about-tag">Docker</span>
                     </p>
+                    <p>Para integración programática, consultá la <a href="/api-ref.html" target="_blank" rel="noopener">Referencia de API</a>.</p>
                     <div class="social-links">
                         <a href="https://www.linkedin.com/in/eduardo-rufeil/" target="_blank" rel="noopener" class="social-link linkedin">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">

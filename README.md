@@ -1,29 +1,51 @@
 # PDFexport
 
-Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autocontenida con backend Python/Flask y frontend HTML/CSS/JS vanilla.
+Servicio de conversión y manipulación de archivos PDF. Aplicación web autocontenida con backend Python/Flask y frontend HTML/CSS/JS vanilla.
 
-## Caracteristicas
+## Documentación
 
-- **PDF a TXT**: Extrae texto plano, removiendo encabezados y pies de pagina
-- **PDF a DOCX**: Convierte a documento Word preservando formato
-- **PDF a PNG/JPG**: Convierte paginas a imagenes con DPI configurable
-- **Comprimir PDF**: Reduce el tamanio con 7 categorias de optimizacion y 4 presets — incluye soporte Ghostscript para fuentes emoji COLR
-- **Extraer imagenes**: Extrae imagenes incrustadas del PDF
-- **Cortar PDF**: Divide el PDF en partes con hasta 20 cortes
-- **Rotar PDF**: Rota paginas individuales o todas
-- **HTML a PDF**: Convierte paginas web a PDF via URL
-- **Unir PDFs**: Combina multiples PDFs en uno
-- **Extraer paginas**: Extrae paginas especificas a PDF unico o separados
-- **Reordenar paginas**: Cambia el orden de las paginas via drag & drop
-- **Migrar SQL (NDM)**: Genera orden secuencial de migracion de tablas SQL a partir de archivos Navicat Data Modeler (.ndm2)
-- **PDF a CSV**: Detecta y extrae todas las tablas del PDF como archivos CSV individuales
-- **Web Scraper**: Extrae contenido estructurado de una URL (titulo, cuerpo, footer, links) en TXT o Markdown
-- **IMG a PDF**: Convierte multiples imagenes (JPG, PNG, WEBP, etc.) en un unico PDF
-- **WEBP a PNG**: Convierte imagenes WEBP a PNG sin perdida de calidad
-- **EPS a PNG**: Rasteriza archivos EPS a PNG con escala configurable (requiere Ghostscript)
-- **Excel a CSV**: Convierte .xlsx/.xls a CSV por hoja (1 hoja → CSV directo, N hojas → ZIP)
-- **Metadatos PDF**: Extrae huella forense completa del PDF (estructura, permisos, XMP, fuentes, IDs)
-- **Metadatos Imagen**: Extrae EXIF, GPS, IPTC/XMP, hashes y colores dominantes de imagenes
+| Documento | Audiencia | Contenido |
+|-----------|-----------|-----------|
+| [NOTAS-USUARIO.md](NOTAS-USUARIO.md) | Usuarios finales | Guía de uso de cada herramienta, capturas, preguntas frecuentes |
+| [README-API-Ref.md](README-API-Ref.md) | Desarrolladores | Referencia completa de endpoints REST con tablas de parámetros y ejemplos `curl` |
+
+---
+
+## Servicios disponibles
+
+| Servicio | Endpoint | Resultado |
+|----------|----------|-----------|
+| PDF → TXT | `/convert/to-txt` | TXT directo |
+| PDF → DOCX | `/convert/to-docx` | DOCX directo |
+| PDF → PNG | `/convert/to-png` | ZIP con PNGs |
+| PDF → JPG | `/convert/to-jpg` | ZIP con JPGs |
+| PDF → CSV (tablas) | `/convert/to-csv` | ZIP con CSVs |
+| PDF → Markdown | `/convert/to-md` | MD directo |
+| Comprimir PDF | `/convert/compress` | PDF directo |
+| Extraer imágenes | `/convert/extract-images` | ZIP con imágenes |
+| Cortar PDF | `/convert/split` | ZIP con PDFs |
+| Unir PDFs | `/convert/merge` | PDF directo |
+| Rotar páginas | `/convert/rotate` | PDF directo |
+| Reordenar páginas | `/convert/reorder` | PDF directo |
+| Extraer páginas | `/convert/extract-pages` | PDF o ZIP |
+| URL → PDF | `/convert/from-html` | PDF directo |
+| Imágenes → PDF | `/convert/img-to-1pdf` | PDF directo |
+| WEBP → PNG | `/convert/webp-to-png` | PNG directo |
+| SVG → PNG | `/convert/svg-to-png` | PNG directo |
+| EPS → PNG | `/convert/eps-to-png` | PNG directo |
+| Excel → CSV | `/convert/xlsx-to-csv` | CSV o ZIP |
+| Imagen → TXT (OCR) | `/convert/img-to-txt` | TXT directo |
+| Excel → Markdown | `/convert/excel-to-md` | MD directo |
+| EPUB → Markdown | `/convert/epub-to-md` | MD directo |
+| YouTube CC → MD | `/convert/youtube-to-md` | MD directo |
+| Wikipedia → MD | `/convert/wikipedia-to-md` | MD directo |
+| Web Scraper | `/convert/scrape-url` | ZIP con MD/TXT |
+| NDM → SQL (orden migración) | `/convert/ndm-to-tables-seq` | TXT directo |
+| Metadatos PDF | `/metadata/extract` + `/metadata/edit` | JSON / PDF |
+| Metadatos Imagen | `/img-metadata/extract` | JSON |
+| Notepad compartido | `/notepad/{slug}` | Texto colaborativo |
+
+---
 
 ## Requisitos
 
@@ -32,7 +54,7 @@ Servicio de conversion y manipulacion de archivos PDF. Aplicacion web autoconten
 
 ---
 
-## Instalacion con Docker (Recomendado)
+## Instalación con Docker (Recomendado)
 
 ### 1. Clonar el repositorio
 
@@ -43,32 +65,29 @@ cd PDFexport
 
 ### 2. Configurar variables de entorno
 
-Las variables se pasan directamente en `docker-compose.yml`:
+Las variables se pasan en `docker-compose.yml`:
 
 ```yaml
 environment:
   - PORT=5000
-  - APP_VERSION=1.1.50     # version que aparece en el footer
-  - FILE_RETENTION_HOURS=4  # horas de retencion de archivos
-  - TIMEOUT=30000           # timeout en ms para peticiones del frontend
+  - APP_VERSION=1.1.70
+  - FILE_RETENTION_HOURS=4
+  - TIMEOUT=30000
   - RETRY_ATTEMPTS=3
 ```
 
 ### 3. Construir y ejecutar
 
 ```bash
-# Construir la imagen
 docker build -t pdfexport .
-
-# Ejecutar con docker-compose
 docker-compose up -d
 ```
 
-### 4. Acceder a la aplicacion
+### 4. Acceder a la aplicación
 
-Abrir en el navegador: `http://localhost:5000`
+`http://localhost:5000`
 
-### Actualizar a una nueva version
+### Actualizar a una nueva versión
 
 ```bash
 git pull
@@ -79,14 +98,14 @@ docker-compose up -d
 
 ---
 
-## Instalacion Manual (Desarrollo)
+## Instalación Manual (Desarrollo)
 
 ### 1. Instalar dependencias del sistema (Ubuntu/Debian)
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y poppler-utils libpango-1.0-0 libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 fonts-liberation fonts-dejavu
+sudo apt-get install -y poppler-utils ghostscript libpango-1.0-0 libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 fonts-liberation fonts-dejavu tesseract-ocr tesseract-ocr-spa
 ```
 
 ### 2. Crear entorno virtual e instalar Python
@@ -99,34 +118,21 @@ pip install -r requirements.txt
 
 ### 3. En Windows: instalar poppler
 
-Descargar zip de: https://github.com/oschwartz10612/poppler-windows/releases
-Copiar la carpeta `bin` en `venv/poppler/`, quedando asi:
+Descargar de: https://github.com/oschwartz10612/poppler-windows/releases
 
-```bash
-venv/
-└── poppler/
-    └── Library/
-        └── bin/
-            ├── pdftoppm.exe
-            ├── pdfinfo.exe
-            └── ...
-```
+Copiar la carpeta `bin` en `venv/poppler/Library/bin/`.
 
 ### 4. En Windows: instalar GTK3 (requerido por WeasyPrint)
 
 Instalar MSYS2 desde: https://www.msys2.org/
-Luego ejecutar en la consola MSYS2:
 
 ```shell
 pacman -S mingw-w64-ucrt-x86_64-gtk3
 ```
 
-Agregar al PATH de Windows:
-```cmd
-set PATH=C:\msys64\ucrt64\bin;%PATH%
-```
+Agregar `C:\msys64\ucrt64\bin` al PATH de Windows.
 
-### 5. Ejecutar la aplicacion
+### 5. Ejecutar
 
 ```bash
 python app.py
@@ -134,887 +140,123 @@ python app.py
 
 ---
 
-## Configuracion
+## Configuración — Variables de entorno
 
-### Variables de entorno
-
-| Variable | Descripcion | Default |
-|----------|-------------|---------|
-| `HOST` | IP donde escucha el servidor | `0.0.0.0` |
-| `PORT` | Puerto del servidor | `5000` |
-| `DEBUG` | Modo debug de Flask | `False` |
-| `APP_VERSION` | Version de la app (aparece en footer) | valor de `config.py` |
-| `FILE_RETENTION_HOURS` | Horas de retencion de archivos | `4` |
-| `TIMEOUT` | Timeout de peticiones frontend (ms) | `30000` |
-| `RETRY_ATTEMPTS` | Reintentos en caso de error | `3` |
-| `MAX_FILE_SIZE` | Tamanio maximo de upload (bytes) | `1073741824` (1 GB) |
-| `POPPLER_PATH` | Ruta a poppler en Windows | `None` |
-
-### Versionado
-
-La version visible en el footer se define en `config.py`:
-
-```python
-VERSION = os.getenv('APP_VERSION', '1.1.50')
-```
-
-Para cambiarla sin recompilar la imagen Docker, pasar la variable de entorno `APP_VERSION` en `docker-compose.yml`. Para cambiarla en el codigo, editar `config.py` y reconstruir la imagen.
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `HOST` | `0.0.0.0` | IP donde escucha el servidor |
+| `PORT` | `5000` | Puerto del servidor |
+| `DEBUG` | `False` | Modo debug de Flask |
+| `APP_VERSION` | valor de `config.py` | Versión visible en el footer |
+| `FILE_RETENTION_HOURS` | `4` | Horas de retención de archivos subidos |
+| `MAX_FILE_SIZE` | `1073741824` (1 GB) | Tamaño máximo de upload en bytes |
+| `TIMEOUT` | `30000` | Timeout de peticiones frontend (ms) |
+| `RETRY_ATTEMPTS` | `3` | Reintentos en caso de error |
+| `POPPLER_PATH` | `None` | Ruta a poppler en Windows |
+| `NLM_INGESTOR_URL` | `http://ingestor:5001` | Servicio NLM para extracción avanzada de tablas (opcional) |
+| `TIKA_URL` | `http://tika:9998` | Apache Tika para OCR avanzado (opcional) |
+| `WHISPER_URL` | `` (vacío) | Servidor Whisper para audio a texto (opcional) |
+| `YOUTUBE_RELAY_URL` | `` (vacío) | Relay para sortear bloqueos de IP en YouTube (opcional) |
+| `YOUTUBE_RELAY_TOKEN` | `` (vacío) | Token de autenticación del relay YouTube |
+| `YOUTUBE_PROXY_URL` | `` (vacío) | Proxy HTTP/HTTPS para YouTube (opcional) |
+| `YOUTUBE_COOKIES_FILE` | `` (vacío) | Archivo de cookies Netscape para YouTube (opcional) |
 
 ---
 
 ## Estructura del Proyecto
 
-```yaml
+```
 PDFexport/
-├── app.py                    # Aplicacion Flask principal
-├── config.py                 # Configuracion Python (incluye VERSION)
-├── config.js                 # Config frontend (generado por entrypoint)
-├── entrypoint.py             # Genera config.js al iniciar el contenedor
-├── index.html                # Landing page
+├── app.py                       # Aplicación Flask principal
+├── config.py                    # Configuración centralizada (VERSION, paths, env vars)
+├── models.py                    # Acceso a SQLite (archivos, trabajos, notepads)
+├── entrypoint.py                # Genera /config.js dinámico al iniciar
+├── index.html                   # Página principal (sirve desde raíz)
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
 │
 ├── api/
-│   ├── routes_files.py       # Endpoints de archivos
-│   ├── routes_convert.py     # Endpoints de conversion
-│   └── routes_jobs.py        # Endpoints de trabajos y descarga
+│   ├── routes_files.py          # /upload, /files, /notepad, /help, /api-ref
+│   ├── routes_convert.py        # /convert/*
+│   └── routes_jobs.py           # /jobs, /download, /status
 │
-├── services/                 # Logica de cada conversion
+├── services/                    # Lógica de cada conversión
 │   ├── pdf_to_txt.py
 │   ├── pdf_to_docx.py
-│   ├── pdf_to_images.py      # PNG y JPG
-│   ├── pdf_compress.py
+│   ├── pdf_to_images.py         # PNG y JPG
+│   ├── pdf_compress.py          # 7 categorías, 4 presets, soporte GS
 │   ├── pdf_extract_images.py
 │   ├── pdf_split.py
 │   ├── pdf_rotate.py
-│   ├── html_to_pdf.py
 │   ├── pdf_merge.py
 │   ├── pdf_extract_pages.py
 │   ├── pdf_reorder.py
-│   └── ndm_to_tables_seq.py  # Orden de migracion SQL
+│   ├── pdf_to_csv.py
+│   ├── pdf_to_md.py
+│   ├── pdf_metadata.py
+│   ├── html_to_pdf.py
+│   ├── img_to_1pdf.py
+│   ├── webp_to_png.py
+│   ├── svg_to_png.py
+│   ├── eps_to_png.py
+│   ├── xlsx_to_csv.py
+│   ├── img_to_txt.py
+│   ├── img_metadata.py
+│   ├── excel_to_md.py
+│   ├── epub_to_md.py
+│   ├── youtube_to_md.py
+│   ├── wikipedia_to_md.py
+│   ├── web_scraper.py
+│   └── ndm_to_tables_seq.py
 │
 ├── utils/
 │   ├── file_manager.py
 │   ├── job_manager.py
 │   └── thumbnail.py
 │
-├── static/                   # Frontend de cada servicio
-├── uploads/                  # Archivos subidos (limpieza cada 4h)
-├── outputs/                  # Resultados de conversion (limpieza cada 4h)
+├── static/                      # Frontend de cada servicio (HTML + JS + CSS)
+│   ├── js/
+│   │   ├── common.js            # formatBytes, escHtml, toggleSidebar
+│   │   └── ...                  # JS por módulo
+│   ├── help.html                # Renderiza NOTAS-USUARIO.md
+│   ├── api-ref.html             # Renderiza README-API-Ref.md
+│   └── ...
+│
+├── uploads/                     # Archivos subidos (limpieza automática cada 4h)
+├── outputs/                     # Resultados de conversión (limpieza automática cada 4h)
 └── data/
-    └── pdfexport.db          # Base de datos SQLite
+    └── pdfexport.db             # Base de datos SQLite
 ```
 
 ---
 
-## Limites
+## Límites
 
-- Tamanio maximo de archivo: **1 GB**
-- Retencion de archivos: **4 horas** (configurable con `FILE_RETENTION_HOURS`)
-- Formatos de entrada PDF: `.pdf`, `.ndm2`, `.json`
-- Formatos de entrada imagenes: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`, `.eps` (EPS requiere Ghostscript)
-- Maximo de cortes en "Cortar PDF": **20**
-
----
-
-## Uso via API con curl
-
-El flujo general es siempre el mismo:
-
-1. **Subir el archivo** → obtenes un `file_id`
-2. **Iniciar la conversion** → obtenes un `job_id`
-3. **Consultar el estado** del trabajo hasta que este `completado`
-4. **Descargar el resultado** usando el `job_id`
-
-Reemplaza `http://localhost:5000` con la URL de tu servidor.
+| Límite | Valor |
+|--------|-------|
+| Tamaño máximo de archivo | 1 GB (configurable con `MAX_FILE_SIZE`) |
+| Retención de archivos | 4 horas (configurable con `FILE_RETENTION_HOURS`) |
+| Máximo de cortes en "Cortar PDF" | 20 |
 
 ---
 
-### 1. Subir un archivo
+## Tecnologías
 
-```bash
-# Linux/Mac
-curl -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@/ruta/al/archivo.pdf"
-
-# Windows CMD (desde la carpeta donde esta el archivo)
-curl -X POST http://localhost:5000/api/v1/upload -F "archivo=@nombre_archivo.pdf"
-
-# Windows CMD (con ruta completa)
-curl -X POST http://localhost:5000/api/v1/upload -F "archivo=@\"C:\Users\usuario\Downloads\archivo.pdf\""
-```
-
-Respuesta:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "abc123",
-    "nombre_original": "archivo.pdf",
-    "tamano_bytes": 2048000,
-    "num_paginas": 45,
-    "fecha_subida": "2026-02-19T10:30:00"
-  }
-}
-```
-
-> Si el mismo archivo (nombre + tamanio + fecha de modificacion) ya esta en el servidor, retorna el existente sin volver a subirlo.
+- **Backend:** Python 3.10+, Flask, SQLite3
+- **PDF:** PyMuPDF (fitz), pdf2image, pdfminer.six, python-docx, pdfplumber
+- **HTML → PDF:** WeasyPrint
+- **Imágenes:** Pillow, cairosvg, pdf2image + poppler
+- **EPS/GS:** Ghostscript
+- **OCR:** Tesseract (via pytesseract)
+- **Web scraping:** beautifulsoup4 + lxml, trafilatura, markdownify
+- **YouTube:** youtube-transcript-api
+- **Audio:** Whisper (servidor externo opcional)
+- **NDM:** lxml + resolución de dependencias FK
+- **Frontend:** HTML5, CSS3, JavaScript vanilla (sin frameworks, sin Node.js)
+- **Contenedor:** Docker
 
 ---
-
-### 2. Listar archivos disponibles
-
-```bash
-curl http://localhost:5000/api/v1/files
-```
-
----
-
-### 3. Obtener miniatura de una pagina
-
-```bash
-# Miniatura de la pagina 1 del archivo con id "abc123"
-curl http://localhost:5000/api/v1/files/abc123/thumbnail/1 \
-  --output miniatura.png
-```
-
----
-
-### 4. Eliminar un archivo
-
-```bash
-curl -X DELETE http://localhost:5000/api/v1/files/abc123
-```
-
-```bash
-# Eliminar todos los archivos
-curl -X DELETE http://localhost:5000/api/v1/files
-```
-
----
-
-### 5. Consultar estado del servicio
-
-```bash
-curl http://localhost:5000/api/v1/status
-```
-
----
-
-### Conversiones
-
-Todos los endpoints de conversion devuelven un `job_id`. Luego se consulta el estado y se descarga el resultado.
-
-#### Consultar estado de un trabajo
-
-```bash
-curl http://localhost:5000/api/v1/jobs/JOB_ID
-```
-
-Respuesta cuando esta listo:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "JOB_ID",
-    "estado": "completado",
-    "progreso": 100,
-    "nombre_archivo": "resultado.zip"
-  }
-}
-```
-
-#### Descargar el resultado
-
-```bash
-curl http://localhost:5000/api/v1/download/JOB_ID \
-  --output resultado.zip
-```
-
----
-
-### 6. PDF a TXT
-
-```bash
-# Paso 1: subir
-FILE_ID=$(curl -s -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@documento.pdf" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])")
-
-# Paso 2: convertir
-JOB_ID=$(curl -s -X POST http://localhost:5000/api/v1/convert/to-txt \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"file_id\": \"$FILE_ID\",
-    \"opciones\": {
-      \"remover_numeros_pagina\": true,
-      \"remover_encabezados\": true,
-      \"remover_pies_pagina\": true,
-      \"preservar_parrafos\": true,
-      \"detectar_columnas\": false
-    }
-  }" | python3 -c "import sys,json; print(json.load(sys.stdin)['job']['id'])")
-
-# Paso 3: descargar cuando este listo
-curl http://localhost:5000/api/v1/download/$JOB_ID --output documento.zip
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion | Default |
-|-----------|------|-------------|---------|
-| `remover_numeros_pagina` | bool | Elimina numeros de pagina | `true` |
-| `remover_encabezados` | bool | Elimina texto repetido en parte superior | `true` |
-| `remover_pies_pagina` | bool | Elimina texto repetido en parte inferior | `true` |
-| `preservar_parrafos` | bool | Mantiene saltos de parrafo | `true` |
-| `detectar_columnas` | bool | Maneja PDFs con multiples columnas | `false` |
-
----
-
-### 7. PDF a DOCX
-
-```bash
-curl -X POST http://localhost:5000/api/v1/convert/to-docx \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "preservar_imagenes": true,
-      "preservar_tablas": true,
-      "preservar_estilos": true,
-      "calidad_imagenes": "media"
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Default |
-|-----------|------|----------|---------|
-| `preservar_imagenes` | bool | - | `true` |
-| `preservar_tablas` | bool | - | `true` |
-| `preservar_estilos` | bool | negrita, cursiva, tamanios | `true` |
-| `calidad_imagenes` | string | `baja`, `media`, `alta`, `original` | `media` |
-
----
-
-### 8. PDF a PNG
-
-```bash
-# Todas las paginas a 150 DPI
-curl -X POST http://localhost:5000/api/v1/convert/to-png \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "dpi": 150,
-      "paginas": "all",
-      "paginas_especificas": null
-    }
-  }'
-
-# Solo un rango de paginas
-curl -X POST http://localhost:5000/api/v1/convert/to-png \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "dpi": 300,
-      "paginas": "rango",
-      "pagina_inicio": 3,
-      "pagina_fin": 10
-    }
-  }'
-
-# Paginas especificas
-curl -X POST http://localhost:5000/api/v1/convert/to-png \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "dpi": 150,
-      "paginas": "especificas",
-      "paginas_especificas": "1,3,5-8"
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Default |
-|-----------|------|----------|---------|
-| `dpi` | int | `72`, `150`, `300`, `600` | `150` |
-| `paginas` | string | `all`, `rango`, `especificas` | `all` |
-| `pagina_inicio` | int | numero de pagina | - |
-| `pagina_fin` | int | numero de pagina | - |
-| `paginas_especificas` | string | ej: `"1,3,5-10"` | `null` |
-
-Resultado: archivo ZIP con `documento.pdf - pagina 001.png`, `documento.pdf - pagina 002.png`, etc.
-
----
-
-### 9. PDF a JPG
-
-```bash
-curl -X POST http://localhost:5000/api/v1/convert/to-jpg \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "dpi": 150,
-      "calidad": 85,
-      "paginas": "all",
-      "paginas_especificas": null
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Default |
-|-----------|------|----------|---------|
-| `dpi` | int | `72`, `150`, `300`, `600` | `150` |
-| `calidad` | int | `60` a `95` | `85` |
-| `paginas` | string | `all`, `rango`, `especificas` | `all` |
-| `pagina_inicio` | int | numero de pagina | - |
-| `pagina_fin` | int | numero de pagina | - |
-| `paginas_especificas` | string | ej: `"1,3,5-10"` | `null` |
-
----
-
-### 10. Comprimir PDF
-
-Antes de comprimir se puede llamar al endpoint de analisis para ver estadisticas del PDF:
-
-```bash
-# Analisis previo (sincrono)
-curl -X POST http://localhost:5000/api/v1/convert/compress/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"file_id": "FILE_ID"}'
-
-# Comprimir con preset estandar
-curl -X POST http://localhost:5000/api/v1/convert/compress \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "preset": "estandar"
-    }
-  }'
-
-# Preset maximo con Ghostscript (para PDFs con emojis de color)
-curl -X POST http://localhost:5000/api/v1/convert/compress \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "preset": "maximo",
-      "usar_ghostscript": true
-    }
-  }'
-
-# Personalizado
-curl -X POST http://localhost:5000/api/v1/convert/compress \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "preset": "personalizado",
-      "reimagenes": true, "dpi": 96, "calidad_jpeg": 60,
-      "grises": false, "dedup_imagenes": true,
-      "subset_fuentes": true, "dedup_fuentes": true,
-      "eliminar_xmp": true, "eliminar_thumbnails": true,
-      "garbage": true, "comprimir_streams": true, "dedup_objetos": true,
-      "eliminar_anotaciones": false, "eliminar_js": true,
-      "eliminar_adjuntos": false, "eliminar_marcadores": false,
-      "eliminar_ocg": false, "linearizar": false,
-      "usar_ghostscript": false
-    }
-  }'
-```
-
-Presets disponibles: `ligero` | `estandar` | `agresivo` | `maximo` | `personalizado`
-
-Parametros clave de opciones:
-
-| Parametro | Tipo | Default Estandar | Descripcion |
-|-----------|------|-----------------|-------------|
-| `preset` | string | `'estandar'` | Preset a aplicar |
-| `reimagenes` | bool | true | Recomprimir imagenes |
-| `dpi` | int | 150 | DPI maximo de imagenes |
-| `calidad_jpeg` | int | 85 | Calidad JPEG (60-95) |
-| `grises` | bool | false | Convertir a escala de grises (On en maximo) |
-| `subset_fuentes` | bool | false | Subconjunto de fuentes (On en agresivo) |
-| `eliminar_xmp` | bool | true | Eliminar stream XMP |
-| `eliminar_thumbnails` | bool | true | Eliminar thumbnails embebidos |
-| `garbage` | bool | true | Garbage collection de objetos huerfanos |
-| `comprimir_streams` | bool | true | Comprimir streams con Deflate |
-| `linearizar` | bool | false | Linearizar para Fast Web View (On en maximo) |
-| `bajar_version` | bool | false | Reescribir en PDF 1.4 con GS, sin degradar imágenes (On en maximo) |
-| `usar_ghostscript` | bool | false | Recomprimir fuentes COLR/emoji con Ghostscript (On en maximo) |
-
-Resultado: **PDF directo** (sin ZIP).
-
-Nota: `usar_ghostscript` requiere que Ghostscript este instalado (`gs` disponible en PATH). El contenedor Docker ya lo incluye. Si no esta disponible, el paso se omite silenciosamente.
-
----
-
-### 11. Extraer imagenes del PDF
-
-```bash
-# Extraer todas las imagenes en formato original
-curl -X POST http://localhost:5000/api/v1/convert/extract-images \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "formato_salida": "original",
-      "imagenes_seleccionadas": null,
-      "tamano_minimo_px": 100
-    }
-  }'
-
-# Extraer solo imagenes especificas en PNG
-curl -X POST http://localhost:5000/api/v1/convert/extract-images \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "formato_salida": "png",
-      "imagenes_seleccionadas": ["img_1", "img_3", "img_5"],
-      "tamano_minimo_px": 200
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Default |
-|-----------|------|----------|---------|
-| `formato_salida` | string | `original`, `png`, `jpg` | `original` |
-| `imagenes_seleccionadas` | array/null | lista de IDs de imagen o `null` para todas | `null` |
-| `tamano_minimo_px` | int | filtra imagenes mas pequenias (ignora iconos) | `100` |
-
-Resultado: ZIP con `documento.pdf - imagen 01.png`, `documento.pdf - imagen 02.jpg`, etc.
-
----
-
-### 12. Cortar PDF
-
-```bash
-# Cortar en partes definidas manualmente
-curl -X POST http://localhost:5000/api/v1/convert/split \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "cortes": [
-        {"inicio": 1, "fin": 50},
-        {"inicio": 51, "fin": 100},
-        {"inicio": 101, "fin": 150}
-      ]
-    }
-  }'
-
-# Cortar en N partes iguales
-curl -X POST http://localhost:5000/api/v1/convert/split \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "num_partes": 5
-    }
-  }'
-```
-
-Parametros disponibles:
-
-Ambos parametros van dentro de `opciones`:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `cortes` | array | Lista de objetos `{"inicio": N, "fin": M}`. Maximo 20 cortes. |
-| `num_partes` | int | Alternativa a `cortes`: divide el PDF en N partes iguales |
-
-Resultado: ZIP con `documento.pdf - pag. 001 - 050.pdf`, `documento.pdf - pag. 051 - 100.pdf`, etc.
-
----
-
-### 13. Rotar PDF
-
-```bash
-# Rotar paginas especificas
-curl -X POST http://localhost:5000/api/v1/convert/rotate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "rotaciones": {
-      "1": 90,
-      "3": 180,
-      "5": 270
-    }
-  }'
-
-# Rotar todas las paginas 90 grados
-curl -X POST http://localhost:5000/api/v1/convert/rotate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "rotaciones": {},
-    "rotar_todas": 90
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `rotaciones` | objeto | Clave: numero de pagina (string). Valor: grados (`90`, `180`, `270`) |
-| `rotar_todas` | int | Rotacion para todas las paginas: `90`, `180` o `270` |
-
----
-
-### 14. HTML a PDF
-
-```bash
-curl -X POST http://localhost:5000/api/v1/convert/from-html \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://ejemplo.com/pagina",
-    "opciones": {
-      "tamano_pagina": "A4",
-      "orientacion": "vertical",
-      "margenes": "normales",
-      "incluir_fondo": true,
-      "solo_contenido": false
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Default |
-|-----------|------|----------|---------|
-| `url` | string | URL completa incluyendo `https://` | requerido |
-| `tamano_pagina` | string | `A4`, `Letter`, `Legal`, `A3` | `A4` |
-| `orientacion` | string | `vertical`, `horizontal` | `vertical` |
-| `margenes` | string | `sin_margenes`, `normales`, `amplios` | `normales` |
-| `incluir_fondo` | bool | Incluye colores e imagenes de fondo | `true` |
-| `solo_contenido` | bool | Intenta remover navegacion y publicidad | `false` |
-
-> Timeout de 30 segundos. Paginas con login o JavaScript pesado pueden no renderizar correctamente.
-
----
-
-### 15. Unir PDFs
-
-```bash
-# Primero subir cada archivo y obtener sus file_id
-curl -X POST http://localhost:5000/api/v1/convert/merge \
-  -H "Content-Type: application/json" \
-  -d '{
-    "archivos": [
-      {"file_id": "FILE_ID_1", "orden": 1},
-      {"file_id": "FILE_ID_2", "orden": 2},
-      {"file_id": "FILE_ID_3", "orden": 3}
-    ],
-    "opciones": {
-      "agregar_marcadores": true
-    }
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `archivos` | array | Lista de `{"file_id": "...", "orden": N}`. El orden determina la secuencia en el PDF final. |
-| `agregar_marcadores` | bool | Agrega marcadores (bookmarks) con el nombre de cada archivo original |
-
----
-
-### 16. Extraer paginas especificas
-
-```bash
-# Exportar a un unico PDF
-curl -X POST http://localhost:5000/api/v1/convert/extract-pages \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "paginas": [1, 3, 5, 6, 7, 8, 9, 10, 15],
-    "formato_salida": "unico"
-  }'
-
-# Exportar cada pagina en un PDF separado
-curl -X POST http://localhost:5000/api/v1/convert/extract-pages \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "paginas": [1, 3, 5, 6, 7, 8, 9, 10, 15],
-    "formato_salida": "separados"
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Opciones | Descripcion |
-|-----------|------|----------|-------------|
-| `paginas` | array | lista de enteros | Numeros de pagina a extraer (base 1) |
-| `formato_salida` | string | `unico`, `separados` | Un solo PDF o un PDF por pagina |
-
----
-
-### 17. Reordenar paginas
-
-```bash
-# El array nuevo_orden indica la posicion final de cada pagina
-# Ejemplo: [3, 1, 2] significa que la pagina 3 va primero, luego la 1, luego la 2
-curl -X POST http://localhost:5000/api/v1/convert/reorder \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "nuevo_orden": [3, 1, 2, 5, 4, 6, 7, 8]
-  }'
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `nuevo_orden` | array | Lista completa de numeros de pagina en el nuevo orden deseado |
-
----
-
-### 18. Migrar SQL (NDM - Navicat Data Modeler)
-
-Genera el orden secuencial correcto de migracion de tablas SQL respetando dependencias de FK.
-Acepta archivos `.ndm2` (Navicat Data Modeler v2) o `.json` con la misma estructura.
-
-```bash
-# Paso 1: subir el archivo .ndm2
-curl -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@modelo.ndm2"
-
-# Paso 2: generar el orden de migracion
-curl -X POST http://localhost:5000/api/v1/convert/ndm-to-tables-seq \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "formato_salida": "original",
-      "sin_comprimir": true
-    }
-  }'
-
-# Paso 3: descargar el TXT resultante
-curl http://localhost:5000/api/v1/download/JOB_ID \
-  --output Orden_secuencial_migracion_SQL.txt
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `formato_salida` | string | `original` (unico valor soportado actualmente) |
-| `sin_comprimir` | bool | `true`: devuelve TXT directamente sin ZIP |
-
-El archivo resultante contiene:
-- Titulo con el nombre de la base de datos
-- Lista numerada de tablas en orden de migracion (primero las que no tienen FK, luego las que dependen de otras)
-- Notas al pie con advertencias de dependencias circulares o FK a otras bases de datos
-
-### 19. PDF a CSV (extraer tablas)
-
-Detecta y extrae todas las tablas del PDF, generando un CSV por tabla.
-
-```bash
-# Paso 1: subir el PDF
-curl -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@informe.pdf"
-
-# Paso 2: extraer tablas a CSV
-curl -X POST http://localhost:5000/api/v1/convert/to-csv \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "FILE_ID",
-    "opciones": {
-      "unificar_iguales": true,
-      "separador": ";",
-      "saltos_linea": "CRLF"
-    }
-  }'
-
-# Paso 3: descargar el ZIP con los CSV
-curl http://localhost:5000/api/v1/download/JOB_ID --output tablas.zip
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `unificar_iguales` | bool | Une tablas con las mismas cabeceras en un solo CSV |
-| `separador` | string | `";"` (decimales con coma) o `","` (decimales con punto) |
-| `saltos_linea` | string | `"CRLF"` (Windows) o `"LF"` (Unix) |
-
----
-
-### 20. Web Scraper
-
-Extrae contenido estructurado de una URL y lo devuelve en TXT o Markdown.
-
-```bash
-# Iniciar el scraping (asyncrono — devuelve job_id)
-curl -X POST http://localhost:5000/api/v1/convert/scrape-url \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://ejemplo.com/articulo",
-    "opciones": {
-      "formato_salida": "markdown",
-      "incluir_metadatos": true,
-      "incluir_contenido": true,
-      "incluir_footer": true,
-      "incluir_links": true
-    }
-  }'
-
-# Preview sincrónico (respuesta inmediata, no genera descarga)
-curl -X POST http://localhost:5000/api/v1/convert/scrape-url/preview \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://ejemplo.com/articulo", "opciones": {"formato_salida": "markdown"}}'
-
-# Descargar el ZIP con el TXT resultante
-curl http://localhost:5000/api/v1/download/JOB_ID --output contenido.zip
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `formato_salida` | string | `"markdown"` o `"texto"` |
-| `incluir_metadatos` | bool | Incluye titulo, URL, fecha, autor, descripcion |
-| `incluir_contenido` | bool | Incluye el cuerpo principal de la pagina |
-| `incluir_footer` | bool | Incluye emails, telefonos y texto del footer |
-| `incluir_links` | bool | Incluye lista de todos los enlaces encontrados |
-
----
-
-### 21. IMG a PDF
-
-Convierte una o varias imagenes en un unico archivo PDF.
-
-```bash
-# Paso 1: subir cada imagen (repetir por cada imagen)
-curl -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@foto1.jpg"
-# guardar el file_id retornado por cada upload
-
-# Paso 2: crear el PDF
-curl -X POST http://localhost:5000/api/v1/convert/img-to-1pdf \
-  -H "Content-Type: application/json" \
-  -d '{
-    "archivos": [
-      {"file_id": "FILE_ID_1", "orden": 1},
-      {"file_id": "FILE_ID_2", "orden": 2}
-    ],
-    "opciones": {
-      "tamano_pagina": "A4",
-      "margen": 0
-    }
-  }'
-
-# Paso 3: descargar el PDF resultante
-curl http://localhost:5000/api/v1/download/JOB_ID --output resultado.pdf
-```
-
-Parametros disponibles:
-
-| Parametro | Tipo | Descripcion |
-|-----------|------|-------------|
-| `tamano_pagina` | string | `"natural"` (dimensiones de la imagen), `"A4"`, `"A4H"`, `"A3"`, `"A3H"`, `"letter"`, `"letterH"` |
-| `margen` | int | Margen en puntos: `0`, `15` o `30` |
-
-Formatos de imagen soportados: JPG, JPEG, PNG, GIF, BMP, TIFF, WEBP.
-
-El resultado es un archivo PDF directo (sin comprimir en ZIP).
-
----
-
-### 22. WEBP a PNG
-
-Convierte una imagen WEBP a PNG sin perdida de calidad.
-Si el WEBP es animado, extrae solo el primer frame.
-
-```bash
-# Paso 1: subir el archivo WEBP
-curl -X POST http://localhost:5000/api/v1/upload \
-  -F "archivo=@imagen.webp"
-
-# Paso 2: iniciar la conversion
-curl -X POST http://localhost:5000/api/v1/convert/webp-to-png \
-  -H "Content-Type: application/json" \
-  -d '{"file_id": "FILE_ID"}'
-
-# Paso 3: descargar el PNG resultante
-curl http://localhost:5000/api/v1/download/JOB_ID --output imagen.png
-```
-
-El resultado es un archivo PNG directo (sin comprimir en ZIP).
-
----
-
-### Flujo completo de ejemplo en un script bash
-
-```bash
-#!/bin/bash
-# Ejemplo: subir un PDF y convertirlo a TXT
-
-BASE_URL="http://localhost:5000/api/v1"
-ARCHIVO="mi_documento.pdf"
-
-echo "Subiendo $ARCHIVO..."
-RESPUESTA_UPLOAD=$(curl -s -X POST "$BASE_URL/upload" -F "archivo=@$ARCHIVO")
-FILE_ID=$(echo $RESPUESTA_UPLOAD | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])")
-echo "file_id: $FILE_ID"
-
-echo "Iniciando conversion a TXT..."
-RESPUESTA_JOB=$(curl -s -X POST "$BASE_URL/convert/to-txt" \
-  -H "Content-Type: application/json" \
-  -d "{\"file_id\": \"$FILE_ID\", \"opciones\": {\"remover_numeros_pagina\": true, \"remover_encabezados\": true, \"remover_pies_pagina\": true}}")
-JOB_ID=$(echo $RESPUESTA_JOB | python3 -c "import sys,json; print(json.load(sys.stdin)['job']['id'])")
-echo "job_id: $JOB_ID"
-
-echo "Esperando resultado..."
-while true; do
-  ESTADO=$(curl -s "$BASE_URL/jobs/$JOB_ID" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['estado'])")
-  echo "  Estado: $ESTADO"
-  if [ "$ESTADO" = "completado" ] || [ "$ESTADO" = "error" ]; then
-    break
-  fi
-  sleep 2
-done
-
-if [ "$ESTADO" = "completado" ]; then
-  echo "Descargando resultado..."
-  curl -s "$BASE_URL/download/$JOB_ID" --output "${ARCHIVO%.pdf}.zip"
-  echo "Listo: ${ARCHIVO%.pdf}.zip"
-else
-  echo "Error en la conversion"
-fi
-```
-
----
-
-## Tecnologias
-
-- **Backend**: Python 3.10+, Flask
-- **Base de datos**: SQLite3
-- **Frontend**: HTML5, CSS3, JavaScript vanilla (sin frameworks)
-- **PDF**: PyMuPDF (fitz), pdf2image, pdfminer.six, python-docx, pdfplumber
-- **HTML a PDF**: WeasyPrint
-- **Imagenes**: pdf2image + poppler, Pillow, cairosvg
-- **EPS**: Pillow + Ghostscript (ghostscript en el contenedor)
-- **Web scraping**: beautifulsoup4 + lxml, trafilatura, markdownify
-- **Contenedor**: Docker (imagen multi-stage para menor tamanio)
 
 ## Licencia
 

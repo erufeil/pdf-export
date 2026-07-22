@@ -480,6 +480,36 @@ El resultado es un archivo **.md** con:
 
 ---
 
+### 📖 Wikipedia a Markdown
+
+**Descarga cualquier artículo de Wikipedia en Markdown limpio.**
+
+Podés ingresar la **URL completa** del artículo o simplemente el **nombre del artículo** en el campo de texto:
+
+- URL: `https://es.wikipedia.org/wiki/Python_(lenguaje_de_programación)`
+- Nombre: `Python (lenguaje de programación)`
+
+Seleccioná la Wikipedia de idioma que querés usar (Español, English, Français, Deutsch, Português). Si pegás una URL completa, el idioma se toma de la URL y el selector se ignora.
+
+El resultado es un archivo **.md** con:
+
+- Encabezado con título, fuente y URL del artículo
+- Contenido principal del artículo estructurado en Markdown
+- Secciones con sus respectivos subtítulos
+
+**No hace falta subir ningún archivo** — solo ingresás el artículo y hacés clic en "Descargar artículo en MD".
+
+**Útil para:** guardar documentación de referencia en tu base de conocimiento, alimentar herramientas de IA con contenido estructurado, crear resúmenes de temas para documentación interna.
+
+**Limitaciones:**
+
+- El artículo debe estar publicado y ser público en Wikipedia
+- Las imágenes no se incluyen en el Markdown — solo el texto
+- Las notas al pie y referencias numéricas se eliminan para mantener el texto limpio
+- Artículos muy cortos o redirecciones pueden generar un Markdown mínimo
+
+---
+
 ### 🎵 Audio a Markdown
 
 **Transcribe archivos de audio a texto y los guarda en Markdown.**
@@ -496,6 +526,39 @@ Opciones de idioma:
 El resultado es un archivo **.md** con el nombre del archivo, el formato y el texto completo de la transcripción.
 
 **Útil para:** pasar grabaciones de reuniones a texto, transcribir entrevistas, convertir notas de voz a Markdown para usar con IA.
+
+---
+
+## Misceláneos
+
+---
+
+### 🔢 Contador de Tokens
+
+**Calculá cuántos tokens consume tu texto en modelos de IA como GPT-4 o Claude.**
+
+Los modelos de lenguaje (GPT-4, Claude, etc.) no cuentan palabras — cuentan *tokens*. Un token puede ser una sílaba, una palabra, una puntuación. Saber cuántos tokens tiene tu texto es útil para:
+
+- No superar el límite de contexto de un modelo
+- Estimar el costo antes de enviar a una API
+- Comparar densidad de texto entre documentos
+
+**Dos modos de uso:**
+
+- **Pegar texto**: escribí o pegá el texto directamente en el campo. Usá **Ctrl+Enter** para contar rápido.
+- **Subir archivo**: arrastrá o seleccioná un archivo `.txt` o `.md`.
+
+**Qué muestra:**
+
+| Dato | Descripción |
+|------|-------------|
+| **Tokens** | Conteo exacto con el encoding `cl100k_base` (el mismo que usa GPT-4) |
+| **Palabras** | Total de palabras separadas por espacios |
+| **Caracteres** | Cantidad de caracteres Unicode |
+| **Bytes (UTF-8)** | Tamaño real del texto en memoria |
+| **Ratio** | Relación chars/token y palabras/token (densidad del texto) |
+
+**Nota técnica:** `cl100k_base` es el vocabulario de GPT-4 y GPT-3.5-turbo. Claude usa un vocabulario similar, por lo que el conteo es una muy buena aproximación.
 
 **Limitaciones:**
 
@@ -542,4 +605,4 @@ La conversión PDF → DOCX es imperfecta por naturaleza. El PDF es un formato d
 Puede ser que el sitio requiera login, que use JavaScript dinámico, o que bloquee los scrapers. En esos casos no hay solución desde esta herramienta.
 
 **¿Puedo usar esto desde una aplicación propia?**
-Sí, todos los servicios tienen endpoints de API. Consultá con el administrador del sistema para el acceso programático.
+Sí, todos los servicios exponen endpoints REST. Consultá la [Referencia de API](/api-ref.html) para ver todos los endpoints, parámetros y ejemplos de integración. Esa sección está orientada a desarrolladores.

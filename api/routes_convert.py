@@ -1951,6 +1951,48 @@ def convertir_youtube_to_md():
         return respuesta_error('JOB_ERROR', str(e), 500)
 
 
+@bp.route('/wikipedia-to-md', methods=['POST'])
+def convertir_wikipedia_to_md():
+    """
+    Extrae un artículo de Wikipedia y lo convierte a Markdown (Etapa 44).
+    No requiere archivo subido — URL o nombre del artículo vienen en el body JSON.
+    Retorna archivo .md directo (sin ZIP).
+
+    Body JSON:
+      - entrada: URL de Wikipedia o nombre de artículo
+      - lang: código de idioma (default 'es'): es|en|fr|de|pt|it|nl|pl|ru|ja|zh|ar
+    """
+    datos = request.get_json()
+    if not datos:
+        return respuesta_error('NO_DATA', 'No se enviaron datos')
+
+    entrada = (datos.get('entrada') or '').strip()
+    if not entrada:
+        return respuesta_error('MISSING_ENTRADA', 'Se requiere URL o nombre de artículo')
+
+    lang = (datos.get('lang') or 'es').strip()
+    _langs = {'es', 'en', 'fr', 'de', 'pt', 'it', 'nl', 'pl', 'ru', 'ja', 'zh', 'ar'}
+    if lang not in _langs:
+        lang = 'es'
+
+    try:
+        trabajo_id = job_manager.encolar_trabajo(
+            archivo_id=None,
+            tipo_conversion='wikipedia-to-md',
+            parametros={'entrada': entrada, 'lang': lang}
+        )
+        trabajo = models.obtener_trabajo(trabajo_id)
+        return respuesta_exitosa({
+            'job_id': trabajo_id,
+            'estado': trabajo['estado'],
+            'mensaje': 'Extracción de Wikipedia iniciada'
+        }, 'Trabajo encolado correctamente')
+
+    except Exception as e:
+        logger.error(f'Error creando trabajo wikipedia-to-md: {e}')
+        return respuesta_error('JOB_ERROR', str(e), 500)
+
+
 @bp.route('/epub-to-md', methods=['POST'])
 def convertir_epub_to_md():
     """

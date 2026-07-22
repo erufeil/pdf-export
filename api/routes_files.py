@@ -341,6 +341,40 @@ def eliminar_notepad(slug):
     return respuesta_exitosa({'ok': True}, 'Notepad eliminado')
 
 
+@bp.route('/api-ref', methods=['GET'])
+def obtener_api_ref():
+    """Retorna el contenido de README-API-Ref.md como texto plano para la página de referencia API."""
+    ruta_md = Path(__file__).parent.parent / 'README-API-Ref.md'
+    try:
+        contenido = ruta_md.read_text(encoding='utf-8')
+        return respuesta_exitosa({'contenido': contenido}, 'API Reference cargado')
+    except FileNotFoundError:
+        return respuesta_exitosa({'contenido': '# API Reference\n\nDocumentación no disponible.'}, 'Sin documentación')
+
+
+@bp.route('/token-count', methods=['POST'])
+def contar_tokens_endpoint():
+    """
+    Cuenta tokens (cl100k_base), palabras, caracteres y bytes de un texto.
+    Síncrono — retorna inmediatamente sin crear un job.
+    Body JSON: { "texto": "..." }
+    """
+    from services.token_counter import contar_tokens
+
+    datos = request.get_json(silent=True) or {}
+    texto = datos.get('texto', '')
+
+    if not isinstance(texto, str):
+        return respuesta_error('TEXTO_INVALIDO', 'El campo texto debe ser un string')
+
+    try:
+        resultado = contar_tokens(texto)
+    except RuntimeError as e:
+        return respuesta_error('TIKTOKEN_ERROR', str(e), 503)
+
+    return respuesta_exitosa(resultado, 'Conteo completado')
+
+
 @bp.route('/help', methods=['GET'])
 def obtener_ayuda():
     """

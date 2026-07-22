@@ -51,6 +51,9 @@ xlrd>=2.0.1
 youtube-transcript-api==1.2.4
 defusedxml>=0.7.1
 
+# Contador de Tokens (Etapa 48)
+tiktoken>=0.6.0
+
 # Utilidades
 python-dateutil==2.8.2
 python-dotenv==1.0.0
